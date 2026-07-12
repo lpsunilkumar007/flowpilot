@@ -1,0 +1,930 @@
+/*
+
+Version: 1.0
+File: Main Css File
+*/
+
+// Custom Variables
+@import 'config/variables';
+@import 'config/theme-config';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// Structure
+@import 'structure/logo';
+@import 'structure/sidenav';
+@import 'structure/topbar';
+
+// Components
+@import 'components/reboot';
+@import 'components/buttons';
+@import 'components/card';
+@import 'components/forms';
+@import 'components/custom-switch';
+@import 'components/print';
+@import 'components/helper';
+
+// Plugins (Extended UI Components)
+@import 'plugins/simplebar';
+@import 'plugins/swiper';
+@import 'plugins/sortablejs'; // Drang & Drop
+@import 'plugins/tippy-tooltip';
+
+// Chart Plugins
+@import 'plugins/apexcharts';
+
+// Advanced Form Plugins
+@import 'plugins/choices';
+@import 'plugins/dropzone';
+@import 'plugins/range-slider';
+@import 'plugins/flatpicker';
+@import 'plugins/colorpicker';
+@import 'plugins/quilljs';
+
+// Data Table
+@import 'plugins/gridjs';
+
+// Map Plugins
+@import 'plugins/vector-maps';
+@import 'plugins/google-map';
+
+// App Pages Plugins
+@import 'plugins/fullcalendar';
+
+@import url('https://fonts.googleapis.com/css2?family=Figtree:wght@300;400;500;600;700&display=swap');
+
+/* AG Grid theme */
+.ag-theme-quartz,
+.ag-theme-quartz-dark,
+.ag-theme-quartz-auto-dark {
+	--ag-border-radius: 7px !important;
+	--ag-font-family: 'Figtree', 'sans-serif' !important;
+
+}
+
+
+
+
+.suppressCellSelection .ag-cell-focus,
+.suppressCellSelection .ag-cell {
+	border: none !important;
+}
+
+.ag-cell {
+	overflow: visible !important;
+}
+
+.ag-theme-quartz .ag-cell {
+	white-space: nowrap !important;
+	overflow: hidden !important;
+	text-overflow: ellipsis !important;
+}
+
+.ql-editor-style1 {
+	width: 100%;
+	max-width: 100%;
+}
+
+.ql-editor-style1 .ql-container {
+	width: 100%;
+	max-width: 100%;
+}
+
+.ql-editor-style1 .ql-editor {
+	min-height: 200px;
+	max-height: 500px;
+	overflow-y: auto;
+	overflow-wrap: break-word;
+	word-break: break-word;
+}
+
+/* Dark Mode Styles for AG Grid*/
+
+[data-mode='dark'] .ag-root-wrapper {
+	border: var(--tw-grid-border-width) var(--tw-grid-border-style) var(--tw-grid-border-color);
+}
+
+[data-mode='dark'] .ag-root-wrapper .ag-row {
+	border-bottom: var(--tw-grid-border-width) var(--tw-grid-border-style) var(--tw-grid-border-color);
+}
+
+[data-mode='dark'] .ag-theme-quartz .ag-header {
+	background-color: var(--tw-grid-header-bg);
+	color: var(--tw-grid-header-text-color);
+	border-bottom: var(--tw-grid-border-width) var(--tw-grid-border-style) var(--tw-grid-border-color);
+}
+
+[data-mode='dark'] .ag-theme-quartz .ag-cell {
+	background-color: var(--tw-grid-cell-bg);
+	color: var(--tw-grid-cell-text-color);
+}
+
+[data-mode='dark'] .ag-theme-quartz .ag-header-cell-text {
+	background-color: var(--tw-grid-cell-bg);
+	color: var(--tw-grid-cell-text-color);
+}
+
+[data-mode='dark'] .ag-center-cols-viewport {
+	background-color: var(--tw-grid-cell-bg);
+	color: var(--tw-grid-cell-text-color);
+}
+
+[data-mode='dark'] .ag-theme-quartz .ag-row-hover {
+	background-color: var(--tw-grid-row-hover-bg);
+}
+
+[data-mode='dark'] .ag-theme-quartz .ag-icon {
+	background-color: var(--tw-grid-cell-bg);
+	color: var(--tw-grid-cell-text-color);
+}
+
+[data-mode='dark'] .ag-theme-quartz .ag-center-cols-container {
+	background-color: var(--tw-grid-cell-bg);
+	color: var(--tw-grid-cell-text-color);
+}
+
+[data-mode='dark'] .ag-theme-quartz .ag-overlay-no-rows-center {
+	color: var(--tw-grid-cell-text-color);
+}
+
+/* Dark Mode Styles for react-select */
+[data-mode='dark'] .select2-multiple>div:first-of-type {
+	background-color: var(--tw-select2-bg); //transparent;
+	border: var(--tw-select2-border-width) var(--tw-select2-border-style) var(--tw-select2-border-color);
+}
+
+.readonly-feild {
+	@apply px-3 py-2 bg-gray-50 dark:bg-gray-800 rounded;
+}
+
+.readonly-label {
+	@apply block text-sm text-gray-500 px-1 font-bold mb-2;
+}
+
+/* Label variants */
+.label-search {
+	@apply mb-2;
+}
+
+.label-field {
+	@apply mb-2 block font-medium text-gray-500;
+}
+
+.label-section {
+	@apply font-semibold text-gray-500 block mb-2 text-sm;
+}
+
+.label-section-alt {
+	@apply font-semibold text-gray-600 dark:text-gray-400;
+}
+
+.label-checkbox {
+	@apply mb-2 font-semibold text-gray-600;
+}
+
+.label-card {
+	@apply flex items-start gap-3 p-3 rounded-md border bg-gray-50 cursor-pointer;
+}
+
+/* Orbit/Auth consistency */
+.popup-wrapper {
+	@apply duration-300 ease-in-out transition-all flex flex-col bg-white shadow-sm rounded dark:bg-gray-800;
+}
+
+.popup-wrapper--default {
+	@apply m-3 my-0 sm:mx-auto;
+}
+
+.popup-wrapper--appointment {
+	@apply -translate-y-5 m-3 sm:mx-auto;
+}
+
+.popup-wrapper--compact {
+	@apply m-3;
+}
+
+.popup-wrapper--form-tabs {
+	@apply my-0 sm:mx-auto;
+}
+
+.popup-wrapper--edit-country {
+	@apply m-3 my-0;
+}
+
+.form-label {
+	@apply mb-2;
+}
+
+.form-label-auth {
+	@apply font-semibold text-gray-500;
+}
+
+.form-field {
+	@apply mb-3;
+}
+
+.form-field-auth {
+	@apply mb-6 space-y-2;
+}
+
+.form-field-appointment {
+	@apply space-y-1.5 mb-6;
+}
+
+.form-textarea-tall {
+	@apply form-input h-32;
+}
+
+.required-asterisk {
+	@apply text-red-500;
+}
+
+.appointment-status-badge {
+	color: #ffffff;
+	border-radius: 0.375rem;
+}
+
+.line-height-normal {
+	line-height: 1.5;
+}
+
+.social-icon {
+	@apply align-middle;
+	font-size: 18px;
+}
+
+.dropdown-fixed {
+	position: fixed;
+}
+
+/* Orbit: action dropdown (use CSS vars for positioning) */
+.orbit-action-trigger {
+	@apply text-sm inline-flex items-center;
+}
+
+.orbit-action-menu {
+	position: fixed;
+	top: var(--orbit-menu-top);
+	right: var(--orbit-menu-right);
+	min-width: var(--orbit-menu-min-width, 120px);
+	@apply z-20 bg-white shadow-lg rounded-lg border border-gray-200 py-1 dark:bg-gray-800 dark:border-gray-600;
+}
+
+/* Orbit: status badge with dynamic background (CSS var) */
+.orbit-status-badge {
+	background-color: var(--orbit-status-bg, #9e9e9e);
+	color: #ffffff;
+	border-radius: 0.375rem;
+}
+
+/* Orbit: subscription plan toggle */
+.orbit-plan-toggle {
+	@apply relative flex rounded-2xl bg-white p-1.5 shadow-md border border-gray-100;
+}
+
+.orbit-plan-toggle-btn {
+	@apply relative z-10 px-8 py-2.5 rounded-xl text-sm font-bold transition-all duration-300;
+}
+
+.orbit-plan-toggle-btn--active {
+	@apply bg-blue-600 text-white shadow-lg;
+}
+
+.orbit-plan-toggle-btn--inactive {
+	@apply text-gray-500 hover:text-gray-900;
+}
+
+/* Orbit: subscription plan pages */
+.orbit-plan-page {
+	@apply min-h-screen bg-gray-50/50 py-16 px-4 sm:px-6;
+}
+
+.orbit-plan-page-container {
+	@apply max-w-6xl mx-auto;
+}
+
+.orbit-plan-page-header {
+	@apply text-center mb-12;
+}
+
+.orbit-plan-page-title {
+	@apply text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl;
+}
+
+.orbit-plan-page-subtitle {
+	@apply mt-4 text-lg text-gray-600;
+}
+
+.orbit-plan-grid {
+	@apply grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3 p-8;
+}
+
+.orbit-plan-card {
+	@apply relative flex flex-col rounded-[2rem] p-8 transition-all duration-500 hover:-translate-y-2;
+}
+
+.orbit-plan-card--current {
+	@apply ring-2 ring-green-500 bg-gradient-to-b from-green-50 to-white shadow-2xl;
+}
+
+.orbit-plan-card--expired {
+	@apply ring-2 ring-red-400 bg-gradient-to-b from-red-50 to-white shadow-2xl;
+}
+
+.orbit-plan-card--ribbon {
+	@apply bg-gradient-to-b from-white to-blue-50 border-2 border-blue-500 shadow-2xl shadow-blue-100;
+}
+
+.orbit-plan-card--default {
+	@apply bg-white border border-gray-100 shadow-xl shadow-gray-100;
+}
+
+.orbit-plan-badge {
+	@apply absolute -top-4 left-8 text-white px-5 py-1.5 rounded-full text-[10px] uppercase tracking-widest font-black shadow-lg;
+}
+
+.orbit-plan-badge--expired {
+	@apply bg-red-600;
+}
+
+.orbit-plan-badge--current {
+	@apply bg-green-600;
+}
+
+.orbit-plan-badge--ribbon {
+	@apply bg-blue-600 shadow-blue-300;
+}
+
+.orbit-plan-price {
+	@apply text-5xl font-extrabold text-gray-900 tracking-tighter;
+}
+
+.orbit-plan-price-suffix {
+	@apply ml-1 text-gray-400 font-medium text-lg;
+}
+
+.orbit-plan-feature-item {
+	@apply flex items-center gap-3 text-gray-600 text-sm;
+}
+
+.orbit-plan-cta {
+	@apply relative w-full overflow-hidden rounded-2xl py-4 text-sm font-bold transition-all duration-300;
+}
+
+.orbit-plan-cta--disabled {
+	@apply bg-gray-200 text-gray-400 cursor-not-allowed shadow-none;
+}
+
+.orbit-plan-cta--primary {
+	@apply bg-blue-600 text-white hover:bg-blue-700 shadow-xl shadow-blue-200 active:scale-95;
+}
+
+.orbit-plan-cta--outline {
+	@apply bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50 shadow-xl shadow-blue-100 active:scale-95;
+}
+
+.orbit-plan-login-link {
+	@apply relative flex w-full items-center justify-center overflow-hidden rounded-2xl py-4 text-sm font-bold transition-all duration-300 bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-95 active:scale-95 shadow-lg shadow-blue-200 no-underline;
+}
+
+.orbit-plan-login-link-shine {
+	@apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-500;
+}
+
+/* Orbit: checkout (Stripe) */
+.orbit-checkout-shell {
+	@apply duration-300 ease-in-out transition-all m-3 my-0 sm:mx-auto flex flex-col bg-white shadow-2xl rounded-[2rem] dark:bg-gray-800 max-w-lg w-full overflow-hidden border border-gray-100 dark:border-gray-700;
+}
+
+.orbit-checkout-header {
+	@apply flex justify-between items-center py-5 px-8 border-b dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50;
+}
+
+.orbit-checkout-close {
+	@apply inline-flex justify-center items-center h-10 w-10 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors;
+}
+
+.orbit-checkout-summary {
+	@apply bg-blue-50 dark:bg-blue-900/20 rounded-2xl p-6 mb-8 border border-blue-100;
+}
+
+.orbit-checkout-card {
+	@apply p-4 border-2 border-gray-100 dark:border-gray-700 rounded-2xl bg-gray-50 dark:bg-gray-900 focus-within:border-blue-500 transition-all;
+}
+
+.orbit-checkout-pay-btn {
+	@apply w-full bg-blue-600 text-white py-4 rounded-2xl font-bold text-lg shadow-xl transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center;
+}
+
+/* Orbit: meeting (Jitsi) */
+.orbit-meeting-layout {
+	@apply grid grid-cols-12;
+}
+
+.orbit-meeting-stage {
+	@apply col-span-12 lg:col-span-9;
+}
+
+.orbit-meeting-sidebar {
+	@apply col-span-12 lg:col-span-3;
+}
+
+.orbit-meeting-loading {
+	@apply flex h-[900px] w-full items-center justify-center rounded-xl border bg-white;
+}
+
+.orbit-meeting-loading-spinner {
+	@apply mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-gray-600;
+}
+
+.orbit-meeting-sidebar-inner {
+	@apply p-4 space-y-4;
+}
+
+.orbit-meeting-meta-title {
+	@apply text-xl font-bold text-gray-900;
+}
+
+.orbit-meeting-meta-desc {
+	@apply text-sm text-gray-600 leading-relaxed;
+}
+
+.orbit-meeting-meta-chip {
+	@apply rounded bg-gray-100 px-2 py-1;
+}
+
+.orbit-meeting-info-card {
+	@apply rounded-lg bg-gray-50 p-3 border border-gray-200;
+}
+
+.orbit-meeting-info-label {
+	@apply text-xs font-semibold text-gray-500 uppercase tracking-wide;
+}
+
+.orbit-meeting-info-value {
+	@apply mt-1 text-sm font-semibold text-gray-900;
+}
+
+.orbit-meeting-section-title {
+	@apply text-sm font-semibold text-gray-900 uppercase tracking-wide;
+}
+
+.orbit-meeting-participant-card {
+	@apply flex items-start gap-3 rounded-lg bg-gray-50 p-3 border border-gray-200;
+}
+
+.orbit-meeting-avatar {
+	@apply h-12 w-12 overflow-hidden rounded-full;
+}
+
+.orbit-meeting-avatar--joined {
+	@apply ring-2 ring-green-500 bg-green-50;
+}
+
+.orbit-meeting-avatar--disconnected {
+	@apply ring-2 ring-yellow-500 bg-yellow-50;
+}
+
+.orbit-meeting-avatar--unknown {
+	@apply ring-1 ring-gray-200 bg-white;
+}
+
+.orbit-meeting-pill {
+	@apply rounded px-2 py-0.5 text-xs font-semibold;
+}
+
+.orbit-meeting-pill--host {
+	@apply bg-indigo-100 text-indigo-700;
+}
+
+.orbit-meeting-pill--required {
+	@apply bg-blue-100 text-blue-700;
+}
+
+.orbit-meeting-pill--optional {
+	@apply bg-gray-100 text-gray-700;
+}
+
+.orbit-meeting-pill--accepted {
+	@apply bg-green-100 text-green-700;
+}
+
+.orbit-meeting-pill--declined {
+	@apply bg-red-100 text-red-700;
+}
+
+.orbit-meeting-pill--pending {
+	@apply bg-yellow-100 text-yellow-700;
+}
+
+.orbit-meeting-pill--presence-joined {
+	@apply bg-green-100 text-green-700;
+}
+
+.orbit-meeting-pill--presence-disconnected {
+	@apply bg-yellow-100 text-yellow-700;
+}
+
+.orbit-meeting-pill--presence-not-joined {
+	@apply bg-gray-100 text-gray-600;
+}
+
+/* Orbit: appointment controls (timepicker + participants) */
+.orbit-timepicker-trigger {
+	@apply w-full form-input border text-left flex items-center justify-between;
+}
+
+.orbit-timepicker-menu {
+	@apply absolute z-50 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-3 w-full min-w-[320px] left-0;
+}
+
+.orbit-timepicker-col-title {
+	@apply text-xs font-semibold text-gray-600 mb-2 text-center uppercase tracking-wide;
+}
+
+.orbit-timepicker-option {
+	@apply w-full py-2.5 px-3 text-sm transition-all text-gray-700 hover:bg-gray-50;
+}
+
+.orbit-timepicker-option--selected {
+	@apply bg-primary text-white font-semibold;
+}
+
+.orbit-participants-field {
+	@apply w-full relative mb-3;
+}
+
+.orbit-participants-row {
+	@apply flex items-start gap-2;
+}
+
+.orbit-participants-select {
+	@apply border rounded px-2 py-1.5 text-sm cursor-pointer flex justify-between items-center bg-white;
+}
+
+.orbit-participants-menu {
+	@apply absolute z-20 mt-1 w-full bg-white border rounded shadow;
+}
+
+.orbit-participants-menu-input-wrap {
+	@apply px-2 py-1 sticky top-0 bg-white border-b;
+}
+
+.orbit-participants-menu-input {
+	@apply w-full border rounded px-2 py-1 text-sm;
+}
+
+.orbit-participants-menu-item {
+	@apply px-3 py-2 hover:bg-gray-100 cursor-pointer text-sm;
+}
+
+.orbit-participants-empty {
+	@apply px-3 py-2 text-gray-500 text-sm text-center;
+}
+
+.orbit-participants-remove {
+	@apply px-2 py-1 text-sm text-red-500 hover:text-red-700;
+}
+
+.orbit-participants-add {
+	@apply mt-1 text-xs text-blue-600 hover:underline flex items-center gap-1;
+}
+
+.orbit-multiselect-shell {
+	@apply flex flex-wrap gap-2 items-center border rounded min-h-[38px] px-2 py-1 cursor-text;
+}
+
+.orbit-multiselect-chip {
+	@apply flex items-center bg-gray-100 border rounded-lg px-2 py-0.5 text-sm gap-2;
+}
+
+.orbit-multiselect-chip-remove {
+	@apply ml-1 text-gray-500 hover:text-black;
+}
+
+.orbit-multiselect-input {
+	@apply flex-1 min-w-[120px] border-none focus:outline-none text-sm;
+}
+
+/* Orbit: tenant subscriptions (ViewTenantSubscriptions) */
+.orbit-tenant-empty {
+	@apply text-center py-20 bg-white dark:bg-gray-800 border border-dashed border-gray-300 dark:border-gray-600;
+}
+
+.orbit-tenant-layout {
+	@apply flex flex-col lg:flex-row gap-3 h-[calc(100vh-200px)] min-h-[600px];
+}
+
+.orbit-tenant-sidebar {
+	@apply w-full lg:w-[320px] xl:w-[360px] bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-y-auto;
+}
+
+.orbit-tenant-sidebar-header {
+	@apply sticky top-0 z-10 p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50;
+}
+
+.orbit-tenant-sidebar-title {
+	@apply text-xs font-bold text-gray-400 uppercase tracking-wider;
+}
+
+.orbit-tenant-plan-item {
+	@apply w-full text-left p-4 transition-all hover:bg-gray-50 flex flex-col gap-1;
+}
+
+.orbit-tenant-plan-item--selected {
+	@apply bg-blue-50/50 border-l-4 lg:border-l-0 lg:border-r-4 border-blue-500;
+}
+
+.orbit-tenant-plan-title {
+	@apply font-bold truncate text-gray-900;
+}
+
+.orbit-tenant-plan-title--selected {
+	@apply text-blue-700;
+}
+
+.orbit-tenant-pill {
+	@apply text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap;
+}
+
+.orbit-tenant-pill--active {
+	@apply bg-green-100 text-green-700;
+}
+
+.orbit-tenant-pill--expired {
+	@apply bg-gray-200 text-gray-600;
+}
+
+.orbit-tenant-detail-panel {
+	@apply flex-1 bg-white dark:bg-gray-800 shadow-sm rounded-lg overflow-y-auto custom-scroll p-3 sm:p-4 md:p-6;
+}
+
+.orbit-tenant-invoice-pill {
+	@apply px-2.5 py-1 rounded-full text-xs font-bold;
+}
+
+.orbit-tenant-invoice-pill--paid {
+	@apply bg-emerald-100 text-emerald-700;
+}
+
+.orbit-tenant-invoice-pill--unpaid {
+	@apply bg-amber-100 text-amber-700;
+}
+
+.orbit-tenant-download-btn {
+	@apply inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 active:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1;
+}
+
+/* Orbit: field validation error text */
+.orbit-field-error {
+	@apply text-red-700;
+}
+
+/* Orbit: shared semantic colors (pills, danger text) */
+.orbit-danger-text {
+	@apply text-red-500;
+}
+
+.orbit-danger-hover {
+	@apply hover:text-red-700;
+}
+
+.orbit-muted {
+	@apply text-gray-500 dark:text-gray-400;
+}
+
+/* Orbit: semantic text (post-v4) */
+.orbit-body {
+	@apply text-gray-700 dark:text-gray-200;
+}
+
+.orbit-body-emphasis {
+	@apply text-gray-800 dark:text-gray-300;
+}
+
+.orbit-heading {
+	@apply text-gray-900 dark:text-white;
+}
+
+.orbit-label-secondary {
+	@apply text-gray-600 dark:text-gray-400;
+}
+
+.orbit-placeholder {
+	@apply text-gray-400 dark:text-gray-500;
+}
+
+.orbit-link {
+	@apply text-blue-600 dark:text-blue-400;
+}
+
+.orbit-link-emphasis {
+	@apply text-blue-700 dark:text-blue-300;
+}
+
+/* Orbit: semantic backgrounds */
+.orbit-panel {
+	@apply bg-gray-50 dark:bg-gray-800 rounded-lg;
+}
+
+.orbit-chip-bg {
+	@apply bg-gray-100 dark:bg-gray-700;
+}
+
+.orbit-info-panel {
+	@apply bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800;
+}
+
+.orbit-disabled {
+	@apply bg-gray-300 text-gray-500 cursor-not-allowed;
+}
+
+.orbit-surface {
+	@apply bg-white dark:bg-gray-800;
+}
+
+.orbit-empty-state {
+	@apply px-4 py-3 text-center;
+}
+
+.orbit-empty-state--card {
+	@apply bg-white dark:bg-gray-800 rounded-lg border border-gray-100 dark:border-slate-700;
+}
+
+.orbit-empty-state__title {
+	@apply text-sm font-medium text-gray-700 dark:text-gray-200;
+}
+
+.orbit-empty-state__desc {
+	@apply mt-1 text-sm orbit-muted;
+}
+
+
+.orbit-pill {
+	@apply inline-flex items-center rounded px-2 py-1 text-xs font-medium;
+}
+
+.orbit-pill--success {
+	@apply bg-green-500 text-white;
+}
+
+.orbit-pill--danger {
+	@apply bg-red-500 text-white;
+}
+
+.orbit-pill--warning {
+	@apply bg-yellow-500 text-white;
+}
+
+.orbit-pill--neutral {
+	@apply bg-gray-500 text-white;
+}
+
+.orbit-pill--success-soft {
+	@apply bg-green-100 text-green-700;
+}
+
+.orbit-pill--danger-soft {
+	@apply bg-red-100 text-red-700;
+}
+
+.orbit-pill--warning-soft {
+	@apply bg-amber-100 text-amber-700;
+}
+
+.orbit-pill--neutral-soft {
+	@apply bg-gray-100 text-gray-700;
+}
+
+.orbit-status-icon--success {
+	@apply text-green-600;
+}
+
+.orbit-status-icon--danger {
+	@apply text-red-500;
+}
+
+.orbit-status-icon--warning {
+	@apply text-amber-600;
+}
+
+/* Orbit: two-factor authentication (UserTwoFactorAuthentication) */
+.orbit-2fa-toggle-btn {
+	@apply btn text-white w-full sm:w-auto;
+}
+
+.orbit-2fa-toggle-btn--enabled {
+	@apply bg-gray-700;
+}
+
+.orbit-2fa-toggle-btn--disabled {
+	@apply bg-primary;
+}
+
+.orbit-2fa-status {
+	@apply inline-flex items-center rounded-full px-3 py-1 text-xs font-medium;
+}
+
+.orbit-2fa-status--enabled {
+	@apply bg-green-100 text-green-700;
+}
+
+.orbit-2fa-status--disabled {
+	@apply bg-gray-100 text-gray-700;
+}
+
+/* Long Tailwind extractions */
+.permission-tabs {
+	@apply flex space-x-2 border-gray-200 dark:border-gray-600 dark:border-b-transparent overflow-x-auto overflow-y-hidden;
+}
+
+.permission-tab {
+	@apply dark:bg-gray-800 dark:border-b-gray-800 -mb-px py-3 px-4 inline-flex items-center gap-2 text-sm font-medium text-center border text-gray-500 rounded-t-lg;
+}
+
+.permission-tab--selected {
+	@apply text-primary bg-white border-b-transparent dark:bg-gray-800 dark:border-gray-600 dark:text-white dark:border-b-transparent;
+}
+
+.permission-tab--unselected {
+	@apply text-gray-500 hover:text-gray-700 bg-gray-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-400;
+}
+
+.participant-approval-bg {
+	@apply h-full bg-gradient-to-br xl:min-h-screen xl:py-9 from-blue-50 via-white to-blue-100 flex flex-col items-center;
+}
+
+.participant-approval-card {
+	@apply w-full max-w-7xl bg-white xl:rounded-3xl shadow-2xl overflow-hidden border border-gray-100;
+	animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+	from {
+		opacity: 0;
+	}
+
+	to {
+		opacity: 1;
+	}
+}
+
+.subscription-status-bg {
+	@apply min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-900/40 dark:to-gray-900;
+}
+
+.admin-menu-button {
+	@apply py-4 px-6 inline-flex items-center justify-between gap-x-3 w-full font-semibold text-left transition text-gray-600 dark:text-gray-300;
+}
+
+.admin-menu-card {
+	@apply rounded-lg shadow-lg bg-gray-100 dark:bg-gray-800 hover:shadow-xl transition;
+}
+
+.admin-menu-card-inner {
+	@apply flex items-center p-6 dark:rounded dark:border dark:border-gray-600;
+}
+
+.admin-menu-icon {
+	@apply bg-primary text-white w-12 h-12 flex items-center justify-center rounded-full;
+}
+
+.admin-menu-title {
+	@apply text-lg font-medium text-gray-800 dark:text-gray-100;
+}
+
+.admin-menu-collapse {
+	@apply w-full transition-[height] duration-300;
+}
+
+.settings-footer {
+	@apply flex justify-end items-center gap-2 p-5 border-t dark:border-slate-700 bg-gray-50 dark:bg-slate-900/50 rounded-b-xl;
+}
+
+/* Button variants - use with btn class */
+.btn-primary {
+	@apply bg-primary text-white;
+}
+
+.btn-secondary {
+	@apply bg-light text-gray-800 dark:bg-gray-700 dark:text-gray-100 transition-all;
+}
+
+.btn-danger {
+	@apply bg-danger text-white;
+}
+
+/* Action dropdown menu items - use consistently in View*ActionButtons */
+.action-menu-item {
+	@apply flex items-center w-full px-4 py-2 text-left text-sm text-gray-500 hover:bg-gray-50 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-gray-300;
+}
+
+.action-menu-item--danger {
+	@apply text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 dark:hover:text-red-300;
+}
+
+.readonly-field {
+	@apply w-full bg-gray-200 text-gray-700 rounded px-3 py-2 text-sm;
+}

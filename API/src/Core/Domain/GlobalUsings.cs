@@ -1,0 +1,1 @@
+global using FlowPilot.Domain.Common.Contracts;

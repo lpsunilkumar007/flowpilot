@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>FlowPilot.Application</RootNamespace>
+    <AssemblyName>FlowPilot.Application</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Email\Models\**" />
+    <EmbeddedResource Remove="Email\Models\**" />
+    <None Remove="Email\Models\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Domain\Domain.csproj" />
+    <ProjectReference Include="..\Shared\Shared.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Common\Models\Request\" />
+    <Folder Include="ExternalIntegrations\Jitsi\Models\Request\" />
+    <Folder Include="Nexus\Identity\Roles\Models\Response\" />
+    <Folder Include="Nexus\Payment\Models\Request\" />
+    <Folder Include="Nexus\Payment\Models\Response\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Update="Roslynator.Analyzers" Version="4.15.0" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,27 @@
+Facebook API Integration – Required Accounts & Setup (Short Reference)
+
+- A Facebook Developer Account and an App created via the :- https://developers.facebook.com/. 
+- Guide to create an app :- https://medium.com/@syedmahmad/login-with-facebook-meta-in-react-app-88efb7a9fc0a
+- Obtain your App ID and App Secret from the app’s Settings → Basic page.
+- Enable the required permissions/scopes (e.g., email, pages_read_engagement, pages_manage_posts, etc.).
+- Generate an appropriate Access Token (User, Page, or App)
+- Decide the Graph API version you’ll target. 
+
+Key Integration Steps
+1. Configure your App → set redirect URIs, privacy policy URL, contact email.
+2. Obtain Access Token:
+   2.1 For user data → OAuth flow (User Access Token)
+   2.2 For managing pages → Page Access Token (via user + page roles)
+   2.3 For server-to-server → App Access Token
+
+
+3. Handle errors (expired token, missing permission) and respect rate limits.
+
+4. For production: enable Live mode for your app, submit for App Review if you use non-basic permissions.
+
+Quick Checklist for Dev Team
+ - Create Facebook App
+ - Configure App settings (redirects, URLs)
+ - Enable required permissions
+ - Implement token generation/storage securely (no secrets in client)
+ - Set up error & token expiry handling

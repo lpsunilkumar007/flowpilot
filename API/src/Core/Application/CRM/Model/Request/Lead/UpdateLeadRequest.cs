@@ -1,0 +1,83 @@
+using System.ComponentModel.DataAnnotations;
+using FlowPilot.Domain.Enums.CRM;
+using FlowPilot.Shared.Common.Validation;
+
+namespace FlowPilot.Application.CRM.Model.Request.Lead;
+
+public class UpdateLeadRequest
+{
+    [Required]
+    public required DefaultIdType Id { get; set; }
+
+    [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
+    public required string BusinessName { get; set; }
+
+    [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
+    public required string BusinessType { get; set; }
+
+    public string? CurrentPOS { get; set; }
+
+    public string? Website { get; set; }
+
+    public string? GstNumber { get; set; }
+
+    public string? Pan { get; set; }
+
+    public int? NumberOfOutlets { get; set; }
+
+    public decimal? ExpectedMonthlyBilling { get; set; }
+
+    public decimal? ExpectedRevenue { get; set; }
+
+    public string? CompanySize { get; set; }
+
+    [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
+    public required string OwnerName { get; set; }
+
+    public string? Designation { get; set; }
+
+    [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
+    public required string Mobile { get; set; }
+
+    public string? WhatsApp { get; set; }
+
+    public string? Email { get; set; }
+
+    public string? AlternatePhone { get; set; }
+
+    public string? Country { get; set; }
+
+    public string? State { get; set; }
+
+    public string? City { get; set; }
+
+    public string? Area { get; set; }
+
+    public string? Pincode { get; set; }
+
+    public string? FullAddress { get; set; }
+
+    public string? GoogleMapsLink { get; set; }
+
+    [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
+    public required string LeadSource { get; set; }
+
+    [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
+    public required string AssignedToUserId { get; set; }
+
+    public LeadPriority Priority { get; set; }
+
+    public LeadStatus LeadStatus { get; set; }
+
+    public DateTimeOffset? ExpectedClosingDate { get; set; }
+
+    public InterestLevel InterestLevel { get; set; }
+
+    public string? PainPoints { get; set; }
+
+    public string? Competitors { get; set; }
+
+    public string? Requirements { get; set; }
+
+    public bool IsArchived { get; set; }
+}
