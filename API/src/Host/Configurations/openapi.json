@@ -1,0 +1,14 @@
+{
+  "SwaggerSettings": {
+    "Enable": true,
+    "Title": "FlowPilot",
+    "Version": "1.0.0",
+    "Description": "",
+    "ContactName": "FlowPilot",
+    "ContactEmail": "FlowPilot@FlowPilot.com",
+    "ContactUrl": "https://FlowPilot.com/",
+    "License": true,
+    "LicenseName": "",
+    "LicenseUrl": ""
+  }
+}

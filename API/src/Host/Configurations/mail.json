@@ -1,0 +1,33 @@
+{
+  "MailSettings": {
+    "Provider": "Aws", // Aws || SendGrid || Resend
+    "AwsMailSettings": {
+      "EmailHost": "",
+      "SendEmailPort": "",
+      "SendEmailEnableSsl": true,
+      "AWSUsername": "",
+      "AWSPassword": "",
+      "IsTestModeEnabled": true,
+      "TestModeEmailTo": [ "cc1@example.com", "cc2@example.com" ],
+      "TestModeEmailCc": [ "cc1@example.com", "cc2@example.com" ],
+      "TestModeEmailBCc": [ "cc1@example.com", "cc2@example.com" ]
+    },
+    "SendGridMailSettings": {
+      "APIKey": "",
+      "FromEmail": "",
+      "IsTestModeEnabled": true,
+      "TestModeEmailTo": [ "cc1@example.com", "cc2@example.com" ],
+      "TestModeEmailCc": [ "cc1@example.com", "cc2@example.com" ],
+      "TestModeEmailBCc": [ "cc1@example.com", "cc2@example.com" ]
+    },
+    // Testing Resend From Email: onboarding@resend.dev
+    "ResendMailSettings": {
+      "APIKey": "",
+      "FromEmail": "",
+      "IsTestModeEnabled": true,
+      "TestModeEmailTo": [ "cc1@example.com", "cc2@example.com" ],
+      "TestModeEmailCc": [ "cc1@example.com", "cc2@example.com" ],
+      "TestModeEmailBCc": [ "cc1@example.com", "cc2@example.com" ]
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "FrontUserPortalSettings": {
+    "Urls": {
+      "RegistrationConfirmUrl": "http://localhost:5173/auth/confirm-mail",
+      "ForgotPasswordUrl": "http://localhost:5173/auth/reset-password",
+      "AppointmentConfirmationUrl": "http://localhost:5173/appointment/confirm/{0}",
+      "StartMeetingLinkUrl": "http://localhost:5173/appointment/start-meeting/{0}"
+    }
+  }
+}

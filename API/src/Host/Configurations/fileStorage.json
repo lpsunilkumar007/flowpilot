@@ -1,0 +1,12 @@
+{
+  "FileStorageSettings": {
+    "Provider": "LocalStorage", // Aws || LocalStorage
+    "AmazonS3Settings": {
+      "DefaultBucketName": "your-bucket",
+      "AwsAccessKeyId": "",
+      "AwsSecretAccessKey": "",
+      "Region": "eu-west-2",
+      "PublicBaseUrl": "https://your-bucket.s3.eu-west-2.amazonaws.com"
+    }
+  }
+}

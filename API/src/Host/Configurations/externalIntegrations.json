@@ -1,0 +1,11 @@
+{
+  "ExternalIntegrations": {
+    "JitsiSettings": {
+      "Key": "Jitsi@4321",
+      "Issuer": "lnp_jitsi_app",
+      "Sub": "jitsi.lnpinfotech.com",
+      "Host": "jitsi.lnpinfotech.com"
+    }
+
+  }
+}

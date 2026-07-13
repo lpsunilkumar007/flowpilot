@@ -1,0 +1,7 @@
+{
+  "StripeSettings": {
+    "SecretKey": "sk_test_51ShS6MCqmuNj8dtLfICY8nNrscDVKqInFW1hD2Rn8BNFQX0Fia8Blt7ak1LwWmDy1LWISfL9yNbVikYn8rFvZw8g00WYh5EwdT",
+    "PublishableKey": "pk_test_51ShS6MCqmuNj8dtL8IeD8r7IF8DheQNw5qyfy7jaAQGwlHKuFa52Z5guBtlooW2Yshw0M1Wt7Dj0399XsiZHnWdl00oJbikuDS",
+    "WebhookSecret": "whsec_2f8832842312bdf6fd31cbe3164de9162628477d41658c7f5771c139dad67e24"
+  }
+}
