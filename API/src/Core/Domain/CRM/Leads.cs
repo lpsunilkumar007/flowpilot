@@ -1,4 +1,6 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using FlowPilot.Domain.Enums.CRM;
+using FlowPilot.Domain.LookUp;
 
 namespace FlowPilot.Domain.CRM;
 
@@ -30,7 +32,8 @@ public class Leads : AuditableEntity
 
     public LeadPriority Priority { get; set; } = LeadPriority.Medium;
 
-    public required LeadStatus LeadStatus { get; set; }
+    [ForeignKey(nameof(LeadStatus))]
+    public required DefaultIdType FKLeadStatusId { get; set; }
 
     public DateTimeOffset? ExpectedClosingDate { get; set; }
 
@@ -50,6 +53,12 @@ public class Leads : AuditableEntity
 
     public string? GoogleMapsLink { get; set; }
 
+    public string? PlaceId { get; set; }
+
+    public decimal? Latitude { get; set; }
+
+    public decimal? Longitude { get; set; }
+
     public string? PainPoints { get; set; }
 
     public string? Competitors { get; set; }
@@ -66,6 +75,8 @@ public class Leads : AuditableEntity
 
     public int? FKConvertedCustomerId { get; set; }
 
+    public virtual LookUpCodeValues LeadStatus { get; set; } = null!;
+
     public List<LeadContacts> LeadContacts { get; set; } = [];
 
     public List<LeadActivities> LeadActivities { get; set; } = [];
@@ -75,4 +86,5 @@ public class Leads : AuditableEntity
     public List<LeadStatusHistories> LeadStatusHistories { get; set; } = [];
 
     public List<LeadAssignmentHistories> LeadAssignmentHistories { get; set; } = [];
+    public List<LeadVisits> LeadVisits { get; set; } = [];
 }

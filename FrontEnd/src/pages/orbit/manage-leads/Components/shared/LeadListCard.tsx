@@ -2,13 +2,12 @@ import { MenuLinks } from '@/constants/menu'
 import { formatHelper } from '@/helpers/format.helper'
 import type { ViewLeadListResponse } from '@/types/crm/lead.types'
 import { useNavigate } from 'react-router-dom'
-import { getUserDisplayName, leadCardClass } from '../../helpers/leadDisplay.helper'
+import { getUserDisplayName, leadCardClass, type LeadUserLookup } from '../../helpers/leadDisplay.helper'
 import LeadStatusBadge from './LeadStatusBadge'
-import type { ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
 
 interface LeadListCardProps {
 	lead: ViewLeadListResponse
-	users: ViewUserDetailsResponse[]
+	users: LeadUserLookup[]
 }
 
 const LeadListCard: React.FC<LeadListCardProps> = ({ lead, users }) => {
@@ -30,7 +29,7 @@ const LeadListCard: React.FC<LeadListCardProps> = ({ lead, users }) => {
 						{lead.ownerName} · {lead.mobile}
 					</p>
 				</div>
-				<LeadStatusBadge status={lead.leadStatus} />
+				<LeadStatusBadge statusName={lead.leadStatusName} />
 			</div>
 
 			<div className="mt-4 grid grid-cols-2 gap-3 text-sm">

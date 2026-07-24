@@ -7,7 +7,7 @@ namespace FlowPilot.Host.Controllers.FormDesigner;
 public partial class FormDesignerController
 {
     [HttpPost("create-new-form")]
-    [MustHavePermission(SystemAction.Create, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.Create, SystemResource.ManageForm)]
     [OpenApiOperation("Create a new form", "")]
     public async Task<CreateFormStructureResponse> CreateFormStructure(CreateFormStructureRequest request)
     {
@@ -15,7 +15,7 @@ public partial class FormDesignerController
     }
 
     [HttpGet("get-form/{id}")]
-    [MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
     [OpenApiOperation("Get form detail by id", "")]
     public async Task<ViewFormStructureDetailResponse> GetFormStructureById(DefaultIdType id)
     {
@@ -23,7 +23,7 @@ public partial class FormDesignerController
     }
 
     [HttpPut("update-form")]
-    [MustHavePermission(SystemAction.Update, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.Update, SystemResource.ManageForm)]
     [OpenApiOperation("Update form detail", "")]
     public async Task<string> UpdateFormStructure(UpdateFormStructureRequest request)
     {
@@ -32,14 +32,14 @@ public partial class FormDesignerController
 
     [HttpPost("get-forms")]
     [OpenApiOperation("Get form details", "")]
-    [MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
     public async Task<PaginationResponse<ViewFormStructureDetailResponse>> GetFormStructures(SearchFormStructureRequest request)
     {
         return await _formStructureService.GetFormStructures(request);
     }
 
     [HttpDelete("delete-form/{id}")]
-    [MustHavePermission(SystemAction.Delete, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.Delete, SystemResource.ManageForm)]
     [OpenApiOperation("Delete a form.", "")]
     public async Task<string> DeleteFormStructure(DefaultIdType id)
     {

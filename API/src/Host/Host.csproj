@@ -1,47 +1,50 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <RootNamespace>FlowPilot.Host</RootNamespace>
-    <AssemblyName>FlowPilot.Host</AssemblyName>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <RootNamespace>FlowPilot.Host</RootNamespace>
+        <AssemblyName>FlowPilot.Host</AssemblyName>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Controllers\EmailLog\**" />
-    <Content Remove="Controllers\EmailLog\**" />
-    <EmbeddedResource Remove="Controllers\EmailLog\**" />
-    <None Remove="Controllers\EmailLog\**" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Remove="Controllers\EmailLog\**" />
+        <Content Remove="Controllers\EmailLog\**" />
+        <EmbeddedResource Remove="Controllers\EmailLog\**" />
+        <None Remove="Controllers\EmailLog\**" />
+    </ItemGroup>
 
-  <ItemGroup>
-    <_ContentIncludedByDefault Remove="configurations\hangfire.json" />
-  </ItemGroup>
+    <ItemGroup>
+        <_ContentIncludedByDefault Remove="configurations\hangfire.json" />
+    </ItemGroup>
 
-  <ItemGroup>
-     
-    <PackageReference Include="JWT" Version="11.0.0" />
-     
-    <PackageReference Include="MailKit" Version="4.16.0" />
-     
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-     
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
-     
-    <PackageReference Include="RestSharp" Version="114.0.0" />
-    <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
-  </ItemGroup>
+    <ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Core\Application\Application.csproj" />
-    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
-    <ProjectReference Include="..\Migrators\Migrators.MSSQL\Migrators.MSSQL.csproj" />
-  </ItemGroup>
+        <PackageReference Include="Hangfire.PostgreSql" Version="1.21.1" />
+        <PackageReference Include="JWT" Version="11.0.0" />
 
-  <ItemGroup>
-    <PackageReference Update="Roslynator.Analyzers" Version="4.15.0" />
-  </ItemGroup>
+        <PackageReference Include="MailKit" Version="4.16.0" />
+
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.7">
+            <PrivateAssets>all</PrivateAssets>
+            <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+        </PackageReference>
+
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.7" />
+
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+        <PackageReference Include="RestSharp" Version="114.0.0" />
+        <PackageReference Include="Serilog.AspNetCore" Version="10.0.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Core\Application\Application.csproj" />
+        <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+        <ProjectReference Include="..\Migrators\Migrators.MSSQL\Migrators.MSSQL.csproj" />
+        <ProjectReference Include="..\Migrators\Migrators.PostgreSQL\Migrators.PostgreSQL.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Update="Roslynator.Analyzers" Version="4.15.0" />
+    </ItemGroup>
 
 </Project>

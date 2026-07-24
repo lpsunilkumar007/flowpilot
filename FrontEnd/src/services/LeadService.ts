@@ -8,6 +8,7 @@ export const leadService: ILeadRepository = {
 	update: (id, request) => leadApiClient.update(id, request),
 	updateStatus: (id, request) => leadApiClient.updateStatus(id, request),
 	assign: (id, request) => leadApiClient.assign(id, request),
+	updateFollowUpDate: (id, request) => leadApiClient.updateFollowUpDate(id, request),
 	getActivities: (id) => leadApiClient.getActivities(id),
 	createActivity: (id, request) => leadApiClient.createActivity(id, request),
 	getTodayFollowUps: () => leadApiClient.getTodayFollowUps(),

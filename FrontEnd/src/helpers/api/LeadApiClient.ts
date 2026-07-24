@@ -14,6 +14,7 @@ import type {
 	PaginationResponseOfViewLeadListResponse,
 	SearchLeadRequest,
 	UpdateLeadRequest,
+	UpdateLeadFollowUpDateRequest,
 	UpdateLeadStatusRequest,
 	ViewEntityNoteResponse,
 	ViewLeadActivityResponse,
@@ -27,7 +28,12 @@ const apiBase = `${baseUrl}/api/v1/Lead`
 
 async function parseJson<T>(response: Response): Promise<T> {
 	const text = await response.text()
-	return text ? JSON.parse(text) : ({} as T)
+	if (!text) return '' as T
+	try {
+		return JSON.parse(text) as T
+	} catch {
+		return text as T
+	}
 }
 
 function buildSearchQuery(request: SearchLeadRequest): string {
@@ -79,6 +85,13 @@ export const leadApiClient = {
 		return authenticatedFetch(`${apiBase}/${id}/assign`, {
 			method: 'POST',
 			body: JSON.stringify(request),
+		}).then((r) => parseJson<string>(r))
+	},
+
+	updateFollowUpDate(id: number, request: UpdateLeadFollowUpDateRequest): Promise<string> {
+		return authenticatedFetch(`${apiBase}/${id}/followup-date`, {
+			method: 'POST',
+			body: JSON.stringify(sanitizeLeadApiPayload(request)),
 		}).then((r) => parseJson<string>(r))
 	},
 

@@ -12,6 +12,7 @@ using Mapster;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowPilot.Infrastructure.Nexus.Localization;
+
 public class LocalizationService : ILocalizationService
 {
     private readonly NexusDbContext _nexusDbContext;
@@ -693,10 +694,45 @@ public class LocalizationService : ILocalizationService
         new() { Key = "Manage.Profile.TwoFactor.ConfirmMethodChange", Value = "2FA is currently enabled. Are you sure you want to change the authentication method?" },
         new() { Key = "Manage.Profile.TwoFactor.ConfirmMethodChange_Heading", Value = "Change 2FA Method" },
         new() { Key = "Manage.Profile.TwoFactor.ConfirmMethodChange_ConfirmButtonText", Value = "Change Method" },
+        new() { Key = "Manage.SalesPipeline.NewLead", Value = "New Lead" },
 
         // File uploader
         new() { Key = "Manage.Profile.Drop_Instruction", Value = "Click to upload or drag and drop" },
         new() { Key = "Manage.Profile.Drop_Hint", Value = "SVG, PNG, JPG or GIF (max. 4MB)" },
+
+        new() { Key = "Manage.SalesCrm_Nav_Heading", Value = "Manage Sales CRM" },
+        new() { Key = "Manage.Leads_Heading", Value = "Manage Leads" },
+        new() { Key = "Manage.Leads.Calendar_Heading", Value = "Calendar" },
+        new() { Key = "Manage.SalesPipeline_Heading", Value = "Sales Pipeline" },
+        new() { Key = "Manage.Leads.Updated", Value = "Lead updated successfully" },
+
+        // Tasks
+        new() { Key = "Manage.Tasks_Heading", Value = "Tasks" },
+        new() { Key = "Manage.Tasks.Breadcrumb", Value = "Tasks" },
+        new() { Key = "Manage.Tasks.Action_Add", Value = "Create Task" },
+        new() { Key = "Manage.Tasks.Section_Today", Value = "Today" },
+        new() { Key = "Manage.Tasks.Section_Tomorrow", Value = "Tomorrow" },
+        new() { Key = "Manage.Tasks.Section_Overdue", Value = "Overdue" },
+        new() { Key = "Manage.Tasks.Section_Future", Value = "Future" },
+        new() { Key = "Manage.Tasks.Empty_Today", Value = "No tasks for today" },
+        new() { Key = "Manage.Tasks.Empty_Tomorrow", Value = "No tasks for tomorrow" },
+        new() { Key = "Manage.Tasks.Empty_Overdue", Value = "No overdue tasks" },
+        new() { Key = "Manage.Tasks.Empty_Future", Value = "No future tasks" },
+        new() { Key = "Manage.Tasks.Add_Title", Value = "Create Task" },
+        new() { Key = "Manage.Tasks.Title", Value = "Title" },
+        new() { Key = "Manage.Tasks.Title_Placeholder", Value = "Call Sarah Chen — Solaris Labs" },
+        new() { Key = "Manage.Tasks.When", Value = "When" },
+        new() { Key = "Manage.Tasks.Bucket", Value = "Bucket" },
+        new() { Key = "Manage.Tasks.Type", Value = "Type" },
+        new() { Key = "Manage.Tasks.Priority", Value = "Priority" },
+        new() { Key = "Manage.Tasks.Add_Close", Value = "Close" },
+        new() { Key = "Manage.Tasks.Add_Save", Value = "Save" },
+        new() { Key = "Manage.Tasks.Completed_Status", Value = "Completed" },
+        new() { Key = "Manage.Tasks.Completed_Message", Value = "Task marked as completed" },
+        new() { Key = "Manage.Tasks.Calendar_Rescheduled", Value = "Task rescheduled" },
+        new() { Key = "Manage.Leads.Calendar_Legend_Task", Value = "Task" },
+
+
         };
     }
 }

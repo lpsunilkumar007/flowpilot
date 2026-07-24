@@ -1,13 +1,13 @@
 {
   "DatabaseSettings": {
-    "Nexus_DBProvider": "mssql",
-    "Nexus_ConnectionString": "Server=localhost;Database=FlowPilot;Integrated Security=True;TrustServerCertificate=True;",
+    "Nexus_DBProvider": "postgresql",
+    "Nexus_ConnectionString": "User Id=postgres;Password=Admin;Server=localhost;Port=5432;Database=FlowPilot",
 
-    "AuditTrail_DBProvider": "mssql",
-    "AuditTrail_ConnectionString": "Server=localhost;Database=FlowPilot;Integrated Security=True;TrustServerCertificate=True;",
+    "AuditTrail_DBProvider": "postgresql",
+    "AuditTrail_ConnectionString": "User Id=postgres;Password=Admin;Server=localhost;Port=5432;Database=FlowPilot",
 
-    "Application_DBProvider": "mssql",
-    "Application_ConnectionString": "Server=localhost;Database=FlowPilot;Integrated Security=True;TrustServerCertificate=True;"
+    "Application_DBProvider": "postgresql",
+    "Application_ConnectionString": "User Id=postgres;Password=Admin;Server=localhost;Port=5432;Database=FlowPilot"
 
   }
 }

@@ -9,6 +9,9 @@ public static class SystemAction
     public const string Update = nameof(Update);
     public const string Delete = nameof(Delete);
     public const string Export = nameof(Export);
+    public const string ViewDetail = nameof(ViewDetail);
+    public const string ViewInfo = nameof(ViewInfo);
+    public const string ViewTasks = nameof(ViewTasks);
     //public const string ManageRoles = nameof(ManageRoles);
     //public const string ManagePermissions = nameof(ManagePermissions);
 
@@ -26,13 +29,23 @@ public static class SystemResource
     public const string EmailLog = nameof(EmailLog);
     public const string EmailTemplates = nameof(EmailTemplates);
 
-    public const string Appointment = nameof(Appointment);
 
     public const string MySubscriptions = nameof(MySubscriptions);
 
-    public const string ManageForm = nameof(ManageForm);
 
     public const string ManageLeads = nameof(ManageLeads);
+
+    public const string ManageLeadCalendar = nameof(ManageLeadCalendar);
+
+    public const string ManageTasks = nameof(ManageTasks);
+
+    public const string ManageLeadVisits = nameof(ManageLeadVisits);
+
+    public const string ManageLeadActivities = nameof(ManageLeadActivities);
+
+    public const string ManageLeadNotes = nameof(ManageLeadNotes);
+
+    public const string ManageSalePipelines = nameof(ManageSalePipelines);
 
     #region Nexus
     public const string ManageNexusLookUps = nameof(ManageNexusLookUps);
@@ -65,29 +78,49 @@ public class SystemPermissions
         new("Update Lookup Values", SystemAction.Update, SystemResource.ManageLookUps, IsRoot : true, IsAdmin : true, IsBasic : false),
 
         // Manage Settings
-        new("View Forms", SystemAction.View, SystemResource.ManageSettings, IsRoot : true, IsAdmin : true, IsBasic : false),
-        new("Update Forms", SystemAction.Update, SystemResource.ManageSettings, IsRoot : true, IsAdmin : true, IsBasic : false),
+        new("View Settings", SystemAction.View, SystemResource.ManageSettings, IsRoot : true, IsAdmin : true, IsBasic : false),
+        new("Update Settings", SystemAction.Update, SystemResource.ManageSettings, IsRoot : true, IsAdmin : true, IsBasic : false),
 
         // Email Log
-        new("View Email Log", SystemAction.View, SystemResource.EmailLog, IsRoot : true, IsAdmin : true, IsBasic : true),      
+        new("View Email Log", SystemAction.View, SystemResource.EmailLog, IsRoot : true, IsAdmin : true, IsBasic : true),
 
-
-        // Manage Appointments
-        new("View Appointment", SystemAction.View, SystemResource.Appointment, IsRoot : true, IsAdmin : true, IsBasic : true),
-        new("Create Appointment", SystemAction.Create, SystemResource.Appointment, IsRoot : true, IsAdmin : true, IsBasic : true),
-        new("Update Appointment", SystemAction.Update, SystemResource.Appointment, IsRoot : true, IsAdmin : true, IsBasic : true),
-
-        // Manage Forms
-        new("View Forms  ", SystemAction.View, SystemResource.ManageForm, IsRoot : true, IsAdmin : true, IsBasic : true),
-        new("Create Form", SystemAction.Create, SystemResource.ManageForm, IsRoot : true, IsAdmin : true, IsBasic : false),
-        new("Update Form", SystemAction.Update, SystemResource.ManageForm, IsRoot : true, IsAdmin : true, IsBasic : false),
-        new("Delete Form", SystemAction.Delete, SystemResource.ManageForm, IsRoot : true, IsAdmin : true, IsBasic : false),
 
         // Manage Leads (CRM)
         new("View Leads", SystemAction.View, SystemResource.ManageLeads, IsRoot : true, IsAdmin : true, IsBasic : true),
         new("Create Lead", SystemAction.Create, SystemResource.ManageLeads, IsRoot : true, IsAdmin : true, IsBasic : true),
         new("Update Lead", SystemAction.Update, SystemResource.ManageLeads, IsRoot : true, IsAdmin : true, IsBasic : true),
-        new("Delete Lead", SystemAction.Delete, SystemResource.ManageLeads, IsRoot : true, IsAdmin : true, IsBasic : false),
+
+        // Lead Calendar (CRM)
+        new("View Lead Calendar", SystemAction.View, SystemResource.ManageLeadCalendar, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("View Lead Detail From Calendar", SystemAction.ViewDetail, SystemResource.ManageLeadCalendar, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("View Lead Info From Calendar", SystemAction.ViewInfo, SystemResource.ManageLeadCalendar, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("View Tasks From Calendar", SystemAction.ViewTasks, SystemResource.ManageLeadCalendar, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("Update Lead Calendar", SystemAction.Update, SystemResource.ManageLeadCalendar, IsRoot : true, IsAdmin : true, IsBasic : true),
+
+        // Manage Tasks (CRM)
+        new("View Tasks", SystemAction.View, SystemResource.ManageTasks, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("Create Task", SystemAction.Create, SystemResource.ManageTasks, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("Update Task", SystemAction.Update, SystemResource.ManageTasks, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("Delete Task", SystemAction.Delete, SystemResource.ManageTasks, IsRoot : true, IsAdmin : true, IsBasic : false),
+
+        // Manage Lead Visits (CRM)
+        new("View Lead Visits", SystemAction.View, SystemResource.ManageLeadVisits, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("Create Lead Visit", SystemAction.Create, SystemResource.ManageLeadVisits, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("Update Lead Visit", SystemAction.Update, SystemResource.ManageLeadVisits, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("Delete Lead Visit", SystemAction.Delete, SystemResource.ManageLeadVisits, IsRoot : true, IsAdmin : true, IsBasic : false),
+
+        // Manage Lead Activities (CRM)
+        new("View Lead Activities", SystemAction.View, SystemResource.ManageLeadActivities, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("Create Lead Activity", SystemAction.Create, SystemResource.ManageLeadActivities, IsRoot : true, IsAdmin : true, IsBasic : true),
+
+        // Manage Lead Notes (CRM)
+        new("View Lead Notes", SystemAction.View, SystemResource.ManageLeadNotes, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("Create Lead Note", SystemAction.Create, SystemResource.ManageLeadNotes, IsRoot : true, IsAdmin : true, IsBasic : true),
+
+        // Sales Pipeline (CRM)
+        new("View Sales Pipeline", SystemAction.View, SystemResource.ManageSalePipelines, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("Create Sales Pipeline Lead", SystemAction.Create, SystemResource.ManageSalePipelines, IsRoot : true, IsAdmin : true, IsBasic : true),
+        new("Update Sales Pipeline", SystemAction.Update, SystemResource.ManageSalePipelines, IsRoot : true, IsAdmin : true, IsBasic : true),
 
         #region Nexus
         // Manage Nexus Lookups
@@ -105,7 +138,6 @@ public class SystemPermissions
         // Manage Tenants
         new("View Tenants", SystemAction.View, SystemResource.Tenants,IsRoot: true, IsAdmin: false, IsBasic: false),
         new("Update Tenant", SystemAction.Update, SystemResource.Tenants,IsRoot: true, IsAdmin: false, IsBasic: false),
-       
 
          #endregion
 
@@ -116,8 +148,6 @@ public class SystemPermissions
         new("Delete Email Template", SystemAction.Delete, SystemResource.EmailTemplates, IsRoot : true, IsAdmin : true, IsBasic : true),
 
         #endregion
-
-        
 
         #region Subscriptions
         new("View My Subscription Details", SystemAction.View, SystemResource.MySubscriptions,IsRoot: false, IsAdmin: true, IsBasic: false),

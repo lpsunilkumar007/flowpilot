@@ -18,7 +18,9 @@ public class ViewLeadListResponse
 
     public string AssignedToUserId { get; set; } = string.Empty;
 
-    public LeadStatus LeadStatus { get; set; }
+    public DefaultIdType LeadStatusId { get; set; }
+
+    public string LeadStatusName { get; set; } = string.Empty;
 
     public DateTimeOffset? NextFollowUpDate { get; set; }
 

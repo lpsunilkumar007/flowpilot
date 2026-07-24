@@ -1,14 +1,18 @@
 import { FormInput } from '@/components'
 import Pagination from '@/components/Pagination'
 import { PagingVariables } from '@/constants/paging'
+import { PermissionTypes } from '@/constants/permissions'
+import type { UserDropDownItemResponse, ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
 import { runWithToast } from '@/helpers/asyncToast.helper'
+import { usePermission } from '@/hooks/usePermission'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
+import { RootState } from '@/redux/store'
+import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
-import { userService } from '@/services/UserService'
 import { LeadFilterType, type PaginationResponseOfViewLeadListResponse } from '@/types/crm/lead.types'
-import type { ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSelector } from 'react-redux'
 import { leadCardClass } from '../helpers/leadDisplay.helper'
 import LeadFilterChips, { type LeadFilterOption } from './shared/LeadFilterChips'
 import LeadListCard from './shared/LeadListCard'
@@ -32,25 +36,41 @@ const FILTER_OPTIONS: LeadFilterOption[] = [
 
 const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	const { t } = useTranslation()
+	const { userHasPermission } = usePermission()
+	const canFilterByAssignee = userHasPermission(PermissionTypes.Permissions_Users_View)
+	const userData = useSelector((state: RootState) => state.Auth.userData) as ViewUserDetailsResponse | undefined
+	const currentUserId = userData?.id
+
 	const [loading, setLoading] = useState(true)
 	const [rowData, setRowData] = useState<PaginationResponseOfViewLeadListResponse>()
-	const [users, setUsers] = useState<ViewUserDetailsResponse[]>([])
+	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
 	const [filterType, setFilterType] = useState(LeadFilterType.All)
 	const [searchText, setSearchText] = useState('')
 	const [assignedToUserId, setAssignedToUserId] = useState<string | undefined>()
 
+	const usersForDisplay = useMemo(() => {
+		if (canFilterByAssignee) return users
+		if (!currentUserId) return []
+		const name = `${userData?.firstName ?? ''} ${userData?.lastName ?? ''}`.trim() || userData?.email || currentUserId
+		return [{ strValue: currentUserId, text: name }]
+	}, [canFilterByAssignee, users, currentUserId, userData?.firstName, userData?.lastName, userData?.email])
+
 	useEffect(() => {
-		userService.getList().then(setUsers).catch(() => setUsers([]))
-	}, [])
+		if (!canFilterByAssignee) return
+		DropDownService.getSystemUsers(true)
+			.then((list) => setUsers(list ?? []))
+			.catch(() => setUsers([]))
+	}, [canFilterByAssignee])
 
 	const fetchLeads = useCallback(
 		async (pageNumber: number, overrides?: { filterType?: LeadFilterType; searchText?: string; assignedToUserId?: string }) => {
+			const assigneeFilter = canFilterByAssignee ? (overrides?.assignedToUserId ?? assignedToUserId) : undefined
 			const searchModel = {
 				pageNumber,
 				pageSize: PagingVariables.DefaultPageSize,
 				filterType: overrides?.filterType ?? filterType,
 				searchText: overrides?.searchText ?? (searchText || undefined),
-				assignedToUserId: overrides?.assignedToUserId ?? assignedToUserId,
+				...(assigneeFilter ? { assignedToUserId: assigneeFilter } : {}),
 			}
 
 			await runWithToast(
@@ -62,7 +82,7 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 				{ setLoading }
 			)
 		},
-		[filterType, searchText, assignedToUserId]
+		[filterType, searchText, assignedToUserId, canFilterByAssignee]
 	)
 
 	useEffect(() => {
@@ -103,7 +123,7 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 					<LeadFilterChips options={FILTER_OPTIONS} active={filterType} onChange={handleFilterChange} />
 				</div>
 
-				<div className="grid gap-4 lg:grid-cols-[1fr_auto_auto] lg:items-end">
+				<div className={`grid gap-4 lg:items-end ${canFilterByAssignee ? 'lg:grid-cols-[1fr_auto_auto]' : 'lg:grid-cols-[1fr_auto]'}`}>
 					<FormInput
 						label={t('Manage.Leads.Filter_Search', 'Search leads')}
 						name="searchText"
@@ -113,14 +133,16 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 						onChange={(e) => setSearchText(e.target.value)}
 						placeholder={t('Manage.Leads.SearchPlaceholder', 'Business, owner, phone, email, GST, lead ID...')}
 					/>
-					<FormInput label={t('Manage.Leads.Filter_AssignedTo', 'Assigned to')} name="assignedToUserId" type="bottom-sheet" className="form-select" value={assignedToUserId ?? ''} onChange={(e) => setAssignedToUserId(e.target.value || undefined)}>
-						<option value="">{t('Common.All', 'All')}</option>
-						{users.map((u) => (
-							<option key={u.id} value={u.id}>
-								{`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email}
-							</option>
-						))}
-					</FormInput>
+					{canFilterByAssignee && (
+						<FormInput label={t('Manage.Leads.Filter_AssignedTo', 'Assigned to')} name="assignedToUserId" type="bottom-sheet" className="form-select" value={assignedToUserId ?? ''} onChange={(e) => setAssignedToUserId(e.target.value || undefined)}>
+							<option value="">{t('Common.All', 'All')}</option>
+							{users.map((u) => (
+								<option key={u.strValue} value={u.strValue}>
+									{u.text}
+								</option>
+							))}
+						</FormInput>
+					)}
 					<div className="flex gap-2">
 						<button type="button" onClick={handleSearch} className="btn btn-primary">
 							{t('Common.Search', 'Search')}
@@ -146,7 +168,7 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 				<>
 					<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 						{leads.map((lead) => (
-							<LeadListCard key={lead.id} lead={lead} users={users} />
+							<LeadListCard key={lead.id} lead={lead} users={usersForDisplay} />
 						))}
 					</div>
 					{rowData && (

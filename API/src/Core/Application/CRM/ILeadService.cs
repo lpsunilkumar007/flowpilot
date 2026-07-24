@@ -5,7 +5,6 @@ using FlowPilot.Application.CRM.Model.Request.Lead;
 using FlowPilot.Application.CRM.Model.Request.LeadActivity;
 using FlowPilot.Application.CRM.Model.Response.Lead;
 using FlowPilot.Application.CRM.Model.Response.LeadActivity;
-using FlowPilot.Domain.Enums.Common;
 
 namespace FlowPilot.Application.CRM;
 
@@ -22,6 +21,8 @@ public interface ILeadService : ITransientService
     Task<string> UpdateStatusAsync(DefaultIdType id, UpdateLeadStatusRequest request, CancellationToken cancellationToken = default);
 
     Task<string> AssignAsync(DefaultIdType id, AssignLeadRequest request, CancellationToken cancellationToken = default);
+
+    Task<string> UpdateFollowUpDateAsync(DefaultIdType id, UpdateLeadFollowUpDateRequest request, CancellationToken cancellationToken = default);
 
     Task<List<ViewLeadListResponse>> GetTodayFollowUpsAsync(CancellationToken cancellationToken = default);
 

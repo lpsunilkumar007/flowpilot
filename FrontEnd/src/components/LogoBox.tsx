@@ -10,13 +10,13 @@ const LogoBox = () => {
 		<>
 			<Link to="/" className="logo-box">
 				<div className="logo-light">
-					<img src={logo} className="logo-lg h-[22px]" alt="Light logo" />
-					<img src={logoSm} className="logo-sm h-[22px]" alt="Small logo" />
+					<span className="logo-lg text-xl font-bold">Flow Pilot</span>
+					<span className="logo-sm text-lg font-bold">FP</span>
 				</div>
 
 				<div className="logo-dark">
-					<img src={logoDark} className="logo-lg h-[22px]" alt="Dark logo" />
-					<img src={logoSm} className="logo-sm h-[22px]" alt="Small logo" />
+					<span className="logo-lg text-xl font-bold text-white">Flow Pilot</span>
+					<span className="logo-sm text-lg font-bold text-white">FP</span>
 				</div>
 			</Link>
 		</>

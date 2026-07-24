@@ -9,7 +9,7 @@ public partial class FormDesignerController
 
     [HttpPost("create-new-form-page")]
     [OpenApiOperation("Create a new form page", "")]
-    [MustHavePermission(SystemAction.Create, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.Create, SystemResource.ManageForm)]
     public async Task<CreateFormPageResponse> CreateFormPage(CreateFormPageRequest request)
     {
         return await _formPageService.CreateFormPage(request);
@@ -17,7 +17,7 @@ public partial class FormDesignerController
 
     [HttpGet("get-form-page/{id}")]
     [OpenApiOperation("Get form page detail by id", "")]
-    [MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
     public async Task<ViewFormPageDetailResponse> GetFormPageById(DefaultIdType id)
     {
         return await _formPageService.GetFormPageById(id);
@@ -25,7 +25,7 @@ public partial class FormDesignerController
 
     [HttpDelete("delete-form-page/{id}")]
     [OpenApiOperation("Delete a page.", "")]
-    [MustHavePermission(SystemAction.Delete, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.Delete, SystemResource.ManageForm)]
     public async Task<string> DeleteFormPage(DefaultIdType id)
     {
         return await _formPageService.DeleteFormPage(id);
@@ -33,7 +33,7 @@ public partial class FormDesignerController
 
     [HttpPost("get-form-pages")]
     [OpenApiOperation("Get form pages details", "")]
-    [MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
     public async Task<PaginationResponse<ViewFormPageDetailResponse>> GetFormPages(SearchFormPageRequest request)
     {
         return await _formPageService.GetFormPages(request);
@@ -41,7 +41,7 @@ public partial class FormDesignerController
 
     [HttpPut("update-form-page")]
     [OpenApiOperation("Update form page detail", "")]
-    [MustHavePermission(SystemAction.Update, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.Update, SystemResource.ManageForm)]
     public async Task<string> UpdateFormPage(UpdateFormPageRequest request)
     {
         return await _formPageService.UpdateFormPage(request);

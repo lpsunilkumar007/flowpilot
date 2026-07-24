@@ -1,14 +1,16 @@
-using FlowPilot.Domain.Enums.CRM;
-
 namespace FlowPilot.Application.CRM.Model.Response.Lead;
 
 public class ViewLeadStatusHistoryResponse
 {
     public DefaultIdType Id { get; set; }
 
-    public LeadStatus? FromStatus { get; set; }
+    public DefaultIdType? FromStatusId { get; set; }
 
-    public LeadStatus ToStatus { get; set; }
+    public string? FromStatusName { get; set; }
+
+    public DefaultIdType ToStatusId { get; set; }
+
+    public string ToStatusName { get; set; } = string.Empty;
 
     public string ChangedByUserId { get; set; } = string.Empty;
 

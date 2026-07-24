@@ -1,8 +1,7 @@
 import {
-	InterestLevel,
-	LeadActivityType,
-	LeadPriority,
-	LeadStatus,
+    InterestLevel,
+    LeadActivityType,
+    LeadPriority,
 } from '@/types/crm/lead.types'
 
 const DATE_FIELDS = new Set(['expectedClosingDate', 'nextFollowUpDate', 'activityDate'])
@@ -10,7 +9,6 @@ const OPTIONAL_NUMBER_FIELDS = new Set(['numberOfOutlets', 'expectedMonthlyBilli
 
 const ENUM_FIELD_MAP: Record<string, Record<string, string | number>> = {
 	priority: LeadPriority,
-	leadStatus: LeadStatus,
 	interestLevel: InterestLevel,
 	activityType: LeadActivityType,
 }

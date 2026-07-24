@@ -1,5 +1,5 @@
-using FlowPilot.Application.CRM.Model.Response.LeadActivity;
 using FlowPilot.Application.Common.Notes.Model.Response;
+using FlowPilot.Application.CRM.Model.Response.LeadActivity;
 using FlowPilot.Domain.Enums.CRM;
 
 namespace FlowPilot.Application.CRM.Model.Response.Lead;
@@ -54,13 +54,21 @@ public class ViewLeadDetailResponse
 
     public string? GoogleMapsLink { get; set; }
 
+    public string? PlaceId { get; set; }
+
+    public decimal? Latitude { get; set; }
+
+    public decimal? Longitude { get; set; }
+
     public string LeadSource { get; set; } = string.Empty;
 
     public string AssignedToUserId { get; set; } = string.Empty;
 
     public LeadPriority Priority { get; set; }
 
-    public LeadStatus LeadStatus { get; set; }
+    public DefaultIdType LeadStatusId { get; set; }
+
+    public string LeadStatusName { get; set; } = string.Empty;
 
     public DateTimeOffset? ExpectedClosingDate { get; set; }
 

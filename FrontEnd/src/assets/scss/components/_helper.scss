@@ -30,6 +30,81 @@
     }
 }
 
+// Proper native-style scrollbar for Sales Pipeline board only
+.pipeline-scroll {
+    scrollbar-width: auto;
+    scrollbar-color: #94a3b8 #e2e8f0;
+
+    &::-webkit-scrollbar {
+        width: 14px;
+        height: 14px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: #e2e8f0;
+        border-radius: 0;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: #94a3b8;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+
+        &:hover {
+            background: #64748b;
+        }
+    }
+
+    &::-webkit-scrollbar-button {
+        display: block;
+        width: 14px;
+        height: 14px;
+        background-color: #e2e8f0;
+        background-repeat: no-repeat;
+        background-position: center;
+        background-size: 8px 8px;
+    }
+
+    &::-webkit-scrollbar-button:vertical:decrement {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%2364748b' d='M0 6l4-4 4 4z'/%3E%3C/svg%3E");
+    }
+
+    &::-webkit-scrollbar-button:vertical:increment {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%2364748b' d='M0 2l4 4 4-4z'/%3E%3C/svg%3E");
+    }
+
+    &::-webkit-scrollbar-button:horizontal:decrement {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%2364748b' d='M6 0L2 4l4 4z'/%3E%3C/svg%3E");
+    }
+
+    &::-webkit-scrollbar-button:horizontal:increment {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3E%3Cpath fill='%2364748b' d='M2 0l4 4-4 4z'/%3E%3C/svg%3E");
+    }
+
+    &::-webkit-scrollbar-corner {
+        background: #e2e8f0;
+    }
+
+    [data-mode='dark'] & {
+        scrollbar-color: #64748b #334155;
+
+        &::-webkit-scrollbar-track,
+        &::-webkit-scrollbar-button,
+        &::-webkit-scrollbar-corner {
+            background: #334155;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: #64748b;
+            border-color: #334155;
+
+            &:hover {
+                background: #94a3b8;
+            }
+        }
+    }
+}
+
 // Form Validation
 .text-help {
     @apply text-danger text-xs mt-1.5;

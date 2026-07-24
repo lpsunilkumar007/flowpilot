@@ -8,7 +8,7 @@ public partial class FormDesignerController
 {
     [HttpPost("create-new-form-page-tab")]
     [OpenApiOperation("Create a new form page tab", "")]
-    [MustHavePermission(SystemAction.Create, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.Create, SystemResource.ManageForm)]
     public async Task<CreateFormPageTabResponse> CreateFormPageTab(CreateFormPageTabRequest request)
     {
         return await _formPageTabService.CreateFormPageTab(request);
@@ -16,7 +16,7 @@ public partial class FormDesignerController
 
     [HttpGet("get-form-page-tab/{id}")]
     [OpenApiOperation("Get form page tab detail by id", "")]
-    [MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
     public async Task<ViewFormPageTabDetailResponse> GetFormPageTabById(DefaultIdType id)
     {
         return await _formPageTabService.GetFormPageTabById(id);
@@ -24,7 +24,7 @@ public partial class FormDesignerController
 
     [HttpPost("get-form-page-tabs")]
     [OpenApiOperation("Get form page tabs details", "")]
-    [MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.View, SystemResource.ManageForm)]
     public async Task<PaginationResponse<ViewFormPageTabDetailResponse>> GetFormPageTabs(SearchFormPageTabRequest request)
     {
         return await _formPageTabService.GetFormPageTabs(request);
@@ -32,7 +32,7 @@ public partial class FormDesignerController
 
     [HttpPut("update-form-page-tab")]
     [OpenApiOperation("Update form page tab detail", "")]
-    [MustHavePermission(SystemAction.Update, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.Update, SystemResource.ManageForm)]
     public async Task<string> UpdateFormPageTab(UpdateFormPageTabRequest request)
     {
         return await _formPageTabService.UpdateFormPageTab(request);
@@ -40,7 +40,7 @@ public partial class FormDesignerController
 
     [HttpDelete("delete-form-page-tab/{id}")]
     [OpenApiOperation("Delete a form page tab.", "")]
-    [MustHavePermission(SystemAction.Delete, SystemResource.ManageForm)]
+    //[MustHavePermission(SystemAction.Delete, SystemResource.ManageForm)]
     public async Task<string> DeleteFormPagTab(DefaultIdType id)
     {
         return await _formPageTabService.DeleteFormPagTab(id);

@@ -1,8 +1,7 @@
 import { formatLeadStatus, getLeadStatusTone } from '../../helpers/leadDisplay.helper'
-import type { LeadStatus } from '@/types/crm/lead.types'
 
 interface LeadStatusBadgeProps {
-	status: LeadStatus | string
+	statusName: string
 	className?: string
 }
 
@@ -13,11 +12,11 @@ const toneClasses = {
 	neutral: 'bg-slate-50 text-slate-700 ring-slate-500/20 dark:bg-slate-500/10 dark:text-slate-300',
 }
 
-const LeadStatusBadge: React.FC<LeadStatusBadgeProps> = ({ status, className = '' }) => {
-	const tone = getLeadStatusTone(status)
+const LeadStatusBadge: React.FC<LeadStatusBadgeProps> = ({ statusName, className = '' }) => {
+	const tone = getLeadStatusTone(statusName)
 	return (
 		<span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${toneClasses[tone]} ${className}`}>
-			{formatLeadStatus(status)}
+			{formatLeadStatus(statusName)}
 		</span>
 	)
 }

@@ -15,7 +15,7 @@ const ModalLayout = ({ showModal, toggleModal, panelClassName, children, placeme
 		<Transition appear show={showModal} as={Fragment}>
 			<Dialog static={isStatic ?? false} as="div" className="relative" onClose={isStatic ? () => null : toggleModal}>
 				<Transition.Child as={Fragment} enter="ease-out duration-300" enterFrom="opacity-0" enterTo="opacity-100" leave="ease-in duration-200" leaveFrom="opacity-100" leaveTo="opacity-0">
-					<div className="fixed inset-0 bg-black bg-opacity-40 z-40" />
+					<div className="fixed end-0 bottom-0 z-40 bg-black bg-opacity-40 top-[var(--tw-topbar-height)] start-[var(--tw-modal-overlay-offset-start)]" />
 				</Transition.Child>
 
 				<div className="fixed inset-0 overflow-y-auto z-50">

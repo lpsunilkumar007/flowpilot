@@ -56,6 +56,12 @@ public class CreateLeadRequest
 
     public string? GoogleMapsLink { get; set; }
 
+    public string? PlaceId { get; set; }
+
+    public decimal? Latitude { get; set; }
+
+    public decimal? Longitude { get; set; }
+
     [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
     public required string LeadSource { get; set; }
 
@@ -64,7 +70,7 @@ public class CreateLeadRequest
 
     public LeadPriority Priority { get; set; } = LeadPriority.Medium;
 
-    public LeadStatus LeadStatus { get; set; } = LeadStatus.New;
+    public DefaultIdType? LeadStatusId { get; set; }
 
     public DateTimeOffset? ExpectedClosingDate { get; set; }
 

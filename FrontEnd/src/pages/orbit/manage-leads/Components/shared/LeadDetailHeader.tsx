@@ -1,12 +1,11 @@
 import { formatHelper } from '@/helpers/format.helper'
 import type { ViewLeadDetailResponse } from '@/types/crm/lead.types'
-import { getUserDisplayName, leadCardClass } from '../../helpers/leadDisplay.helper'
+import { getUserDisplayName, leadCardClass, type LeadUserLookup } from '../../helpers/leadDisplay.helper'
 import LeadStatusBadge from './LeadStatusBadge'
-import type { ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
 
 interface LeadDetailHeaderProps {
 	lead: ViewLeadDetailResponse
-	users: ViewUserDetailsResponse[]
+	users: LeadUserLookup[]
 }
 
 const LeadDetailHeader: React.FC<LeadDetailHeaderProps> = ({ lead, users }) => (
@@ -21,7 +20,7 @@ const LeadDetailHeader: React.FC<LeadDetailHeaderProps> = ({ lead, users }) => (
 						{lead.email ? ` · ${lead.email}` : ''}
 					</p>
 					<div className="mt-3 flex flex-wrap gap-2">
-						<LeadStatusBadge status={lead.leadStatus} />
+						<LeadStatusBadge statusName={lead.leadStatusName} />
 						<span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{lead.businessType}</span>
 						{lead.leadSource && <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{lead.leadSource}</span>}
 					</div>

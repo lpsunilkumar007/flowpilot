@@ -2,8 +2,9 @@ using FlowPilot.Application.Common.Exceptions;
 using FlowPilot.Application.Common.Extensions;
 using FlowPilot.Application.Common.Interfaces;
 using FlowPilot.Application.Nexus.Identity.Users;
-using FlowPilot.Application.Setting.Models;
 using FlowPilot.Domain.Enums;
+using FlowPilot.Domain.Enums.CRM;
+using FlowPilot.Domain.LookUp;
 using FlowPilot.Infrastructure.Auth;
 using FlowPilot.Infrastructure.Nexus.Identity.DbModels;
 using FlowPilot.Infrastructure.Nexus.MultiTenant.DbModels;
@@ -47,6 +48,7 @@ internal class ApplicationDbSeeder
         await SeedAdminUserAsync(nexusDbContext, currentTenant);
         //await _seederRunner.RunSeedersAsync(cancellationToken);
         await SeedLookUps(dbContext, currentTenant, cancellationToken);
+        await SeedLookTypeUps(dbContext, currentTenant, cancellationToken);
         await SeedSettings(dbContext, currentTenant, cancellationToken);
     }
 
@@ -116,6 +118,31 @@ internal class ApplicationDbSeeder
         await dbContext.SaveChangesAsync(cancellationToken);
     }
 
+    private async Task SeedLookTypeUps(ApplicationDbContext dbContext, Tenants tenant, CancellationToken cancellationToken)
+    {
+        var status = await dbContext.LookUpCodes.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.LookUpCodeType == LookUpCodeTypes.LeadStatus && x.TenantId == tenant.Id, cancellationToken);
+        if (status is null)
+            return;
+        foreach (LeadStatus type in Enum.GetValues(typeof(LeadStatus)))
+        {
+            bool exists = await dbContext.LookUpCodeValues.IgnoreQueryFilters().Include(m => m.LookUpCode).AnyAsync(x => x.LookUpCode.LookUpCodeType == LookUpCodeTypes.LeadStatus && x.TenantId == tenant.Id && x.LookUpValue == type.ToString(), cancellationToken);
+
+            if (!exists)
+            {
+                await dbContext.LookUpCodeValues.AddAsync(new LookUpCodeValues
+                {
+                    LookUpValue = type.ToString(),
+                    DisplayOrder = (int)type,
+                    FKLookUpCodePKId = status.Id,
+                    IsActive = true,
+                    TenantId = tenant.Id
+                });
+            }
+        }
+
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
     private async Task SeedSettings(ApplicationDbContext dbContext, Tenants tenant, CancellationToken cancellationToken)
     {
         foreach (SettingTypes type in Enum.GetValues(typeof(SettingTypes)))
@@ -124,22 +151,35 @@ internal class ApplicationDbSeeder
             {
                 switch (type)
                 {
+                    //case SettingTypes.Appointment:
+                    //    await dbContext.Settings.AddAsync(new Domain.Setting.Settings
+                    //    {
+                    //        OriginalValue = _serializer.Serialize(new AppointmentSettingModels()),
+                    //        SettingValues = _serializer.Serialize(new AppointmentSettingModels()),
+                    //        Description = type.GetDescription(),
+                    //        SettingType = type
+                    //    });
+                    //    break;
+                    //case SettingTypes.ApprovedAppointment:
+                    //    await dbContext.Settings.AddAsync(new Domain.Setting.Settings
+                    //    {
+                    //        OriginalValue = _serializer.Serialize(new ApprovedAppointmentSetting()),
+                    //        SettingValues = _serializer.Serialize(new ApprovedAppointmentSetting()),
+                    //        Description = type.GetDescription(),
+                    //        SettingType = type
+                    //    });
+                    //    break;
                     case SettingTypes.Appointment:
-                        await dbContext.Settings.AddAsync(new Domain.Setting.Settings
-                        {
-                            OriginalValue = _serializer.Serialize(new AppointmentSettingModels()),
-                            SettingValues = _serializer.Serialize(new AppointmentSettingModels()),
-                            Description = type.GetDescription(),
-                            SettingType = type
-                        });
-                        break;
                     case SettingTypes.ApprovedAppointment:
+                        break;
+                    case SettingTypes.GoogleMapKey:
                         await dbContext.Settings.AddAsync(new Domain.Setting.Settings
                         {
-                            OriginalValue = _serializer.Serialize(new ApprovedAppointmentSetting()),
-                            SettingValues = _serializer.Serialize(new ApprovedAppointmentSetting()),
+                            OriginalValue = _serializer.Serialize("AIzaSyD8gZW_iUpwVDVEYrypMRRRbmj9AggzCYo"),
+                            SettingValues = _serializer.Serialize("AIzaSyD8gZW_iUpwVDVEYrypMRRRbmj9AggzCYo"),
                             Description = type.GetDescription(),
-                            SettingType = type
+                            SettingType = type,
+
                         });
                         break;
                     default:

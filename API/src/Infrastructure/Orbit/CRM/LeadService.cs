@@ -8,12 +8,15 @@ using FlowPilot.Application.CRM.Model.Request.Lead;
 using FlowPilot.Application.CRM.Model.Request.LeadActivity;
 using FlowPilot.Application.CRM.Model.Response.Lead;
 using FlowPilot.Application.CRM.Model.Response.LeadActivity;
+using FlowPilot.Application.Nexus.Identity.Users;
 using FlowPilot.Domain.Common;
 using FlowPilot.Domain.CRM;
+using FlowPilot.Domain.Enums;
 using FlowPilot.Domain.Enums.Common;
 using FlowPilot.Domain.Enums.CRM;
 using FlowPilot.Infrastructure.Persistence.Context;
 using FlowPilot.Infrastructure.SystemConstants;
+using FlowPilot.Shared.Authorization;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -24,20 +27,23 @@ public class LeadService : ILeadService
     private readonly ApplicationDbContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly IDateTimeService _dateTimeService;
+    private readonly IUserService _userService;
 
     public LeadService(
         ApplicationDbContext db,
         ICurrentUser currentUser,
-        IDateTimeService dateTimeService)
+        IDateTimeService dateTimeService,
+        IUserService userService)
     {
         _db = db;
         _currentUser = currentUser;
         _dateTimeService = dateTimeService;
+        _userService = userService;
     }
 
     public async Task<PaginationResponse<ViewLeadListResponse>> SearchAsync(SearchLeadRequest request, CancellationToken cancellationToken = default)
     {
-        var query = BuildLeadQuery(request);
+        var query = await BuildLeadQueryAsync(request, cancellationToken);
         var projected = query.Select(x => new ViewLeadListResponse
         {
             Id = x.Id,
@@ -47,7 +53,8 @@ public class LeadService : ILeadService
             BusinessType = x.BusinessType,
             CurrentPOS = x.CurrentPOS,
             AssignedToUserId = x.FKAssignedToUserId,
-            LeadStatus = x.LeadStatus,
+            LeadStatusId = x.FKLeadStatusId,
+            LeadStatusName = x.LeadStatus.LookUpValue,
             NextFollowUpDate = x.NextFollowUpDate,
             LastActivityDate = x.LastActivityDate,
             ExpectedRevenue = x.ExpectedRevenue,
@@ -66,11 +73,15 @@ public class LeadService : ILeadService
             .Include(x => x.LeadContacts)
             .Include(x => x.LeadActivities)
             .Include(x => x.LeadFollowUps)
-            .Include(x => x.LeadStatusHistories)
+            .Include(x => x.LeadStatus)
+            .Include(x => x.LeadStatusHistories).ThenInclude(x => x.FromStatus)
+            .Include(x => x.LeadStatusHistories).ThenInclude(x => x.ToStatus)
             .Include(x => x.LeadAssignmentHistories)
             .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
+
+        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
 
         var contact = lead.LeadContacts.FirstOrDefault(c => c.IsPrimary);
         var notes = await _db.EntityNotes
@@ -85,6 +96,9 @@ public class LeadService : ILeadService
     public async Task<CreateLeadResponse> CreateAsync(CreateLeadRequest request, CancellationToken cancellationToken = default)
     {
         await ValidateDuplicatesAsync(request.Mobile, request.Email, request.GstNumber, null, cancellationToken);
+
+        var leadStatusId = request.LeadStatusId ?? await GetDefaultLeadStatusIdAsync(cancellationToken);
+        await EnsureValidLeadStatusIdAsync(leadStatusId, cancellationToken);
 
         var lead = new Leads
         {
@@ -101,7 +115,7 @@ public class LeadService : ILeadService
             LeadSource = request.LeadSource,
             FKAssignedToUserId = request.AssignedToUserId,
             Priority = request.Priority,
-            LeadStatus = request.LeadStatus,
+            FKLeadStatusId = leadStatusId,
             ExpectedClosingDate = request.ExpectedClosingDate,
             InterestLevel = request.InterestLevel,
             Country = request.Country,
@@ -111,6 +125,9 @@ public class LeadService : ILeadService
             Pincode = request.Pincode,
             FullAddress = request.FullAddress,
             GoogleMapsLink = request.GoogleMapsLink,
+            PlaceId = request.PlaceId,
+            Latitude = request.Latitude,
+            Longitude = request.Longitude,
             PainPoints = request.PainPoints,
             Competitors = request.Competitors,
             Requirements = request.Requirements,
@@ -131,8 +148,8 @@ public class LeadService : ILeadService
             [
                 new LeadStatusHistories
                 {
-                    FromStatus = null,
-                    ToStatus = request.LeadStatus,
+                    FKFromStatusId = null,
+                    FKToStatusId = leadStatusId,
                     ChangedByUserId = _currentUser.GetUserId().ToString(),
                     ChangedOn = _dateTimeService.UtcNow,
                 }
@@ -178,7 +195,11 @@ public class LeadService : ILeadService
 
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
 
+        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+
         await ValidateDuplicatesAsync(request.Mobile, request.Email, request.GstNumber, id, cancellationToken);
+
+        await EnsureValidLeadStatusIdAsync(request.LeadStatusId, cancellationToken);
 
         lead.BusinessName = request.BusinessName;
         lead.BusinessType = request.BusinessType;
@@ -193,7 +214,7 @@ public class LeadService : ILeadService
         lead.LeadSource = request.LeadSource;
         lead.FKAssignedToUserId = request.AssignedToUserId;
         lead.Priority = request.Priority;
-        lead.LeadStatus = request.LeadStatus;
+        lead.FKLeadStatusId = request.LeadStatusId;
         lead.ExpectedClosingDate = request.ExpectedClosingDate;
         lead.InterestLevel = request.InterestLevel;
         lead.Country = request.Country;
@@ -203,6 +224,9 @@ public class LeadService : ILeadService
         lead.Pincode = request.Pincode;
         lead.FullAddress = request.FullAddress;
         lead.GoogleMapsLink = request.GoogleMapsLink;
+        lead.PlaceId = request.PlaceId;
+        lead.Latitude = request.Latitude;
+        lead.Longitude = request.Longitude;
         lead.PainPoints = request.PainPoints;
         lead.Competitors = request.Competitors;
         lead.Requirements = request.Requirements;
@@ -236,13 +260,22 @@ public class LeadService : ILeadService
 
     public async Task<string> UpdateStatusAsync(DefaultIdType id, UpdateLeadStatusRequest request, CancellationToken cancellationToken = default)
     {
-        var lead = await _db.Leads.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        var lead = await _db.Leads
+            .Include(x => x.LeadStatus)
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
 
-        var fromStatus = lead.LeadStatus;
-        lead.LeadStatus = request.LeadStatus;
+        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+        await EnsureValidLeadStatusIdAsync(request.LeadStatusId, cancellationToken);
 
-        if (request.LeadStatus == LeadStatus.Won)
+        var newStatus = await _db.LookUpCodeValues
+            .AsNoTracking()
+            .SingleAsync(x => x.Id == request.LeadStatusId, cancellationToken);
+
+        var fromStatusId = lead.FKLeadStatusId;
+        lead.FKLeadStatusId = request.LeadStatusId;
+
+        if (string.Equals(newStatus.LookUpValue, "Won", StringComparison.OrdinalIgnoreCase))
         {
             lead.ConvertedOn = _dateTimeService.UtcNow;
         }
@@ -250,8 +283,8 @@ public class LeadService : ILeadService
         await _db.LeadStatusHistories.AddAsync(new LeadStatusHistories
         {
             FKLeadPKId = lead.Id,
-            FromStatus = fromStatus,
-            ToStatus = request.LeadStatus,
+            FKFromStatusId = fromStatusId,
+            FKToStatusId = request.LeadStatusId,
             ChangedByUserId = _currentUser.GetUserId().ToString(),
             ChangedOn = _dateTimeService.UtcNow,
             Remarks = request.Remarks,
@@ -265,6 +298,8 @@ public class LeadService : ILeadService
     {
         var lead = await _db.Leads.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
+
+        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
 
         var fromUserId = lead.FKAssignedToUserId;
         lead.FKAssignedToUserId = request.AssignedToUserId;
@@ -283,14 +318,37 @@ public class LeadService : ILeadService
         return SuccessMessages.CommonRecordUpdated;
     }
 
+    public async Task<string> UpdateFollowUpDateAsync(DefaultIdType id, UpdateLeadFollowUpDateRequest request, CancellationToken cancellationToken = default)
+    {
+        var lead = await _db.Leads
+            .Include(x => x.LeadFollowUps)
+            .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+
+        _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
+
+        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+        lead.NextFollowUpDate = request.NextFollowUpDate;
+
+        var pendingFollowUp = lead.LeadFollowUps
+            .Where(x => x.FollowUpStatus == FollowUpStatus.Pending)
+            .OrderByDescending(x => x.NextFollowUpDate)
+            .FirstOrDefault();
+
+        _ = pendingFollowUp ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead FollowUp"));
+        pendingFollowUp.NextFollowUpDate = request.NextFollowUpDate;
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return SuccessMessages.CommonRecordUpdated;
+    }
+
     public async Task<List<ViewLeadListResponse>> GetTodayFollowUpsAsync(CancellationToken cancellationToken = default)
     {
         var today = _dateTimeService.UtcNow.Date;
         var tomorrow = today.AddDays(1);
+        var query = _db.Leads.AsNoTracking().Where(x => x.NextFollowUpDate >= today && x.NextFollowUpDate < tomorrow && !x.IsArchived);
+        query = await ApplyLeadScopeForCurrentUserAsync(query, cancellationToken);
 
-        return await _db.Leads
-            .AsNoTracking()
-            .Where(x => x.NextFollowUpDate >= today && x.NextFollowUpDate < tomorrow && !x.IsArchived)
+        return await query
             .Select(x => new ViewLeadListResponse
             {
                 Id = x.Id,
@@ -300,7 +358,8 @@ public class LeadService : ILeadService
                 BusinessType = x.BusinessType,
                 CurrentPOS = x.CurrentPOS,
                 AssignedToUserId = x.FKAssignedToUserId,
-                LeadStatus = x.LeadStatus,
+                LeadStatusId = x.FKLeadStatusId,
+                LeadStatusName = x.LeadStatus.LookUpValue,
                 NextFollowUpDate = x.NextFollowUpDate,
                 LastActivityDate = x.LastActivityDate,
                 ExpectedRevenue = x.ExpectedRevenue,
@@ -314,13 +373,13 @@ public class LeadService : ILeadService
     public async Task<List<ViewLeadListResponse>> GetOverdueFollowUpsAsync(CancellationToken cancellationToken = default)
     {
         var today = _dateTimeService.UtcNow.Date;
+        var closedStatusIds = await GetClosedLeadStatusIdsAsync(cancellationToken);
+        var query = _db.Leads.AsNoTracking().Where(x => x.NextFollowUpDate < today
+            && !closedStatusIds.Contains(x.FKLeadStatusId)
+            && !x.IsArchived);
+        query = await ApplyLeadScopeForCurrentUserAsync(query, cancellationToken);
 
-        return await _db.Leads
-            .AsNoTracking()
-            .Where(x => x.NextFollowUpDate < today
-                && x.LeadStatus != LeadStatus.Won
-                && x.LeadStatus != LeadStatus.Lost
-                && !x.IsArchived)
+        return await query
             .Select(x => new ViewLeadListResponse
             {
                 Id = x.Id,
@@ -330,7 +389,8 @@ public class LeadService : ILeadService
                 BusinessType = x.BusinessType,
                 CurrentPOS = x.CurrentPOS,
                 AssignedToUserId = x.FKAssignedToUserId,
-                LeadStatus = x.LeadStatus,
+                LeadStatusId = x.FKLeadStatusId,
+                LeadStatusName = x.LeadStatus.LookUpValue,
                 NextFollowUpDate = x.NextFollowUpDate,
                 LastActivityDate = x.LastActivityDate,
                 ExpectedRevenue = x.ExpectedRevenue,
@@ -343,7 +403,7 @@ public class LeadService : ILeadService
 
     public async Task<List<ViewLeadActivityResponse>> GetActivitiesAsync(DefaultIdType leadId, CancellationToken cancellationToken = default)
     {
-        await EnsureLeadExistsAsync(leadId, cancellationToken);
+        await EnsureLeadAccessibleAsync(leadId, cancellationToken);
 
         return await _db.LeadActivities
             .AsNoTracking()
@@ -358,6 +418,8 @@ public class LeadService : ILeadService
     {
         var lead = await _db.Leads.SingleOrDefaultAsync(x => x.Id == leadId, cancellationToken);
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
+
+        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
 
         var activity = new LeadActivities
         {
@@ -394,7 +456,7 @@ public class LeadService : ILeadService
 
     public async Task<List<ViewEntityNoteResponse>> GetNotesAsync(DefaultIdType leadId, CancellationToken cancellationToken = default)
     {
-        await EnsureLeadExistsAsync(leadId, cancellationToken);
+        await EnsureLeadAccessibleAsync(leadId, cancellationToken);
 
         return await _db.EntityNotes
             .AsNoTracking()
@@ -406,7 +468,7 @@ public class LeadService : ILeadService
 
     public async Task<ViewEntityNoteResponse> CreateNoteAsync(DefaultIdType leadId, CreateEntityNoteRequest request, CancellationToken cancellationToken = default)
     {
-        await EnsureLeadExistsAsync(leadId, cancellationToken);
+        await EnsureLeadAccessibleAsync(leadId, cancellationToken);
 
         var note = new EntityNotes
         {
@@ -421,12 +483,17 @@ public class LeadService : ILeadService
         return note.Adapt<ViewEntityNoteResponse>();
     }
 
-    private IQueryable<Leads> BuildLeadQuery(SearchLeadRequest request)
+    private async Task<IQueryable<Leads>> BuildLeadQueryAsync(SearchLeadRequest request, CancellationToken cancellationToken)
     {
         var query = _db.Leads.AsNoTracking().AsQueryable();
         var userId = _currentUser.GetUserId().ToString();
         var today = _dateTimeService.UtcNow.Date;
-        var tomorrow = today.AddDays(1);
+
+        var start = new DateTimeOffset(today, TimeSpan.Zero);
+        var end = start.AddDays(1);
+        var closedStatusIds = await GetClosedLeadStatusIdsAsync(cancellationToken);
+        var wonStatusIds = await GetLeadStatusIdsByValueAsync("Won", cancellationToken);
+        var lostStatusIds = await GetLeadStatusIdsByValueAsync("Lost", cancellationToken);
 
         switch (request.FilterType)
         {
@@ -434,21 +501,20 @@ public class LeadService : ILeadService
                 query = query.Where(x => x.FKAssignedToUserId == userId);
                 break;
             case LeadFilterType.TodayFollowUps:
-                query = query.Where(x => x.NextFollowUpDate >= today && x.NextFollowUpDate < tomorrow);
+                query = query.Where(x => x.NextFollowUpDate >= start && x.NextFollowUpDate < end);
                 break;
             case LeadFilterType.Overdue:
-                query = query.Where(x => x.NextFollowUpDate < today
-                    && x.LeadStatus != LeadStatus.Won
-                    && x.LeadStatus != LeadStatus.Lost);
+                query = query.Where(x => x.NextFollowUpDate < start
+                    && !closedStatusIds.Contains(x.FKLeadStatusId));
                 break;
             case LeadFilterType.Interested:
                 query = query.Where(x => x.InterestLevel == InterestLevel.High);
                 break;
             case LeadFilterType.Won:
-                query = query.Where(x => x.LeadStatus == LeadStatus.Won);
+                query = query.Where(x => wonStatusIds.Contains(x.FKLeadStatusId));
                 break;
             case LeadFilterType.Lost:
-                query = query.Where(x => x.LeadStatus == LeadStatus.Lost);
+                query = query.Where(x => lostStatusIds.Contains(x.FKLeadStatusId));
                 break;
             case LeadFilterType.Archived:
                 query = query.Where(x => x.IsArchived);
@@ -460,7 +526,16 @@ public class LeadService : ILeadService
 
         if (!string.IsNullOrWhiteSpace(request.AssignedToUserId))
         {
+            if (!await CanViewAllTenantLeadsAsync(cancellationToken) && request.AssignedToUserId != userId)
+            {
+                throw new ForbiddenException(ErrorMessages.NotAuthorized);
+            }
+
             query = query.Where(x => x.FKAssignedToUserId == request.AssignedToUserId);
+        }
+        else
+        {
+            query = await ApplyLeadScopeForCurrentUserAsync(query, cancellationToken);
         }
 
         if (request.FromDate.HasValue)
@@ -486,6 +561,53 @@ public class LeadService : ILeadService
         }
 
         return query.OrderByDescending(x => x.CreatedOn);
+    }
+
+    private async Task<bool> CanViewAllTenantLeadsAsync(CancellationToken cancellationToken) =>
+        await _userService.HasPermissionAsync(
+            _currentUser.GetUserId().ToString(),
+            SystemAction.View,
+            SystemResource.Users,
+            cancellationToken);
+
+    private async Task<IQueryable<Leads>> ApplyLeadScopeForCurrentUserAsync(IQueryable<Leads> query, CancellationToken cancellationToken)
+    {
+        if (await CanViewAllTenantLeadsAsync(cancellationToken))
+        {
+            return query;
+        }
+
+        var userId = _currentUser.GetUserId().ToString();
+        return query.Where(x => x.FKAssignedToUserId == userId);
+    }
+
+    private async Task EnsureCanAccessLeadAsync(string? assignedToUserId, CancellationToken cancellationToken)
+    {
+        if (await CanViewAllTenantLeadsAsync(cancellationToken))
+        {
+            return;
+        }
+
+        if (assignedToUserId != _currentUser.GetUserId().ToString())
+        {
+            throw new ForbiddenException(ErrorMessages.NotAuthorized);
+        }
+    }
+
+    private async Task EnsureLeadAccessibleAsync(DefaultIdType leadId, CancellationToken cancellationToken)
+    {
+        var lead = await _db.Leads
+            .AsNoTracking()
+            .Where(x => x.Id == leadId)
+            .Select(x => new { x.FKAssignedToUserId })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (lead is null)
+        {
+            throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
+        }
+
+        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
     }
 
     private async Task ValidateDuplicatesAsync(string mobile, string? email, string? gstNumber, DefaultIdType? excludeLeadId, CancellationToken cancellationToken)
@@ -521,15 +643,6 @@ public class LeadService : ILeadService
         }
     }
 
-    private async Task EnsureLeadExistsAsync(DefaultIdType leadId, CancellationToken cancellationToken)
-    {
-        var exists = await _db.Leads.AnyAsync(x => x.Id == leadId, cancellationToken);
-        if (!exists)
-        {
-            throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
-        }
-    }
-
     private static ViewLeadDetailResponse MapToDetail(Leads lead, LeadContacts? contact, List<EntityNotes> notes)
     {
         return new ViewLeadDetailResponse
@@ -558,10 +671,14 @@ public class LeadService : ILeadService
             Pincode = lead.Pincode,
             FullAddress = lead.FullAddress,
             GoogleMapsLink = lead.GoogleMapsLink,
+            PlaceId = lead.PlaceId,
+            Latitude = lead.Latitude,
+            Longitude = lead.Longitude,
             LeadSource = lead.LeadSource,
             AssignedToUserId = lead.FKAssignedToUserId,
             Priority = lead.Priority,
-            LeadStatus = lead.LeadStatus,
+            LeadStatusId = lead.FKLeadStatusId,
+            LeadStatusName = lead.LeadStatus.LookUpValue,
             ExpectedClosingDate = lead.ExpectedClosingDate,
             InterestLevel = lead.InterestLevel,
             PainPoints = lead.PainPoints,
@@ -582,10 +699,71 @@ public class LeadService : ILeadService
             Notes = notes.Adapt<List<ViewEntityNoteResponse>>(),
             StatusHistories = lead.LeadStatusHistories
                 .OrderByDescending(h => h.ChangedOn)
-                .Adapt<List<ViewLeadStatusHistoryResponse>>(),
+                .Select(h => new ViewLeadStatusHistoryResponse
+                {
+                    Id = h.Id,
+                    FromStatusId = h.FKFromStatusId,
+                    FromStatusName = h.FromStatus?.LookUpValue,
+                    ToStatusId = h.FKToStatusId,
+                    ToStatusName = h.ToStatus.LookUpValue,
+                    ChangedByUserId = h.ChangedByUserId,
+                    ChangedOn = h.ChangedOn,
+                    Remarks = h.Remarks,
+                })
+                .ToList(),
             AssignmentHistories = lead.LeadAssignmentHistories
                 .OrderByDescending(h => h.AssignedOn)
                 .Adapt<List<ViewLeadAssignmentHistoryResponse>>(),
         };
     }
+
+    private async Task EnsureValidLeadStatusIdAsync(DefaultIdType leadStatusId, CancellationToken cancellationToken)
+    {
+        var isValid = await _db.LookUpCodeValues
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == leadStatusId
+                && x.IsActive
+                && x.LookUpCode.LookUpCodeType == LookUpCodeTypes.LeadStatus, cancellationToken);
+
+        if (!isValid)
+        {
+            throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead Status"));
+        }
+    }
+
+    private async Task<DefaultIdType> GetDefaultLeadStatusIdAsync(CancellationToken cancellationToken)
+    {
+        var defaultStatus = await _db.LookUpCodeValues
+            .AsNoTracking()
+            .Where(x => x.IsActive && x.LookUpCode.LookUpCodeType == LookUpCodeTypes.LeadStatus)
+            .OrderBy(x => x.LookUpValue == "New" ? 0 : 1)
+            .ThenBy(x => x.DisplayOrder)
+            .Select(x => x.Id)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (defaultStatus == default)
+        {
+            throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead Status"));
+        }
+
+        return defaultStatus;
+    }
+
+    private async Task<List<DefaultIdType>> GetLeadStatusIdsByValueAsync(string lookUpValue, CancellationToken cancellationToken) =>
+        await _db.LookUpCodeValues
+            .AsNoTracking()
+            .Where(x => x.IsActive
+                && x.LookUpCode.LookUpCodeType == LookUpCodeTypes.LeadStatus
+                && x.LookUpValue == lookUpValue)
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
+
+    private async Task<List<DefaultIdType>> GetClosedLeadStatusIdsAsync(CancellationToken cancellationToken) =>
+        await _db.LookUpCodeValues
+            .AsNoTracking()
+            .Where(x => x.IsActive
+                && x.LookUpCode.LookUpCodeType == LookUpCodeTypes.LeadStatus
+                && (x.LookUpValue == "Won" || x.LookUpValue == "Lost"))
+            .Select(x => x.Id)
+            .ToListAsync(cancellationToken);
 }

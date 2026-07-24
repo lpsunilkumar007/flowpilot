@@ -7,18 +7,26 @@
     width: $sidenav-width;
     min-width: $sidenav-width;
     background: $menu-bg;
-    @apply sticky top-0 h-screen z-40 shadow transition-all duration-300;
+    @apply fixed top-0 start-0 bottom-0 z-[45] shadow transition-all duration-300;
+    height: 100vh;
+    height: 100dvh;
 
     .scrollbar {
         height: calc(100% - $topbar-height);
     }
 }
 
+.app-menu + .page-content {
+    margin-inline-start: $sidenav-width;
+    padding-top: $topbar-height;
+}
+
 // Page Content
 .page-content {
     display: flex;
     flex-direction: column;
-    width: 100%;
+    flex: 1 1 0%;
+    min-width: 0;
     min-block-size: 100vh;
 }
 
@@ -116,6 +124,7 @@
 
 // Small Sidenav Width ( 'sm' width || item Hover View )
 html[data-sidenav-view="sm"] {
+	--tw-modal-overlay-offset-start: var(--tw-sidenav-width-sm);
 
     // Side menu
     .app-menu {
@@ -124,6 +133,10 @@ html[data-sidenav-view="sm"] {
         min-height: $sidenav-sm-height;
         height: unset;
         position: static;
+
+        & + .page-content {
+            margin-inline-start: 0;
+        }
 
         .simplebar-mask,
         .simplebar-content-wrapper {
@@ -262,13 +275,23 @@ html[data-sidenav-view="sm"] {
             @apply hidden;
         }
     }
+
+    .app-header {
+        inset-inline-start: $sidenav-width-sm;
+    }
 }
 
 // Compact Menu ( 'md' width )
 html[data-sidenav-view="md"] {
+	--tw-modal-overlay-offset-start: var(--tw-sidenav-width-md);
+
     .app-menu {
         width: $sidenav-width-md;
         min-width: $sidenav-width-md;
+
+        & + .page-content {
+            margin-inline-start: $sidenav-width-md;
+        }
 
         .menu {
             .menu-title {
@@ -304,6 +327,10 @@ html[data-sidenav-view="md"] {
             @apply hidden;
         }
     }
+
+    .app-header {
+        inset-inline-start: $sidenav-width-md;
+    }
 }
 
 // Sidenav Hover Button
@@ -314,6 +341,7 @@ html[data-sidenav-view="md"] {
 
 // Small Hover
 html[data-sidenav-view="hover"] {
+	--tw-modal-overlay-offset-start: var(--tw-sidenav-width-sm);
 
     // Content Page
     .app-menu:not(:hover) {
@@ -391,6 +419,8 @@ html[data-sidenav-view="hover"] {
     }
 
     .app-header {
+        inset-inline-start: $sidenav-width-sm;
+
         #button-toggle-menu {
             display: none;
         }
@@ -399,7 +429,11 @@ html[data-sidenav-view="hover"] {
 
 // hover active
 html[data-sidenav-view="hover-active"] {
+	--tw-modal-overlay-offset-start: var(--tw-sidenav-width);
+
     .app-header {
+        inset-inline-start: $sidenav-width;
+
         #button-toggle-menu {
             @apply hidden;
         }
@@ -428,9 +462,19 @@ html[data-sidenav-view="hover-active"] {
 
 // Mobile View Sidenav (Mobile Sidebar || Open Sidenav with Backdrop)
 html[data-sidenav-view="mobile"] {
+	--tw-modal-overlay-offset-start: 0;
+
+    .app-header {
+        inset-inline-start: 0;
+    }
+
     .app-menu {
         margin-inline-start: calc($sidenav-width * -1);
         @apply fixed opacity-0;
+
+        & + .page-content {
+            margin-inline-start: 0;
+        }
     }
 
     &.sidenav-enable {
@@ -443,8 +487,18 @@ html[data-sidenav-view="mobile"] {
 
 // Hidden Sidenav View ( Fullscreen page content view)
 html[data-sidenav-view="hidden"] {
+	--tw-modal-overlay-offset-start: 0;
+
+    .app-header {
+        inset-inline-start: 0;
+    }
+
     .app-menu {
         margin-inline-start: calc($sidenav-width * -1);
+
+        & + .page-content {
+            margin-inline-start: 0;
+        }
     }
 }
 
@@ -461,6 +515,11 @@ html[data-layout-position="scrollable"] {
     .logo-box,
     .app-header {
         position: unset;
+    }
+
+    .app-menu + .page-content {
+        margin-inline-start: 0;
+        padding-top: 0;
     }
 
     &:not([data-sidenav-view="mobile"]) {

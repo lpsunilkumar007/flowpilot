@@ -143,8 +143,10 @@ export class messageHelper {
 
 	static showSuccess(message: string) {
 		toast.dismiss()
-		toast.success(message, {
+		const text = typeof message === 'string' && message.trim() ? message : 'Success'
+		toast.success(text, {
 			position: 'top-center',
+			autoClose: 3000,
 			style: { zIndex: 9999 },
 		})
 	}

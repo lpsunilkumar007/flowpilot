@@ -102,3 +102,36 @@ th.fc-day-header {
 .fc-theme-standard th {
     @apply border border-solid border-gray-200 dark:border-gray-600;
 }
+
+#lead-followup-calendar {
+    .fc-daygrid-event {
+        @apply text-white;
+    }
+
+    .fc-daygrid-event .fc-event-main {
+        @apply text-white;
+    }
+
+    .fc-daygrid-event:has(.calendar-event--task) .fc-event-main,
+    .fc-timegrid-event:has(.calendar-event--task) .fc-event-main {
+        @apply flex items-center justify-center;
+    }
+
+    .calendar-event--task {
+        @apply flex w-full flex-col items-center justify-center;
+    }
+
+    .fc-list-event .fc-list-event-title,
+    .fc-list-event .fc-list-event-title * {
+        @apply text-sm font-semibold text-gray-900 dark:text-gray-100;
+    }
+
+    .fc-list-event .fc-list-event-time {
+        @apply text-xs font-medium text-gray-600 dark:text-gray-400;
+    }
+
+    // Colored chip in list view so task/lead colors stay visible
+    .fc-list-event-dot {
+        border-width: 6px !important;
+    }
+}

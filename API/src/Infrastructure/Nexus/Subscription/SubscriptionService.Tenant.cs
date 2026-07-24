@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Stripe;
 
 namespace FlowPilot.Infrastructure.Nexus.Subscription;
+
 public partial class SubscriptionService
 {
 
@@ -188,6 +189,7 @@ public partial class SubscriptionService
 
     public async Task<TenantCurrentSubscriptionDetailResponse> GetTenantCurrentSubscriptionDetail()
     {
+        var today = new DateTimeOffset(_dateTimeService.UtcNow.UtcDateTime.Date, TimeSpan.Zero);
         var entity = await _nexusDbContext.TenantSubscriptionPlans.Include(x => x.TentantSubscriptionPlanInvoices).Where(x => x.FkTenantPKId == _currentUser.GetTenant() && x.IsActive && !x.IsDeleted)
     .OrderByDescending(x => x.Id)
     .Select(x => new TenantCurrentSubscriptionDetailResponse
@@ -196,11 +198,11 @@ public partial class SubscriptionService
         Name = x.Name,
         Price = x.Price,
         FKSubscriptionPlanPKId = x.FKSubscriptionPlanPKId,
-        IsOverDue = x.TentantSubscriptionPlanInvoices.Any(i => i.StripePaymentStatus == "Pending" && i.PeriodFrom.Date <= _dateTimeService.UtcNow.Date),
-        PaymentPending = x.TentantSubscriptionPlanInvoices.Where(i => i.StripePaymentStatus == "Pending" && i.PeriodFrom.Date <= _dateTimeService.UtcNow.Date).Select(i => i.PeriodFrom).FirstOrDefault(),
-        LatePaymentOverDue = x.TentantSubscriptionPlanInvoices.Any(i => i.StripePaymentStatus == "Failed" || (i.StripePaymentStatus == "Pending" && i.PeriodFrom.Date <= _dateTimeService.UtcNow.Date)),
+        IsOverDue = x.TentantSubscriptionPlanInvoices.Any(i => i.StripePaymentStatus == "Pending" && i.PeriodFrom.Date <= today),
+        PaymentPending = x.TentantSubscriptionPlanInvoices.Where(i => i.StripePaymentStatus == "Pending" && i.PeriodFrom.Date <= today).Select(i => i.PeriodFrom).FirstOrDefault(),
+        LatePaymentOverDue = x.TentantSubscriptionPlanInvoices.Any(i => i.StripePaymentStatus == "Failed" || (i.StripePaymentStatus == "Pending" && i.PeriodFrom.Date <= today)),
         Invoices = x.TentantSubscriptionPlanInvoices
-            .Where(i => i.PeriodFrom.Date <= _dateTimeService.UtcNow.Date)
+            .Where(i => i.PeriodFrom.Date <= today)
             .Select(i => new TenantInvoicesResponse
             {
                 InvoiceId = i.Id,
@@ -248,7 +250,7 @@ public partial class SubscriptionService
         {
             query = query.Where(x => x.FkTenantPKId == id);
         }
-    
+
         return await query.OrderByDescending(x => x.Id)
             .Select(x => new GetTenantSubscriptionResponse
             {
