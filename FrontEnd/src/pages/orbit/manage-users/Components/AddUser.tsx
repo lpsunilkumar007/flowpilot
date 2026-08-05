@@ -22,7 +22,11 @@ type ModalState = {
 const AddUser: React.FC<AddUserProps> = (props) => {
 	const { t } = useTranslation()
 	const loadingIndicator = () => <AnimationSkeleton />
-	const { state: modalState, setKey: setModalKey, set } = useObjectState<ModalState>({
+	const {
+		state: modalState,
+		setKey: setModalKey,
+		set,
+	} = useObjectState<ModalState>({
 		timeZone: [],
 		managers: [],
 		loading: true,
@@ -33,7 +37,7 @@ const AddUser: React.FC<AddUserProps> = (props) => {
 			...formData,
 			reportsToUserId: formData.reportsToUserId || undefined,
 		}
-		await runWithToast(() => userService.create(payload), {
+		await runWithToast(() => userService.create(payload as CreateUserRequest), {
 			onSuccess: (response) => {
 				messageHelper.showSuccess(response.message!)
 				props.addNewUserOutPut(true)

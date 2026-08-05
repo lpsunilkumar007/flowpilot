@@ -62,11 +62,10 @@ const ViewAppointment: React.FC<ViewAppointmentProps> = (props) => {
 	})
 	const [colorSettingsMap, setColorSettingsMap] = useState<ColorSettingsMap>({})
 	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
-	const [searchAppointmentsRequest, setSearchAppointmentsRequest] = useState<SearchAppointmentsRequest>(
-		new SearchAppointmentsRequest({
-			pageSize: PagingVariables.DefaultPageSize,
-		})
-	)
+	const [searchAppointmentsRequest, setSearchAppointmentsRequest] = useState<SearchAppointmentsRequest>()
+	// new SearchAppointmentsRequest({
+	// 	pageSize: PagingVariables.DefaultPageSize,
+	// })
 	const [hostUserId, setHostUserId] = useState<string | undefined>(undefined)
 	const [guestUserId, setGuestUserId] = useState<string | undefined>(undefined)
 	const [modalState, setModalState] = useState<ModalState>({
@@ -171,7 +170,7 @@ const ViewAppointment: React.FC<ViewAppointmentProps> = (props) => {
 			async () => {
 				const req = new SearchAppointmentsRequest()
 
-				req.appointmentStatus = searchAppointmentsRequest.appointmentStatus
+				// req.appointmentStatus = searchAppointmentsRequest.appointmentStatus
 
 				if (hostUserId) {
 					req.hostUserId = hostUserId
@@ -314,7 +313,7 @@ const ViewAppointment: React.FC<ViewAppointmentProps> = (props) => {
 		if (Object.keys(colorSettingsMap).length > 0) {
 			loadAppointments()
 		}
-	}, [colorSettingsMap, refreshData, hostUserId, guestUserId, searchAppointmentsRequest.appointmentStatus])
+	}, [colorSettingsMap, refreshData, hostUserId, guestUserId])
 
 	const handleDateClick = () => onActionClick()
 
