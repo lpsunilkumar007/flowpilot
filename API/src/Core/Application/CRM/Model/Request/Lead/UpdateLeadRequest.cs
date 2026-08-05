@@ -66,10 +66,12 @@ public class UpdateLeadRequest
     public decimal? Longitude { get; set; }
 
     [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
-    public required string LeadSource { get; set; }
+    public required DefaultIdType LeadSourceId { get; set; }
 
-    [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
-    public required string AssignedToUserId { get; set; }
+    public bool AssignToYourself { get; set; }
+
+    [RequiredIf(nameof(AssignToYourself), false)]
+    public string? AssignedToUserId { get; set; }
 
     public LeadPriority Priority { get; set; }
 

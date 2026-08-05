@@ -43,7 +43,7 @@ export enum LayoutPosition {
 }
 
 export enum BrandingDetails {
-	PAGE_TITLE_PREFIX = 'Demo',
-	CLIENT_NAME = 'Demo',
+	PAGE_TITLE_PREFIX = 'Flow Pilot',
+	CLIENT_NAME = 'Flow Pilot',
 	CLIENT_WEBSITE = 'URL',
 }

@@ -336,7 +336,7 @@ const Topbar = () => {
 					</button>
 				</div> */}
 
-                <div className="lg:flex hidden">
+                <div className="flex">
                     <button id="light-dark-mode" type="button" className="nav-link p-2" onClick={toggleDarkMode}>
                         <span className="sr-only">Light/Dark Mode</span>
                         <span className="flex items-center justify-center">

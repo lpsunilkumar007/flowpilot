@@ -60,7 +60,9 @@ public class ViewLeadDetailResponse
 
     public decimal? Longitude { get; set; }
 
-    public string LeadSource { get; set; } = string.Empty;
+    public DefaultIdType LeadSourceId { get; set; }
+
+    public string LeadSourceName { get; set; } = string.Empty;
 
     public string AssignedToUserId { get; set; } = string.Empty;
 

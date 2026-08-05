@@ -16,7 +16,6 @@ using FlowPilot.Domain.Enums.Common;
 using FlowPilot.Domain.Enums.CRM;
 using FlowPilot.Infrastructure.Persistence.Context;
 using FlowPilot.Infrastructure.SystemConstants;
-using FlowPilot.Shared.Authorization;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 
@@ -27,18 +26,18 @@ public class LeadService : ILeadService
     private readonly ApplicationDbContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly IDateTimeService _dateTimeService;
-    private readonly IUserService _userService;
+    private readonly IReportingHierarchyService _reportingHierarchyService;
 
     public LeadService(
         ApplicationDbContext db,
         ICurrentUser currentUser,
         IDateTimeService dateTimeService,
-        IUserService userService)
+        IReportingHierarchyService reportingHierarchyService)
     {
         _db = db;
         _currentUser = currentUser;
         _dateTimeService = dateTimeService;
-        _userService = userService;
+        _reportingHierarchyService = reportingHierarchyService;
     }
 
     public async Task<PaginationResponse<ViewLeadListResponse>> SearchAsync(SearchLeadRequest request, CancellationToken cancellationToken = default)
@@ -74,6 +73,7 @@ public class LeadService : ILeadService
             .Include(x => x.LeadActivities)
             .Include(x => x.LeadFollowUps)
             .Include(x => x.LeadStatus)
+            .Include(x => x.LeadSource)
             .Include(x => x.LeadStatusHistories).ThenInclude(x => x.FromStatus)
             .Include(x => x.LeadStatusHistories).ThenInclude(x => x.ToStatus)
             .Include(x => x.LeadAssignmentHistories)
@@ -81,7 +81,7 @@ public class LeadService : ILeadService
 
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
 
-        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+        await EnsureCanReadLeadAsync(lead.FKAssignedToUserId, cancellationToken);
 
         var contact = lead.LeadContacts.FirstOrDefault(c => c.IsPrimary);
         var notes = await _db.EntityNotes
@@ -95,10 +95,14 @@ public class LeadService : ILeadService
 
     public async Task<CreateLeadResponse> CreateAsync(CreateLeadRequest request, CancellationToken cancellationToken = default)
     {
+        var assignedToUserId = ResolveAssignedToUserId(request.AssignToYourself, request.AssignedToUserId);
+
         await ValidateDuplicatesAsync(request.Mobile, request.Email, request.GstNumber, null, cancellationToken);
+        await EnsureCanWriteLeadAsync(assignedToUserId, cancellationToken);
 
         var leadStatusId = request.LeadStatusId ?? await GetDefaultLeadStatusIdAsync(cancellationToken);
         await EnsureValidLeadStatusIdAsync(leadStatusId, cancellationToken);
+        await EnsureValidLeadSourceIdAsync(request.LeadSourceId, cancellationToken);
 
         var lead = new Leads
         {
@@ -112,8 +116,8 @@ public class LeadService : ILeadService
             ExpectedMonthlyBilling = request.ExpectedMonthlyBilling,
             ExpectedRevenue = request.ExpectedRevenue,
             CompanySize = request.CompanySize,
-            LeadSource = request.LeadSource,
-            FKAssignedToUserId = request.AssignedToUserId,
+            FKLeadSourceId = request.LeadSourceId,
+            FKAssignedToUserId = assignedToUserId,
             Priority = request.Priority,
             FKLeadStatusId = leadStatusId,
             ExpectedClosingDate = request.ExpectedClosingDate,
@@ -159,7 +163,7 @@ public class LeadService : ILeadService
                 new LeadAssignmentHistories
                 {
                     FromUserId = null,
-                    ToUserId = request.AssignedToUserId,
+                    ToUserId = assignedToUserId,
                     AssignedByUserId = _currentUser.GetUserId().ToString(),
                     AssignedOn = _dateTimeService.UtcNow,
                 }
@@ -195,11 +199,19 @@ public class LeadService : ILeadService
 
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
 
-        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+        await EnsureCanWriteLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+
+        var assignedToUserId = ResolveAssignedToUserId(request.AssignToYourself, request.AssignedToUserId);
 
         await ValidateDuplicatesAsync(request.Mobile, request.Email, request.GstNumber, id, cancellationToken);
 
         await EnsureValidLeadStatusIdAsync(request.LeadStatusId, cancellationToken);
+        await EnsureValidLeadSourceIdAsync(request.LeadSourceId, cancellationToken);
+        await EnsureCanWriteLeadAsync(assignedToUserId, cancellationToken);
+
+        var fromUserId = lead.FKAssignedToUserId;
+        var assigneeChanged = !string.Equals(fromUserId, assignedToUserId, StringComparison.OrdinalIgnoreCase);
+        var coordsChanged = lead.Latitude != request.Latitude || lead.Longitude != request.Longitude;
 
         lead.BusinessName = request.BusinessName;
         lead.BusinessType = request.BusinessType;
@@ -211,8 +223,8 @@ public class LeadService : ILeadService
         lead.ExpectedMonthlyBilling = request.ExpectedMonthlyBilling;
         lead.ExpectedRevenue = request.ExpectedRevenue;
         lead.CompanySize = request.CompanySize;
-        lead.LeadSource = request.LeadSource;
-        lead.FKAssignedToUserId = request.AssignedToUserId;
+        lead.FKLeadSourceId = request.LeadSourceId;
+        lead.FKAssignedToUserId = assignedToUserId;
         lead.Priority = request.Priority;
         lead.FKLeadStatusId = request.LeadStatusId;
         lead.ExpectedClosingDate = request.ExpectedClosingDate;
@@ -254,6 +266,23 @@ public class LeadService : ILeadService
             contact.AlternatePhone = request.AlternatePhone;
         }
 
+        if (assigneeChanged)
+        {
+            await _db.LeadAssignmentHistories.AddAsync(new LeadAssignmentHistories
+            {
+                FKLeadPKId = lead.Id,
+                FromUserId = fromUserId,
+                ToUserId = assignedToUserId,
+                AssignedByUserId = _currentUser.GetUserId().ToString(),
+                AssignedOn = _dateTimeService.UtcNow,
+            }, cancellationToken);
+        }
+
+        if (coordsChanged)
+        {
+            await ReverifyGpsLogsForLeadAsync(id, request.Latitude, request.Longitude, cancellationToken);
+        }
+
         await _db.SaveChangesAsync(cancellationToken);
         return SuccessMessages.CommonRecordUpdated;
     }
@@ -265,7 +294,7 @@ public class LeadService : ILeadService
             .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
 
-        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+        await EnsureCanWriteLeadAsync(lead.FKAssignedToUserId, cancellationToken);
         await EnsureValidLeadStatusIdAsync(request.LeadStatusId, cancellationToken);
 
         var newStatus = await _db.LookUpCodeValues
@@ -299,16 +328,24 @@ public class LeadService : ILeadService
         var lead = await _db.Leads.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
 
-        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+        var assignedToUserId = ResolveAssignedToUserId(request.AssignToYourself, request.AssignedToUserId);
+
+        await EnsureCanWriteLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+        await EnsureCanWriteLeadAsync(assignedToUserId, cancellationToken);
 
         var fromUserId = lead.FKAssignedToUserId;
-        lead.FKAssignedToUserId = request.AssignedToUserId;
+        if (string.Equals(fromUserId, assignedToUserId, StringComparison.OrdinalIgnoreCase))
+        {
+            return SuccessMessages.CommonRecordUpdated;
+        }
+
+        lead.FKAssignedToUserId = assignedToUserId;
 
         await _db.LeadAssignmentHistories.AddAsync(new LeadAssignmentHistories
         {
             FKLeadPKId = lead.Id,
             FromUserId = fromUserId,
-            ToUserId = request.AssignedToUserId,
+            ToUserId = assignedToUserId,
             AssignedByUserId = _currentUser.GetUserId().ToString(),
             AssignedOn = _dateTimeService.UtcNow,
             Remarks = request.Remarks,
@@ -326,7 +363,7 @@ public class LeadService : ILeadService
 
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
 
-        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+        await EnsureCanWriteLeadAsync(lead.FKAssignedToUserId, cancellationToken);
         lead.NextFollowUpDate = request.NextFollowUpDate;
 
         var pendingFollowUp = lead.LeadFollowUps
@@ -344,8 +381,9 @@ public class LeadService : ILeadService
     public async Task<List<ViewLeadListResponse>> GetTodayFollowUpsAsync(CancellationToken cancellationToken = default)
     {
         var today = _dateTimeService.UtcNow.Date;
-        var tomorrow = today.AddDays(1);
-        var query = _db.Leads.AsNoTracking().Where(x => x.NextFollowUpDate >= today && x.NextFollowUpDate < tomorrow && !x.IsArchived);
+        var start = new DateTimeOffset(today, TimeSpan.Zero);
+        var tomorrow = start.AddDays(1);
+        var query = _db.Leads.AsNoTracking().Where(x => x.NextFollowUpDate >= start && x.NextFollowUpDate < tomorrow && !x.IsArchived);
         query = await ApplyLeadScopeForCurrentUserAsync(query, cancellationToken);
 
         return await query
@@ -419,7 +457,7 @@ public class LeadService : ILeadService
         var lead = await _db.Leads.SingleOrDefaultAsync(x => x.Id == leadId, cancellationToken);
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
 
-        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+        await EnsureCanWriteLeadAsync(lead.FKAssignedToUserId, cancellationToken);
 
         var activity = new LeadActivities
         {
@@ -468,7 +506,7 @@ public class LeadService : ILeadService
 
     public async Task<ViewEntityNoteResponse> CreateNoteAsync(DefaultIdType leadId, CreateEntityNoteRequest request, CancellationToken cancellationToken = default)
     {
-        await EnsureLeadAccessibleAsync(leadId, cancellationToken);
+        await EnsureLeadWritableAsync(leadId, cancellationToken);
 
         var note = new EntityNotes
         {
@@ -526,7 +564,7 @@ public class LeadService : ILeadService
 
         if (!string.IsNullOrWhiteSpace(request.AssignedToUserId))
         {
-            if (!await CanViewAllTenantLeadsAsync(cancellationToken) && request.AssignedToUserId != userId)
+            if (!await _reportingHierarchyService.CanReadAsync(request.AssignedToUserId, cancellationToken))
             {
                 throw new ForbiddenException(ErrorMessages.NotAuthorized);
             }
@@ -563,32 +601,42 @@ public class LeadService : ILeadService
         return query.OrderByDescending(x => x.CreatedOn);
     }
 
-    private async Task<bool> CanViewAllTenantLeadsAsync(CancellationToken cancellationToken) =>
-        await _userService.HasPermissionAsync(
-            _currentUser.GetUserId().ToString(),
-            SystemAction.View,
-            SystemResource.Users,
-            cancellationToken);
-
     private async Task<IQueryable<Leads>> ApplyLeadScopeForCurrentUserAsync(IQueryable<Leads> query, CancellationToken cancellationToken)
     {
-        if (await CanViewAllTenantLeadsAsync(cancellationToken))
+        if (await _reportingHierarchyService.IsTenantAdminAsync(cancellationToken))
         {
             return query;
         }
 
-        var userId = _currentUser.GetUserId().ToString();
-        return query.Where(x => x.FKAssignedToUserId == userId);
+        var accessibleUserIds = await _reportingHierarchyService.GetAccessibleUserIdsAsync(cancellationToken);
+        return query.Where(x => accessibleUserIds.Contains(x.FKAssignedToUserId));
     }
 
-    private async Task EnsureCanAccessLeadAsync(string? assignedToUserId, CancellationToken cancellationToken)
+    private async Task EnsureCanReadLeadAsync(string? assignedToUserId, CancellationToken cancellationToken)
     {
-        if (await CanViewAllTenantLeadsAsync(cancellationToken))
+        if (!await _reportingHierarchyService.CanReadAsync(assignedToUserId, cancellationToken))
         {
-            return;
+            throw new ForbiddenException(ErrorMessages.NotAuthorized);
+        }
+    }
+
+    private string ResolveAssignedToUserId(bool assignToYourself, string? assignedToUserId)
+    {
+        var resolved = assignToYourself
+            ? _currentUser.GetUserId().ToString()
+            : assignedToUserId;
+
+        if (string.IsNullOrWhiteSpace(resolved))
+        {
+            throw new BadRequestException(ErrorMessages.AssignedSalesPersonRequired);
         }
 
-        if (assignedToUserId != _currentUser.GetUserId().ToString())
+        return resolved;
+    }
+
+    private async Task EnsureCanWriteLeadAsync(string? assignedToUserId, CancellationToken cancellationToken)
+    {
+        if (!await _reportingHierarchyService.CanWriteAsync(assignedToUserId, cancellationToken))
         {
             throw new ForbiddenException(ErrorMessages.NotAuthorized);
         }
@@ -607,7 +655,23 @@ public class LeadService : ILeadService
             throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
         }
 
-        await EnsureCanAccessLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+        await EnsureCanReadLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+    }
+
+    private async Task EnsureLeadWritableAsync(DefaultIdType leadId, CancellationToken cancellationToken)
+    {
+        var lead = await _db.Leads
+            .AsNoTracking()
+            .Where(x => x.Id == leadId)
+            .Select(x => new { x.FKAssignedToUserId })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (lead is null)
+        {
+            throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
+        }
+
+        await EnsureCanWriteLeadAsync(lead.FKAssignedToUserId, cancellationToken);
     }
 
     private async Task ValidateDuplicatesAsync(string mobile, string? email, string? gstNumber, DefaultIdType? excludeLeadId, CancellationToken cancellationToken)
@@ -674,7 +738,8 @@ public class LeadService : ILeadService
             PlaceId = lead.PlaceId,
             Latitude = lead.Latitude,
             Longitude = lead.Longitude,
-            LeadSource = lead.LeadSource,
+            LeadSourceId = lead.FKLeadSourceId,
+            LeadSourceName = lead.LeadSource.LookUpValue,
             AssignedToUserId = lead.FKAssignedToUserId,
             Priority = lead.Priority,
             LeadStatusId = lead.FKLeadStatusId,
@@ -717,6 +782,33 @@ public class LeadService : ILeadService
         };
     }
 
+    private async Task ReverifyGpsLogsForLeadAsync(
+        DefaultIdType leadId,
+        decimal? referenceLatitude,
+        decimal? referenceLongitude,
+        CancellationToken cancellationToken)
+    {
+        var gpsLogs = await _db.GpsLogs
+            .Include(g => g.Verification)
+            .Where(g => g.Visit.FKLeadPKId == leadId)
+            .ToListAsync(cancellationToken);
+
+        foreach (var gpsLog in gpsLogs)
+        {
+            if (gpsLog.Verification is null)
+            {
+                gpsLog.Verification = new GpsVerifications();
+            }
+
+            GpsVerificationHelper.Apply(
+                gpsLog.Verification,
+                gpsLog.Latitude,
+                gpsLog.Longitude,
+                referenceLatitude,
+                referenceLongitude);
+        }
+    }
+
     private async Task EnsureValidLeadStatusIdAsync(DefaultIdType leadStatusId, CancellationToken cancellationToken)
     {
         var isValid = await _db.LookUpCodeValues
@@ -728,6 +820,20 @@ public class LeadService : ILeadService
         if (!isValid)
         {
             throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead Status"));
+        }
+    }
+
+    private async Task EnsureValidLeadSourceIdAsync(DefaultIdType leadSourceId, CancellationToken cancellationToken)
+    {
+        var isValid = await _db.LookUpCodeValues
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == leadSourceId
+                && x.IsActive
+                && x.LookUpCode.LookUpCodeType == LookUpCodeTypes.LeadSource, cancellationToken);
+
+        if (!isValid)
+        {
+            throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead Source"));
         }
     }
 

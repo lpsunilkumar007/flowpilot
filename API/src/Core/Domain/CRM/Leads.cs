@@ -26,7 +26,8 @@ public class Leads : AuditableEntity
 
     public string? CompanySize { get; set; }
 
-    public required string LeadSource { get; set; }
+    [ForeignKey(nameof(LeadSource))]
+    public required DefaultIdType FKLeadSourceId { get; set; }
 
     public required string FKAssignedToUserId { get; set; }
 
@@ -74,6 +75,8 @@ public class Leads : AuditableEntity
     public DateTimeOffset? ConvertedOn { get; set; }
 
     public int? FKConvertedCustomerId { get; set; }
+
+    public virtual LookUpCodeValues LeadSource { get; set; } = null!;
 
     public virtual LookUpCodeValues LeadStatus { get; set; } = null!;
 

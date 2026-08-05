@@ -90,7 +90,7 @@ const detailToUpdateRequest = (lead: ViewLeadDetailResponse, overrides: Partial<
 	pincode: lead.pincode,
 	fullAddress: lead.fullAddress,
 	googleMapsLink: lead.googleMapsLink,
-	leadSource: lead.leadSource,
+	leadSourceId: lead.leadSourceId,
 	assignedToUserId: lead.assignedToUserId,
 	priority: lead.priority,
 	leadStatusId: lead.leadStatusId,

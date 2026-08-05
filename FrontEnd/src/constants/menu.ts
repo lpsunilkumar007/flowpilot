@@ -59,6 +59,7 @@ export enum MenuLinks {
 	EditLead = '/manage-leads/:id',
 	ManageTasks = '/manage-tasks',
 	SalesPipeline = '/manage-leads/pipeline',
+	MyTeam = '/my-team',
 }
 
 const MENU_ITEMS: MenuItemTypes[] = [
@@ -108,6 +109,13 @@ const MENU_ITEMS: MenuItemTypes[] = [
 		isTitle: false,
 		icon: 'ri-funds-line',
 		url: MenuLinks.SalesPipeline,
+	},
+	{
+		key: 'my_team',
+		label: 'Manage.MyTeam_Heading',
+		isTitle: false,
+		icon: 'ri-team-line',
+		url: MenuLinks.MyTeam,
 	},
 	{
 		key: 'manage_email_nav',
@@ -161,6 +169,7 @@ const getMenuItems = () => {
 		manage_leads: [PermissionTypes.Permissions_ManageLeads_View],
 		manage_tasks: [PermissionTypes.Permissions_ManageTasks_View],
 		sales_pipeline: [PermissionTypes.Permissions_ManageSalePipelines_View],
+		my_team: [PermissionTypes.Permissions_ManageLeads_View, PermissionTypes.Permissions_ManageTasks_View],
 		manage_email_nav: [PermissionTypes.Permissions_EmailLog_View, PermissionTypes.Permissions_EmailTemplates_View],
 		manage_email_log: [PermissionTypes.Permissions_EmailLog_View],
 		manage_emailTemplates: [PermissionTypes.Permissions_EmailTemplates_View],
@@ -237,6 +246,6 @@ const findMenuItem = (menuItems: MenuItemTypes[] | undefined, menuItemKey: MenuI
 	return null
 }
 
-export { getMenuItems, findAllParent, findMenuItem }
+export { findAllParent, findMenuItem, getMenuItems }
 
 export { MENU_ITEMS }

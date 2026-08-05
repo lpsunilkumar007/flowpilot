@@ -94,6 +94,12 @@ public class ApplicationDbContext : BaseDbContext
             .IsUnique();
 
         modelBuilder.Entity<Leads>()
+            .HasOne(x => x.LeadSource)
+            .WithMany()
+            .HasForeignKey(x => x.FKLeadSourceId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Leads>()
             .HasOne(x => x.LeadStatus)
             .WithMany()
             .HasForeignKey(x => x.FKLeadStatusId)

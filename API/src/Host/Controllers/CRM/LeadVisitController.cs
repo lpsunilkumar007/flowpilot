@@ -40,11 +40,19 @@ public class LeadVisitController : VersionedApiController
     }
 
     [HttpPost("create-with-lead")]
-    [MustHavePermission(SystemAction.Create, SystemResource.ManageLeadVisits)]
+    [RequireAnyResource(SystemAction.Create, [SystemResource.ManageLeadVisits, SystemResource.ManageLeads])]
     [OpenApiOperation("Create a new lead with visit", "")]
     public async Task<CreateLeadWithVisitResponse> CreateWithLead(CreateLeadWithVisitRequest request, CancellationToken cancellationToken)
     {
         return await _leadVisitService.CreateWithLeadAsync(request, cancellationToken);
+    }
+
+    [HttpPut("update-with-lead/{id}")]
+    [RequireAnyResource(SystemAction.Update, [SystemResource.ManageLeadVisits, SystemResource.ManageLeads])]
+    [OpenApiOperation("Update a lead with visit", "")]
+    public async Task<UpdateLeadWithVisitResponse> UpdateWithLead(DefaultIdType id, UpdateLeadWithVisitRequest request, CancellationToken cancellationToken)
+    {
+        return await _leadVisitService.UpdateWithLeadAsync(id, request, cancellationToken);
     }
 
     [HttpPost("{id}/gps")]

@@ -10,11 +10,22 @@ import { LayoutActionType } from './actions'
 // utils
 import { getLayoutConfigs } from '../../utils/layout'
 
+const LAYOUT_THEME_STORAGE_KEY = 'flowpilot-layout-theme'
+
 const INIT_STATE = () => {
 	const urlSearchParams = new URLSearchParams(window.location.search)
 	const params = Object.fromEntries(urlSearchParams.entries())
+	const storedTheme = localStorage.getItem(LAYOUT_THEME_STORAGE_KEY)
+	const layoutThemeFromStorage =
+		storedTheme === LayoutTheme.THEME_DARK || storedTheme === LayoutTheme.THEME_LIGHT ? storedTheme : null
+
 	return {
-		layoutTheme: params['layout_theme'] === 'dark' ? LayoutTheme.THEME_DARK : LayoutTheme.THEME_LIGHT,
+		layoutTheme:
+			params['layout_theme'] === 'dark'
+				? LayoutTheme.THEME_DARK
+				: params['layout_theme'] === 'light'
+					? LayoutTheme.THEME_LIGHT
+					: layoutThemeFromStorage ?? LayoutTheme.THEME_LIGHT,
 		layoutDirection: params['dir'] === 'rtl' ? LayoutDirection.RIGHT_TO_LEFT : LayoutDirection.LEFT_TO_RIGHT,
 		layoutWidth: LayoutWidth.LAYOUT_WIDTH_FLUID,
 		sideBarType: SideBarType.LEFT_SIDEBAR_TYPE_DEFAULT,
@@ -28,6 +39,9 @@ const INIT_STATE = () => {
 const Layout = (state: LayoutStateTypes = INIT_STATE(), action: LayoutActionType<string>) => {
 	switch (action.type) {
 		case LayoutActionTypes.CHANGE_LAYOUT_THEME:
+			if (action.payload === LayoutTheme.THEME_DARK || action.payload === LayoutTheme.THEME_LIGHT) {
+				localStorage.setItem(LAYOUT_THEME_STORAGE_KEY, action.payload)
+			}
 			return {
 				...state,
 				layoutTheme: action.payload,

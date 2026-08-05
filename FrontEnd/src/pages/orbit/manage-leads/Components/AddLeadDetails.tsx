@@ -11,32 +11,38 @@ import { InterestLevel, LeadPriority, type CreateLeadRequest } from '@/types/crm
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import AssignSalesPersonFields from './shared/AssignSalesPersonFields'
 import LeadSectionCard from './shared/LeadSectionCard'
 // form validation
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
-
-const LEAD_SOURCES = ['Website', 'Referral', 'Cold Call', 'Walk-in', 'Social Media', 'Partner', 'Other']
 
 const AddLeadDetails: React.FC = () => {
 	const { t } = useTranslation()
 	const navigate = useNavigate()
 	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
 	const [leadStatuses, setLeadStatuses] = useState<{ value: number; text: string }[]>([])
+	const [leadSources, setLeadSources] = useState<{ value: number; text: string }[]>([])
 	const [defaultLeadStatusId, setDefaultLeadStatusId] = useState<number | undefined>()
 
 	useEffect(() => {
-		Promise.all([DropDownService.getSystemUsers(true), DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus)])
-			.then(([userList, statusList]) => {
+		Promise.all([
+			DropDownService.getDirectReportSystemUsers(),
+			DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus),
+			DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadSource),
+		])
+			.then(([userList, statusList, sourceList]) => {
 				setUsers(userList ?? [])
 				const statuses = (statusList ?? []).map((item) => ({ value: item.value, text: item.text }))
 				setLeadStatuses(statuses)
 				const newStatus = statuses.find((s) => s.text === 'New') ?? statuses[0]
 				setDefaultLeadStatusId(newStatus?.value)
+				setLeadSources((sourceList ?? []).map((item) => ({ value: item.value, text: item.text })))
 			})
 			.catch(() => {
 				setUsers([])
 				setLeadStatuses([])
+				setLeadSources([])
 			})
 	}, [])
 
@@ -46,8 +52,13 @@ const AddLeadDetails: React.FC = () => {
 			businessType: yup.string().required('This field cannot be left empty'),
 			ownerName: yup.string().required('This field cannot be left empty'),
 			mobile: yup.string().required('Please enter Mobile Number'),
-			leadSource: yup.string().required('Please select a value'),
-			assignedToUserId: yup.string().required('Please select a value'),
+			leadStatusId: yup.number().required('Please select a value'),
+			assignToYourself: yup.boolean(),
+			assignedToUserId: yup.string().when('assignToYourself', {
+				is: true,
+				then: (schema) => schema.optional().nullable(),
+				otherwise: (schema) => schema.required('Please select a value'),
+			}),
 			email: yup.string().email('Please enter a valid email address').nullable(),
 			website: yup.string().url('Please enter a valid URL').nullable(),
 			GoogleMapsLink: yup.string().url('Please enter a valid URL').nullable(),
@@ -67,7 +78,7 @@ const AddLeadDetails: React.FC = () => {
 		<>
 			<PageBreadcrumbsWithLinks title={t('Manage.Leads.Add_Heading', 'Create Lead')} subNames={[{ label: t('Manage.Leads_Heading', 'Leads'), link: MenuLinks.ManageLeads }, { label: t('Manage.Leads.Add.Breadcrumb', 'Create') }]} />
 
-			<VerticalForm<any> onSubmit={onSubmit} resolver={schemaResolver} defaultValues={{ priority: LeadPriority.Medium, leadStatusId: defaultLeadStatusId, interestLevel: InterestLevel.Medium }} key={defaultLeadStatusId ?? 'loading'}>
+			<VerticalForm<any> onSubmit={onSubmit} resolver={schemaResolver} defaultValues={{ priority: LeadPriority.Medium, leadStatusId: defaultLeadStatusId, interestLevel: InterestLevel.Medium, assignToYourself: false }} key={defaultLeadStatusId ?? 'loading'}>
 				<div className="space-y-6 pb-24">
 					<LeadSectionCard title={t('Manage.Leads.Section_Business', 'Business Information')} subtitle={t('Manage.Leads.Section_Business_Sub', 'Tell us about the business')} icon="ri-building-2-line">
 						<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -109,22 +120,15 @@ const AddLeadDetails: React.FC = () => {
 
 					<LeadSectionCard title={t('Manage.Leads.Section_Sales', 'Sales Information')} subtitle={t('Manage.Leads.Section_Sales_Sub', 'Pipeline and ownership')} icon="ri-line-chart-line">
 						<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-							<FormInput label={t('Manage.Leads.LeadSource', 'Lead Source')} required name="leadSource" type="bottom-sheet" className="form-select">
+							<FormInput label={t('Manage.Leads.LeadSource', 'Lead Source')} required name="leadSourceId" type="bottom-sheet" className="form-select">
 								<option value="">{t('Common.Select', 'Select')}</option>
-								{LEAD_SOURCES.map((s) => (
-									<option key={s} value={s}>
-										{s}
+								{leadSources.map((source) => (
+									<option key={source.value} value={source.value}>
+										{source.text}
 									</option>
 								))}
 							</FormInput>
-							<FormInput label={t('Manage.Leads.AssignedTo', 'Assigned Sales Person')} required name="assignedToUserId" type="bottom-sheet" className="form-select">
-								<option value="">{t('Common.Select', 'Select')}</option>
-								{users.map((u) => (
-									<option key={u.strValue} value={u.strValue}>
-										{u.text}
-									</option>
-								))}
-							</FormInput>
+							<AssignSalesPersonFields users={users} />
 							<FormInput label={t('Manage.Leads.Priority', 'Priority')} name="priority" type="bottom-sheet" className="form-select">
 								{Object.values(LeadPriority)
 									.filter((v) => typeof v === 'number')

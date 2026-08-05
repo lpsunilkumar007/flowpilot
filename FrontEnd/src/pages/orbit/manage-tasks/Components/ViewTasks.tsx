@@ -8,6 +8,7 @@ import { taskService } from '@/services/TaskService'
 import type { ViewTaskResponse } from '@/types/crm/task.types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSearchParams } from 'react-router-dom'
 import { groupTasksByBucket } from '../helpers/taskDisplay.helper'
 import TaskListCard from './TaskListCard'
 
@@ -50,7 +51,12 @@ const TaskSection: React.FC<TaskSectionProps> = ({ title, tasks, updatingTaskId,
 const ViewTasks: React.FC<ViewTasksProps> = ({ reloadTasks }) => {
 	const { t } = useTranslation()
 	const { userHasPermission } = usePermission()
-	const canUpdate = userHasPermission(PermissionTypes.Permissions_ManageTasks_Update)
+	const [searchParams] = useSearchParams()
+	const teamMode = searchParams.get('teamMode')
+	const createdByUserId = searchParams.get('createdByUserId') || undefined
+	const isTeamContext = Boolean(teamMode && createdByUserId)
+	const isIndirectTeam = teamMode === 'indirect'
+	const canUpdate = userHasPermission(PermissionTypes.Permissions_ManageTasks_Update) && !isIndirectTeam
 	const [loading, setLoading] = useState(true)
 	const [tasks, setTasks] = useState<ViewTaskResponse[]>([])
 	const [updatingTaskId, setUpdatingTaskId] = useState<number | null>(null)
@@ -63,13 +69,14 @@ const ViewTasks: React.FC<ViewTasksProps> = ({ reloadTasks }) => {
 					pageSize: PagingVariables.DefaultPageSize,
 					sortField: 'When',
 					sortOrder: 'asc',
+					...(createdByUserId ? { createdByUserId } : {}),
 				})
 				setTasks(res?.data ?? [])
 				return res
 			},
 			{ setLoading }
 		)
-	}, [])
+	}, [createdByUserId])
 
 	useEffect(() => {
 		fetchTasks()
@@ -105,6 +112,13 @@ const ViewTasks: React.FC<ViewTasksProps> = ({ reloadTasks }) => {
 
 	return (
 		<div className="space-y-8">
+			{isTeamContext && (
+				<div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-gray-700 dark:text-gray-200">
+					{isIndirectTeam
+						? t('Manage.Tasks.TeamMode_Indirect', 'Viewing team member tasks (read-only).')
+						: t('Manage.Tasks.TeamMode_Direct', 'Viewing team member tasks.')}
+				</div>
+			)}
 			<TaskSection title={t('Manage.Tasks.Section_Today', 'Today')} tasks={grouped.today} emptyLabel={t('Manage.Tasks.Empty_Today', 'No tasks for today')} {...sectionProps} />
 			<TaskSection title={t('Manage.Tasks.Section_Tomorrow', 'Tomorrow')} tasks={grouped.tomorrow} emptyLabel={t('Manage.Tasks.Empty_Tomorrow', 'No tasks for tomorrow')} {...sectionProps} />
 			<TaskSection title={t('Manage.Tasks.Section_Overdue', 'Overdue')} tasks={grouped.overdue} emptyLabel={t('Manage.Tasks.Empty_Overdue', 'No overdue tasks')} {...sectionProps} />

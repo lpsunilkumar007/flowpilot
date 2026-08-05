@@ -12,6 +12,7 @@ public static class Startup
             options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
 
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
             options.JsonSerializerOptions.WriteIndented = false;
             options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
 

@@ -9,7 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Migrators.PostgreSQL.Migrations
+namespace Migrators.PostgreSQL.Migrations.ApplicationDb
 {
     [DbContext(typeof(ApplicationDbContext))]
     partial class ApplicationDbContextModelSnapshot : ModelSnapshot
@@ -858,6 +858,9 @@ namespace Migrators.PostgreSQL.Migrations
                     b.Property<Guid?>("FKLastModifiedBy")
                         .HasColumnType("uuid");
 
+                    b.Property<int>("FKLeadSourceId")
+                        .HasColumnType("integer");
+
                     b.Property<int>("FKLeadStatusId")
                         .HasColumnType("integer");
 
@@ -887,10 +890,6 @@ namespace Migrators.PostgreSQL.Migrations
 
                     b.Property<decimal?>("Latitude")
                         .HasColumnType("numeric");
-
-                    b.Property<string>("LeadSource")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<decimal?>("Longitude")
                         .HasColumnType("numeric");
@@ -929,6 +928,8 @@ namespace Migrators.PostgreSQL.Migrations
                         .HasColumnType("text");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FKLeadSourceId");
 
                     b.HasIndex("FKLeadStatusId");
 
@@ -1791,11 +1792,19 @@ namespace Migrators.PostgreSQL.Migrations
 
             modelBuilder.Entity("FlowPilot.Domain.CRM.Leads", b =>
                 {
+                    b.HasOne("FlowPilot.Domain.LookUp.LookUpCodeValues", "LeadSource")
+                        .WithMany()
+                        .HasForeignKey("FKLeadSourceId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
                     b.HasOne("FlowPilot.Domain.LookUp.LookUpCodeValues", "LeadStatus")
                         .WithMany()
                         .HasForeignKey("FKLeadStatusId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("LeadSource");
 
                     b.Navigation("LeadStatus");
                 });

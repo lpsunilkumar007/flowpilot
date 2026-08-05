@@ -1,6 +1,6 @@
+import { MenuLinks } from '@/constants/menu'
 import React from 'react'
 import PrivateRoute from './PrivateRoute'
-import { MenuLinks } from '@/constants/menu'
 import type { RoutesProps } from './utils'
 
 // Static imports (orbit)
@@ -32,6 +32,7 @@ const AddLead = React.lazy(() => import('@/pages/orbit/manage-leads/Components/A
 const EditLeadLandingPage = React.lazy(() => import('@/pages/orbit/manage-leads/Components/EditLeadLandingPage'))
 const ManageTasks = React.lazy(() => import('@/pages/orbit/manage-tasks'))
 const ManageSalesPipeline = React.lazy(() => import('@/pages/orbit/manage-sales-pipeline'))
+const MyTeam = React.lazy(() => import('@/pages/orbit/my-team'))
 const ManageLanguage = React.lazy(() => import('@/pages/orbit/manage-language'))
 const ManageLanguageLocalizations = React.lazy(() => import('@/pages/orbit/manage-language/Components/ViewLocalizationPage'))
 const ViewSubMenus = React.lazy(() => import('@/pages/orbit/view-sub-menus'))
@@ -215,6 +216,12 @@ const orbitCrmRoutes: RoutesProps = {
 			path: MenuLinks.SalesPipeline,
 			name: 'sales_pipeline',
 			element: <ManageSalesPipeline />,
+			route: PrivateRoute,
+		},
+		{
+			path: MenuLinks.MyTeam,
+			name: 'my_team',
+			element: <MyTeam />,
 			route: PrivateRoute,
 		},
 	],

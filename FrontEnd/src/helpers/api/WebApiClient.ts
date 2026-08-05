@@ -9,241 +9,6 @@
 
 import moment from 'moment';
 
-export class NexusLookUpClient {
-    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
-    private baseUrl: string;
-    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
-
-    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
-        this.http = http ? http : window as any;
-        this.baseUrl = baseUrl ?? "https://localhost:7027";
-    }
-
-    /**
-     * Retrieve all look-ups
-     * @param api_version (optional) 
-     */
-    getLookUpCodes(api_version: string | null | undefined): Promise<ViewNexusLookUpsResponse[]> {
-        let url_ = this.baseUrl + "/nexus-lookup/get-look-ups?";
-        if (api_version !== undefined && api_version !== null)
-            url_ += "api-version=" + encodeURIComponent("" + api_version) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetLookUpCodes(_response);
-        });
-    }
-
-    protected processGetLookUpCodes(response: Response): Promise<ViewNexusLookUpsResponse[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(ViewNexusLookUpsResponse.fromJS(item));
-            }
-            else {
-                result200 = null as any;
-            }
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<ViewNexusLookUpsResponse[]>(null as any);
-    }
-
-    /**
-     * Retrieve look-up values
-     * @param api_version (optional) 
-     */
-    getLookUpCodeValues(api_version: string | null | undefined, request: SearchNexusLookUpCodeValuesRequest): Promise<PaginationResponseOfViewNexusLookUpCodeValuesResponse> {
-        let url_ = this.baseUrl + "/nexus-lookup/get-look-up-values?";
-        if (api_version !== undefined && api_version !== null)
-            url_ += "api-version=" + encodeURIComponent("" + api_version) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetLookUpCodeValues(_response);
-        });
-    }
-
-    protected processGetLookUpCodeValues(response: Response): Promise<PaginationResponseOfViewNexusLookUpCodeValuesResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = PaginationResponseOfViewNexusLookUpCodeValuesResponse.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<PaginationResponseOfViewNexusLookUpCodeValuesResponse>(null as any);
-    }
-
-    /**
-     * Create a new item for look-up
-     * @param api_version (optional) 
-     */
-    createLookUpCodeValue(api_version: string | null | undefined, request: CreateNexusLookUpCodeValueRequest): Promise<string> {
-        let url_ = this.baseUrl + "/nexus-lookup/create-look-up-value?";
-        if (api_version !== undefined && api_version !== null)
-            url_ += "api-version=" + encodeURIComponent("" + api_version) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processCreateLookUpCodeValue(_response);
-        });
-    }
-
-    protected processCreateLookUpCodeValue(response: Response): Promise<string> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : null as any;
-    
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<string>(null as any);
-    }
-
-    /**
-     * Get look-up value by id
-     * @param api_version (optional) 
-     */
-    getLookUpCodeValueById(id: number, api_version: string | null | undefined): Promise<ViewNexusLookUpCodeValuesResponse> {
-        let url_ = this.baseUrl + "/nexus-lookup/get-look-up-value/{id}?";
-        if (id === undefined || id === null)
-            throw new globalThis.Error("The parameter 'id' must be defined.");
-        url_ = url_.replace("{id}", encodeURIComponent("" + id));
-        if (api_version !== undefined && api_version !== null)
-            url_ += "api-version=" + encodeURIComponent("" + api_version) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetLookUpCodeValueById(_response);
-        });
-    }
-
-    protected processGetLookUpCodeValueById(response: Response): Promise<ViewNexusLookUpCodeValuesResponse> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            result200 = ViewNexusLookUpCodeValuesResponse.fromJS(resultData200);
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<ViewNexusLookUpCodeValuesResponse>(null as any);
-    }
-
-    /**
-     * Update look-up value
-     * @param api_version (optional) 
-     */
-    updateLookUpCodeValue(api_version: string | null | undefined, request: UpdateNexusLookUpCodeValueRequest): Promise<string> {
-        let url_ = this.baseUrl + "/nexus-lookup/update-look-up-value?";
-        if (api_version !== undefined && api_version !== null)
-            url_ += "api-version=" + encodeURIComponent("" + api_version) + "&";
-        url_ = url_.replace(/[?&]$/, "");
-
-        const content_ = JSON.stringify(request);
-
-        let options_: RequestInit = {
-            body: content_,
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processUpdateLookUpCodeValue(_response);
-        });
-    }
-
-    protected processUpdateLookUpCodeValue(response: Response): Promise<string> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : null as any;
-    
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<string>(null as any);
-    }
-}
-
 export class DataControllersClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -375,6 +140,50 @@ export class DataControllersClient {
     }
 
     protected processGetSystemUsers(response: Response): Promise<UserDropDownItemResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(UserDropDownItemResponse.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<UserDropDownItemResponse[]>(null as any);
+    }
+
+    /**
+     * Retrieve system users who report directly to the current user
+     */
+    getDirectReportSystemUsers(): Promise<UserDropDownItemResponse[]> {
+        let url_ = this.baseUrl + "/api/datacontrollers/system-users-direct-reports";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetDirectReportSystemUsers(_response);
+        });
+    }
+
+    protected processGetDirectReportSystemUsers(response: Response): Promise<UserDropDownItemResponse[]> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -889,7 +698,8 @@ export class SettingsClient {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-                result200 = resultData200 !== undefined ? resultData200 : null;
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -1369,6 +1179,290 @@ export class LookUpClient {
         }
         return Promise.resolve<string>(null as any);
     }
+
+    /**
+     * Get address autocomplete suggestions
+     * @param input (optional) 
+     */
+    getAddressSuggestions(input: string | undefined): Promise<DropDownStrValuePlaceResponse[]> {
+        let url_ = this.baseUrl + "/api/v1/lookup/address-autofill?";
+        if (input === null)
+            throw new globalThis.Error("The parameter 'input' cannot be null.");
+        else if (input !== undefined)
+            url_ += "input=" + encodeURIComponent("" + input) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetAddressSuggestions(_response);
+        });
+    }
+
+    protected processGetAddressSuggestions(response: Response): Promise<DropDownStrValuePlaceResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(DropDownStrValuePlaceResponse.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<DropDownStrValuePlaceResponse[]>(null as any);
+    }
+}
+
+export class NexusLookUpClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:7027";
+    }
+
+    /**
+     * Retrieve all look-ups
+     * @param api_version (optional) 
+     */
+    getLookUpCodes(api_version: string | null | undefined): Promise<ViewNexusLookUpsResponse[]> {
+        let url_ = this.baseUrl + "/nexus-lookup/get-look-ups?";
+        if (api_version !== undefined && api_version !== null)
+            url_ += "api-version=" + encodeURIComponent("" + api_version) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetLookUpCodes(_response);
+        });
+    }
+
+    protected processGetLookUpCodes(response: Response): Promise<ViewNexusLookUpsResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ViewNexusLookUpsResponse.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewNexusLookUpsResponse[]>(null as any);
+    }
+
+    /**
+     * Retrieve look-up values
+     * @param api_version (optional) 
+     */
+    getLookUpCodeValues(api_version: string | null | undefined, request: SearchNexusLookUpCodeValuesRequest): Promise<PaginationResponseOfViewNexusLookUpCodeValuesResponse> {
+        let url_ = this.baseUrl + "/nexus-lookup/get-look-up-values?";
+        if (api_version !== undefined && api_version !== null)
+            url_ += "api-version=" + encodeURIComponent("" + api_version) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetLookUpCodeValues(_response);
+        });
+    }
+
+    protected processGetLookUpCodeValues(response: Response): Promise<PaginationResponseOfViewNexusLookUpCodeValuesResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PaginationResponseOfViewNexusLookUpCodeValuesResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<PaginationResponseOfViewNexusLookUpCodeValuesResponse>(null as any);
+    }
+
+    /**
+     * Create a new item for look-up
+     * @param api_version (optional) 
+     */
+    createLookUpCodeValue(api_version: string | null | undefined, request: CreateNexusLookUpCodeValueRequest): Promise<string> {
+        let url_ = this.baseUrl + "/nexus-lookup/create-look-up-value?";
+        if (api_version !== undefined && api_version !== null)
+            url_ += "api-version=" + encodeURIComponent("" + api_version) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreateLookUpCodeValue(_response);
+        });
+    }
+
+    protected processCreateLookUpCodeValue(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Get look-up value by id
+     * @param api_version (optional) 
+     */
+    getLookUpCodeValueById(id: number, api_version: string | null | undefined): Promise<ViewNexusLookUpCodeValuesResponse> {
+        let url_ = this.baseUrl + "/nexus-lookup/get-look-up-value/{id}?";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (api_version !== undefined && api_version !== null)
+            url_ += "api-version=" + encodeURIComponent("" + api_version) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetLookUpCodeValueById(_response);
+        });
+    }
+
+    protected processGetLookUpCodeValueById(response: Response): Promise<ViewNexusLookUpCodeValuesResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ViewNexusLookUpCodeValuesResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewNexusLookUpCodeValuesResponse>(null as any);
+    }
+
+    /**
+     * Update look-up value
+     * @param api_version (optional) 
+     */
+    updateLookUpCodeValue(api_version: string | null | undefined, request: UpdateNexusLookUpCodeValueRequest): Promise<string> {
+        let url_ = this.baseUrl + "/nexus-lookup/update-look-up-value?";
+        if (api_version !== undefined && api_version !== null)
+            url_ += "api-version=" + encodeURIComponent("" + api_version) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdateLookUpCodeValue(_response);
+        });
+    }
+
+    protected processUpdateLookUpCodeValue(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
 }
 
 export class LocalizationClient {
@@ -1751,6 +1845,140 @@ export class LocalizationClient {
             });
         }
         return Promise.resolve<string>(null as any);
+    }
+}
+
+export class MyTeamClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:7027";
+    }
+
+    /**
+     * Get whether the current user has direct or indirect reports.
+     */
+    getSummary(): Promise<MyTeamSummaryResponse> {
+        let url_ = this.baseUrl + "/api/myteam/summary";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetSummary(_response);
+        });
+    }
+
+    protected processGetSummary(response: Response): Promise<MyTeamSummaryResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MyTeamSummaryResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<MyTeamSummaryResponse>(null as any);
+    }
+
+    /**
+     * List direct and indirect team members for the current user.
+     */
+    getMembers(): Promise<MyTeamMemberResponse[]> {
+        let url_ = this.baseUrl + "/api/myteam";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetMembers(_response);
+        });
+    }
+
+    protected processGetMembers(response: Response): Promise<MyTeamMemberResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(MyTeamMemberResponse.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<MyTeamMemberResponse[]>(null as any);
+    }
+
+    /**
+     * Aggregate lead/task status pies for Direct or Indirect reports.
+     * @param relation (optional) 
+     */
+    getStats(relation: MyTeamRelation | undefined): Promise<MyTeamStatsResponse> {
+        let url_ = this.baseUrl + "/api/myteam/stats?";
+        if (relation === null)
+            throw new globalThis.Error("The parameter 'relation' cannot be null.");
+        else if (relation !== undefined)
+            url_ += "relation=" + encodeURIComponent("" + relation) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetStats(_response);
+        });
+    }
+
+    protected processGetStats(response: Response): Promise<MyTeamStatsResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = MyTeamStatsResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<MyTeamStatsResponse>(null as any);
     }
 }
 
@@ -4311,6 +4539,1256 @@ export class EmailTemplateClient {
     }
 }
 
+export class LeadClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:7027";
+    }
+
+    /**
+     * Search leads
+     * @param filterType (optional) 
+     * @param searchText (optional) 
+     * @param assignedToUserId (optional) 
+     * @param fromDate (optional) 
+     * @param toDate (optional) 
+     * @param pageNumber (optional) 
+     * @param pageSize (optional) 
+     * @param sortOrder (optional) 
+     * @param sortField (optional) 
+     */
+    search(filterType: LeadFilterType | undefined, searchText: string | null | undefined, assignedToUserId: string | null | undefined, fromDate: moment.Moment | null | undefined, toDate: moment.Moment | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortOrder: string | null | undefined, sortField: string | null | undefined): Promise<PaginationResponseOfViewLeadListResponse> {
+        let url_ = this.baseUrl + "/api/v1/lead?";
+        if (filterType === null)
+            throw new globalThis.Error("The parameter 'filterType' cannot be null.");
+        else if (filterType !== undefined)
+            url_ += "FilterType=" + encodeURIComponent("" + filterType) + "&";
+        if (searchText !== undefined && searchText !== null)
+            url_ += "SearchText=" + encodeURIComponent("" + searchText) + "&";
+        if (assignedToUserId !== undefined && assignedToUserId !== null)
+            url_ += "AssignedToUserId=" + encodeURIComponent("" + assignedToUserId) + "&";
+        if (fromDate !== undefined && fromDate !== null)
+            url_ += "FromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
+        if (toDate !== undefined && toDate !== null)
+            url_ += "ToDate=" + encodeURIComponent(toDate ? "" + toDate.toISOString() : "") + "&";
+        if (pageNumber === null)
+            throw new globalThis.Error("The parameter 'pageNumber' cannot be null.");
+        else if (pageNumber !== undefined)
+            url_ += "PageNumber=" + encodeURIComponent("" + pageNumber) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (sortOrder !== undefined && sortOrder !== null)
+            url_ += "sortOrder=" + encodeURIComponent("" + sortOrder) + "&";
+        if (sortField !== undefined && sortField !== null)
+            url_ += "sortField=" + encodeURIComponent("" + sortField) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSearch(_response);
+        });
+    }
+
+    protected processSearch(response: Response): Promise<PaginationResponseOfViewLeadListResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PaginationResponseOfViewLeadListResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<PaginationResponseOfViewLeadListResponse>(null as any);
+    }
+
+    /**
+     * Create a new lead
+     */
+    create(request: CreateLeadRequest): Promise<CreateLeadResponse> {
+        let url_ = this.baseUrl + "/api/v1/lead";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreate(_response);
+        });
+    }
+
+    protected processCreate(response: Response): Promise<CreateLeadResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateLeadResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CreateLeadResponse>(null as any);
+    }
+
+    /**
+     * Get today's follow-ups
+     */
+    getTodayFollowUps(): Promise<ViewLeadListResponse[]> {
+        let url_ = this.baseUrl + "/api/v1/lead/followups/today";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetTodayFollowUps(_response);
+        });
+    }
+
+    protected processGetTodayFollowUps(response: Response): Promise<ViewLeadListResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ViewLeadListResponse.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewLeadListResponse[]>(null as any);
+    }
+
+    /**
+     * Get overdue follow-ups
+     */
+    getOverdueFollowUps(): Promise<ViewLeadListResponse[]> {
+        let url_ = this.baseUrl + "/api/v1/lead/followups/overdue";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetOverdueFollowUps(_response);
+        });
+    }
+
+    protected processGetOverdueFollowUps(response: Response): Promise<ViewLeadListResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ViewLeadListResponse.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewLeadListResponse[]>(null as any);
+    }
+
+    /**
+     * Get lead detail by id
+     */
+    getById(id: number): Promise<ViewLeadDetailResponse> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetById(_response);
+        });
+    }
+
+    protected processGetById(response: Response): Promise<ViewLeadDetailResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ViewLeadDetailResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewLeadDetailResponse>(null as any);
+    }
+
+    /**
+     * Update lead
+     */
+    update(id: number, request: UpdateLeadRequest): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdate(_response);
+        });
+    }
+
+    protected processUpdate(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Update lead status
+     */
+    updateStatus(id: number, request: UpdateLeadStatusRequest): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}/status";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdateStatus(_response);
+        });
+    }
+
+    protected processUpdateStatus(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Assign or reassign lead
+     */
+    assign(id: number, request: AssignLeadRequest): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}/assign";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processAssign(_response);
+        });
+    }
+
+    protected processAssign(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Update lead next follow-up date
+     */
+    updateFollowUpDate(id: number, request: UpdateLeadFollowUpDateRequest): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}/followup-date";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdateFollowUpDate(_response);
+        });
+    }
+
+    protected processUpdateFollowUpDate(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Get lead activity timeline
+     */
+    getActivities(id: number): Promise<ViewLeadActivityResponse[]> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}/activities";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetActivities(_response);
+        });
+    }
+
+    protected processGetActivities(response: Response): Promise<ViewLeadActivityResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ViewLeadActivityResponse.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewLeadActivityResponse[]>(null as any);
+    }
+
+    /**
+     * Add lead activity
+     */
+    createActivity(id: number, request: CreateLeadActivityRequest): Promise<ViewLeadActivityResponse> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}/activities";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreateActivity(_response);
+        });
+    }
+
+    protected processCreateActivity(response: Response): Promise<ViewLeadActivityResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ViewLeadActivityResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewLeadActivityResponse>(null as any);
+    }
+
+    /**
+     * Get lead notes
+     */
+    getNotes(id: number): Promise<ViewEntityNoteResponse[]> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}/notes";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetNotes(_response);
+        });
+    }
+
+    protected processGetNotes(response: Response): Promise<ViewEntityNoteResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ViewEntityNoteResponse.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewEntityNoteResponse[]>(null as any);
+    }
+
+    /**
+     * Add lead note
+     */
+    createNote(id: number, request: CreateEntityNoteRequest): Promise<ViewEntityNoteResponse> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}/notes";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreateNote(_response);
+        });
+    }
+
+    protected processCreateNote(response: Response): Promise<ViewEntityNoteResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ViewEntityNoteResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewEntityNoteResponse>(null as any);
+    }
+}
+
+export class LeadVisitClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:7027";
+    }
+
+    /**
+     * Search lead visits
+     */
+    search(request: SearchLeadVisitRequest): Promise<PaginationResponseOfViewLeadVisitResponse> {
+        let url_ = this.baseUrl + "/api/v1/leadvisit/search";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSearch(_response);
+        });
+    }
+
+    protected processSearch(response: Response): Promise<PaginationResponseOfViewLeadVisitResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PaginationResponseOfViewLeadVisitResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<PaginationResponseOfViewLeadVisitResponse>(null as any);
+    }
+
+    /**
+     * Get lead visit by id
+     */
+    getById(id: number): Promise<ViewLeadVisitResponse> {
+        let url_ = this.baseUrl + "/api/v1/leadvisit/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetById(_response);
+        });
+    }
+
+    protected processGetById(response: Response): Promise<ViewLeadVisitResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ViewLeadVisitResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewLeadVisitResponse>(null as any);
+    }
+
+    /**
+     * Create a new lead visit
+     */
+    create(request: CreateLeadVisitRequest): Promise<CreateLeadVisitResponse> {
+        let url_ = this.baseUrl + "/api/v1/leadvisit/create";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreate(_response);
+        });
+    }
+
+    protected processCreate(response: Response): Promise<CreateLeadVisitResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateLeadVisitResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CreateLeadVisitResponse>(null as any);
+    }
+
+    /**
+     * Create a new lead with visit
+     */
+    createWithLead(request: CreateLeadWithVisitRequest): Promise<CreateLeadWithVisitResponse> {
+        let url_ = this.baseUrl + "/api/v1/leadvisit/create-with-lead";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreateWithLead(_response);
+        });
+    }
+
+    protected processCreateWithLead(response: Response): Promise<CreateLeadWithVisitResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateLeadWithVisitResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CreateLeadWithVisitResponse>(null as any);
+    }
+
+    /**
+     * Update a lead with visit
+     */
+    updateWithLead(id: number, request: UpdateLeadWithVisitRequest): Promise<UpdateLeadWithVisitResponse> {
+        let url_ = this.baseUrl + "/api/v1/leadvisit/update-with-lead/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdateWithLead(_response);
+        });
+    }
+
+    protected processUpdateWithLead(response: Response): Promise<UpdateLeadWithVisitResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = UpdateLeadWithVisitResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<UpdateLeadWithVisitResponse>(null as any);
+    }
+
+    /**
+     * Log a GPS point for a lead visit
+     */
+    logGps(id: number, request: LogGpsRequest): Promise<ViewGpsLogResponse> {
+        let url_ = this.baseUrl + "/api/v1/leadvisit/{id}/gps";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processLogGps(_response);
+        });
+    }
+
+    protected processLogGps(response: Response): Promise<ViewGpsLogResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ViewGpsLogResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewGpsLogResponse>(null as any);
+    }
+
+    /**
+     * Add an image to a lead visit
+     */
+    addImage(id: number, request: AddLeadVisitImageRequest): Promise<ViewLeadImageResponse> {
+        let url_ = this.baseUrl + "/api/v1/leadvisit/{id}/images";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processAddImage(_response);
+        });
+    }
+
+    protected processAddImage(response: Response): Promise<ViewLeadImageResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ViewLeadImageResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewLeadImageResponse>(null as any);
+    }
+
+    /**
+     * Delete lead visit
+     */
+    delete(id: number): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/leadvisit/delete/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDelete(_response);
+        });
+    }
+
+    protected processDelete(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+}
+
+export class TaskClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:7027";
+    }
+
+    /**
+     * Search tasks
+     * @param searchText (optional) 
+     * @param bucket (optional) 
+     * @param type (optional) 
+     * @param priority (optional) 
+     * @param createdByUserId (optional) When set, returns tasks created by this user (subject to reporting hierarchy).
+     * @param pageNumber (optional) 
+     * @param pageSize (optional) 
+     * @param sortOrder (optional) 
+     * @param sortField (optional) 
+     */
+    search(searchText: string | null | undefined, bucket: TaskBucket | null | undefined, type: TaskType | null | undefined, priority: TaskPriority | null | undefined, createdByUserId: string | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortOrder: string | null | undefined, sortField: string | null | undefined): Promise<PaginationResponseOfViewTaskResponse> {
+        let url_ = this.baseUrl + "/api/v1/task?";
+        if (searchText !== undefined && searchText !== null)
+            url_ += "SearchText=" + encodeURIComponent("" + searchText) + "&";
+        if (bucket !== undefined && bucket !== null)
+            url_ += "Bucket=" + encodeURIComponent("" + bucket) + "&";
+        if (type !== undefined && type !== null)
+            url_ += "Type=" + encodeURIComponent("" + type) + "&";
+        if (priority !== undefined && priority !== null)
+            url_ += "Priority=" + encodeURIComponent("" + priority) + "&";
+        if (createdByUserId !== undefined && createdByUserId !== null)
+            url_ += "CreatedByUserId=" + encodeURIComponent("" + createdByUserId) + "&";
+        if (pageNumber === null)
+            throw new globalThis.Error("The parameter 'pageNumber' cannot be null.");
+        else if (pageNumber !== undefined)
+            url_ += "PageNumber=" + encodeURIComponent("" + pageNumber) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (sortOrder !== undefined && sortOrder !== null)
+            url_ += "sortOrder=" + encodeURIComponent("" + sortOrder) + "&";
+        if (sortField !== undefined && sortField !== null)
+            url_ += "sortField=" + encodeURIComponent("" + sortField) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSearch(_response);
+        });
+    }
+
+    protected processSearch(response: Response): Promise<PaginationResponseOfViewTaskResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PaginationResponseOfViewTaskResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<PaginationResponseOfViewTaskResponse>(null as any);
+    }
+
+    /**
+     * Create a new task
+     */
+    create(request: CreateTaskRequest): Promise<CreateTaskResponse> {
+        let url_ = this.baseUrl + "/api/v1/task";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreate(_response);
+        });
+    }
+
+    protected processCreate(response: Response): Promise<CreateTaskResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateTaskResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CreateTaskResponse>(null as any);
+    }
+
+    /**
+     * Get task by id
+     */
+    getById(id: number): Promise<ViewTaskResponse> {
+        let url_ = this.baseUrl + "/api/v1/task/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetById(_response);
+        });
+    }
+
+    protected processGetById(response: Response): Promise<ViewTaskResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ViewTaskResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewTaskResponse>(null as any);
+    }
+
+    /**
+     * Update task
+     */
+    update(id: number, request: UpdateTaskRequest): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/task/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdate(_response);
+        });
+    }
+
+    protected processUpdate(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Delete task
+     */
+    delete(id: number): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/task/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDelete(_response);
+        });
+    }
+
+    protected processDelete(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Mark task completed
+     */
+    markCompleted(id: number, request: MarkTaskCompletedRequest): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/task/{id}/completed";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processMarkCompleted(_response);
+        });
+    }
+
+    protected processMarkCompleted(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+}
+
 export class AppointmentRequestClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -4745,359 +6223,6 @@ export class ParticipantRequestClient {
     }
 }
 
-export class ViewNexusLookUpsResponse implements IViewNexusLookUpsResponse {
-    id!: number;
-    lookUpCodeType!: NexusLookUpCodeTypes;
-    description?: string | undefined;
-
-    constructor(data?: IViewNexusLookUpsResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.lookUpCodeType = _data["lookUpCodeType"];
-            this.description = _data["description"];
-        }
-    }
-
-    static fromJS(data: any): ViewNexusLookUpsResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new ViewNexusLookUpsResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["lookUpCodeType"] = this.lookUpCodeType;
-        data["description"] = this.description;
-        return data;
-    }
-}
-
-export interface IViewNexusLookUpsResponse {
-    id: number;
-    lookUpCodeType: NexusLookUpCodeTypes;
-    description?: string | undefined;
-}
-
-export enum NexusLookUpCodeTypes {
-    UserTimeZone = "UserTimeZone",
-}
-
-export class PaginationResponseOfViewNexusLookUpCodeValuesResponse implements IPaginationResponseOfViewNexusLookUpCodeValuesResponse {
-    data?: ViewNexusLookUpCodeValuesResponse[];
-    currentPage?: number;
-    totalPages?: number;
-    totalCount?: number;
-    pageSize?: number;
-    hasPreviousPage?: boolean;
-    hasNextPage?: boolean;
-
-    constructor(data?: IPaginationResponseOfViewNexusLookUpCodeValuesResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            if (Array.isArray(_data["data"])) {
-                this.data = [] as any;
-                for (let item of _data["data"])
-                    this.data!.push(ViewNexusLookUpCodeValuesResponse.fromJS(item));
-            }
-            this.currentPage = _data["currentPage"];
-            this.totalPages = _data["totalPages"];
-            this.totalCount = _data["totalCount"];
-            this.pageSize = _data["pageSize"];
-            this.hasPreviousPage = _data["hasPreviousPage"];
-            this.hasNextPage = _data["hasNextPage"];
-        }
-    }
-
-    static fromJS(data: any): PaginationResponseOfViewNexusLookUpCodeValuesResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new PaginationResponseOfViewNexusLookUpCodeValuesResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        if (Array.isArray(this.data)) {
-            data["data"] = [];
-            for (let item of this.data)
-                data["data"].push(item ? item.toJSON() : undefined as any);
-        }
-        data["currentPage"] = this.currentPage;
-        data["totalPages"] = this.totalPages;
-        data["totalCount"] = this.totalCount;
-        data["pageSize"] = this.pageSize;
-        data["hasPreviousPage"] = this.hasPreviousPage;
-        data["hasNextPage"] = this.hasNextPage;
-        return data;
-    }
-}
-
-export interface IPaginationResponseOfViewNexusLookUpCodeValuesResponse {
-    data?: ViewNexusLookUpCodeValuesResponse[];
-    currentPage?: number;
-    totalPages?: number;
-    totalCount?: number;
-    pageSize?: number;
-    hasPreviousPage?: boolean;
-    hasNextPage?: boolean;
-}
-
-export class ViewNexusLookUpCodeValuesResponse implements IViewNexusLookUpCodeValuesResponse {
-    id!: number;
-    lookUpValue!: string;
-    displayOrder!: number;
-    isActive!: boolean;
-    isDefault!: boolean;
-
-    constructor(data?: IViewNexusLookUpCodeValuesResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.lookUpValue = _data["lookUpValue"];
-            this.displayOrder = _data["displayOrder"];
-            this.isActive = _data["isActive"];
-            this.isDefault = _data["isDefault"];
-        }
-    }
-
-    static fromJS(data: any): ViewNexusLookUpCodeValuesResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new ViewNexusLookUpCodeValuesResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["lookUpValue"] = this.lookUpValue;
-        data["displayOrder"] = this.displayOrder;
-        data["isActive"] = this.isActive;
-        data["isDefault"] = this.isDefault;
-        return data;
-    }
-}
-
-export interface IViewNexusLookUpCodeValuesResponse {
-    id: number;
-    lookUpValue: string;
-    displayOrder: number;
-    isActive: boolean;
-    isDefault: boolean;
-}
-
-export class SearchRequestBaseClass implements ISearchRequestBaseClass {
-    pageNumber?: number;
-    pageSize?: number;
-    sortOrder?: string | undefined;
-    sortField?: string | undefined;
-
-    constructor(data?: ISearchRequestBaseClass) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.pageNumber = _data["pageNumber"];
-            this.pageSize = _data["pageSize"];
-            this.sortOrder = _data["sortOrder"];
-            this.sortField = _data["sortField"];
-        }
-    }
-
-    static fromJS(data: any): SearchRequestBaseClass {
-        data = typeof data === 'object' ? data : {};
-        let result = new SearchRequestBaseClass();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["pageNumber"] = this.pageNumber;
-        data["pageSize"] = this.pageSize;
-        data["sortOrder"] = this.sortOrder;
-        data["sortField"] = this.sortField;
-        return data;
-    }
-}
-
-export interface ISearchRequestBaseClass {
-    pageNumber?: number;
-    pageSize?: number;
-    sortOrder?: string | undefined;
-    sortField?: string | undefined;
-}
-
-export class SearchNexusLookUpCodeValuesRequest extends SearchRequestBaseClass implements ISearchNexusLookUpCodeValuesRequest {
-    type!: NexusLookUpCodeTypes;
-
-    constructor(data?: ISearchNexusLookUpCodeValuesRequest) {
-        super(data);
-    }
-
-    override init(_data?: any) {
-        super.init(_data);
-        if (_data) {
-            this.type = _data["type"];
-        }
-    }
-
-    static override fromJS(data: any): SearchNexusLookUpCodeValuesRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new SearchNexusLookUpCodeValuesRequest();
-        result.init(data);
-        return result;
-    }
-
-    override toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["type"] = this.type;
-        super.toJSON(data);
-        return data;
-    }
-}
-
-export interface ISearchNexusLookUpCodeValuesRequest extends ISearchRequestBaseClass {
-    type: NexusLookUpCodeTypes;
-}
-
-export class CreateNexusLookUpCodeValueRequest implements ICreateNexusLookUpCodeValueRequest {
-    lookUpValue!: string;
-    displayOrder!: number;
-    lookUpCodeId?: number;
-    isActive?: boolean;
-    isDefault?: boolean;
-
-    constructor(data?: ICreateNexusLookUpCodeValueRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.lookUpValue = _data["lookUpValue"];
-            this.displayOrder = _data["displayOrder"];
-            this.lookUpCodeId = _data["lookUpCodeId"];
-            this.isActive = _data["isActive"];
-            this.isDefault = _data["isDefault"];
-        }
-    }
-
-    static fromJS(data: any): CreateNexusLookUpCodeValueRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new CreateNexusLookUpCodeValueRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["lookUpValue"] = this.lookUpValue;
-        data["displayOrder"] = this.displayOrder;
-        data["lookUpCodeId"] = this.lookUpCodeId;
-        data["isActive"] = this.isActive;
-        data["isDefault"] = this.isDefault;
-        return data;
-    }
-}
-
-export interface ICreateNexusLookUpCodeValueRequest {
-    lookUpValue: string;
-    displayOrder: number;
-    lookUpCodeId?: number;
-    isActive?: boolean;
-    isDefault?: boolean;
-}
-
-export class UpdateNexusLookUpCodeValueRequest implements IUpdateNexusLookUpCodeValueRequest {
-    id?: number;
-    lookUpValue!: string;
-    displayOrder!: number;
-    isActive?: boolean;
-    isDefault?: boolean;
-
-    constructor(data?: IUpdateNexusLookUpCodeValueRequest) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.id = _data["id"];
-            this.lookUpValue = _data["lookUpValue"];
-            this.displayOrder = _data["displayOrder"];
-            this.isActive = _data["isActive"];
-            this.isDefault = _data["isDefault"];
-        }
-    }
-
-    static fromJS(data: any): UpdateNexusLookUpCodeValueRequest {
-        data = typeof data === 'object' ? data : {};
-        let result = new UpdateNexusLookUpCodeValueRequest();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["id"] = this.id;
-        data["lookUpValue"] = this.lookUpValue;
-        data["displayOrder"] = this.displayOrder;
-        data["isActive"] = this.isActive;
-        data["isDefault"] = this.isDefault;
-        return data;
-    }
-}
-
-export interface IUpdateNexusLookUpCodeValueRequest {
-    id?: number;
-    lookUpValue: string;
-    displayOrder: number;
-    isActive?: boolean;
-    isDefault?: boolean;
-}
-
 export class DropDownItemResponse implements IDropDownItemResponse {
     value!: number;
     text!: string;
@@ -5143,13 +6268,16 @@ export interface IDropDownItemResponse {
 }
 
 export enum LookUpCodeTypes {
-    Temp = "Temp",
-    Temp1 = "Temp1",
     LeadStatus = "LeadStatus",
+    LeadSource = "LeadSource",
+}
+
+export enum NexusLookUpCodeTypes {
+    UserTimeZone = "UserTimeZone",
 }
 
 export class UserDropDownItemResponse implements IUserDropDownItemResponse {
-    text?: string;
+    text!: string;
     strValue?: string | undefined;
     timeZone?: string | undefined;
 
@@ -5187,7 +6315,7 @@ export class UserDropDownItemResponse implements IUserDropDownItemResponse {
 }
 
 export interface IUserDropDownItemResponse {
-    text?: string;
+    text: string;
     strValue?: string | undefined;
     timeZone?: string | undefined;
 }
@@ -5408,9 +6536,9 @@ export enum StripeCurrencyType {
 }
 
 export class GetPaymentStatusResponse implements IGetPaymentStatusResponse {
-    paymentStatus?: StripePaymentStatus;
-    amount?: number;
-    currency?: string;
+    paymentStatus!: StripePaymentStatus;
+    amount!: number;
+    currency!: string;
 
     constructor(data?: IGetPaymentStatusResponse) {
         if (data) {
@@ -5446,9 +6574,9 @@ export class GetPaymentStatusResponse implements IGetPaymentStatusResponse {
 }
 
 export interface IGetPaymentStatusResponse {
-    paymentStatus?: StripePaymentStatus;
-    amount?: number;
-    currency?: string;
+    paymentStatus: StripePaymentStatus;
+    amount: number;
+    currency: string;
 }
 
 export enum StripePaymentStatus {
@@ -5462,10 +6590,10 @@ export class TenantCurrentSubscriptionDetailResponse implements ITenantCurrentSu
     price!: number;
     expiredOn!: moment.Moment;
     paymentPending?: moment.Moment | undefined;
-    isOverDue?: boolean;
+    isOverDue!: boolean;
     fkSubscriptionPlanPKId!: number;
     latePaymentOverDue!: boolean;
-    invoices?: TenantInvoicesResponse[];
+    invoices!: TenantInvoicesResponse[];
 
     constructor(data?: ITenantCurrentSubscriptionDetailResponse) {
         if (data) {
@@ -5473,6 +6601,9 @@ export class TenantCurrentSubscriptionDetailResponse implements ITenantCurrentSu
                 if (data.hasOwnProperty(property))
                     (this as any)[property] = (data as any)[property];
             }
+        }
+        if (!data) {
+            this.invoices = [];
         }
     }
 
@@ -5523,18 +6654,18 @@ export interface ITenantCurrentSubscriptionDetailResponse {
     price: number;
     expiredOn: moment.Moment;
     paymentPending?: moment.Moment | undefined;
-    isOverDue?: boolean;
+    isOverDue: boolean;
     fkSubscriptionPlanPKId: number;
     latePaymentOverDue: boolean;
-    invoices?: TenantInvoicesResponse[];
+    invoices: TenantInvoicesResponse[];
 }
 
 export class TenantInvoicesResponse implements ITenantInvoicesResponse {
-    invoiceId?: number;
-    periodFrom?: moment.Moment;
-    periodTo?: moment.Moment;
-    invoiceStatus?: string;
-    stripeInvoiceUrl?: string;
+    invoiceId!: number;
+    periodFrom!: moment.Moment;
+    periodTo!: moment.Moment;
+    invoiceStatus!: string;
+    stripeInvoiceUrl!: string;
 
     constructor(data?: ITenantInvoicesResponse) {
         if (data) {
@@ -5574,16 +6705,16 @@ export class TenantInvoicesResponse implements ITenantInvoicesResponse {
 }
 
 export interface ITenantInvoicesResponse {
-    invoiceId?: number;
-    periodFrom?: moment.Moment;
-    periodTo?: moment.Moment;
-    invoiceStatus?: string;
-    stripeInvoiceUrl?: string;
+    invoiceId: number;
+    periodFrom: moment.Moment;
+    periodTo: moment.Moment;
+    invoiceStatus: string;
+    stripeInvoiceUrl: string;
 }
 
 export class ViewSettingResponse implements IViewSettingResponse {
     id?: number;
-    settingType?: SettingTypes;
+    settingType!: SettingTypes;
     description?: string | undefined;
 
     constructor(data?: IViewSettingResponse) {
@@ -5621,7 +6752,7 @@ export class ViewSettingResponse implements IViewSettingResponse {
 
 export interface IViewSettingResponse {
     id?: number;
-    settingType?: SettingTypes;
+    settingType: SettingTypes;
     description?: string | undefined;
 }
 
@@ -5632,8 +6763,8 @@ export enum SettingTypes {
 }
 
 export class UpdateSettingsRequest implements IUpdateSettingsRequest {
-    id?: number;
-    settingJson?: string;
+    id!: number;
+    settingJson!: string;
 
     constructor(data?: IUpdateSettingsRequest) {
         if (data) {
@@ -5667,8 +6798,8 @@ export class UpdateSettingsRequest implements IUpdateSettingsRequest {
 }
 
 export interface IUpdateSettingsRequest {
-    id?: number;
-    settingJson?: string;
+    id: number;
+    settingJson: string;
 }
 
 export class AppointmentSettingModels implements IAppointmentSettingModels {
@@ -5765,11 +6896,11 @@ export interface IAppointmentSettingModels {
 
 export class MailDto implements IMailDto {
     to?: string[];
-    subject?: string;
-    body?: string;
-    emailType?: EmailTypes;
-    from?: string;
-    displayName?: string;
+    subject!: string;
+    body!: string;
+    emailType!: EmailTypes;
+    from!: string;
+    displayName!: string;
     replyTo?: string | undefined;
     replyToName?: string | undefined;
     bcc?: string[] | undefined;
@@ -5878,11 +7009,11 @@ export class MailDto implements IMailDto {
 
 export interface IMailDto {
     to?: string[];
-    subject?: string;
-    body?: string;
-    emailType?: EmailTypes;
-    from?: string;
-    displayName?: string;
+    subject: string;
+    body: string;
+    emailType: EmailTypes;
+    from: string;
+    displayName: string;
     replyTo?: string | undefined;
     replyToName?: string | undefined;
     bcc?: string[] | undefined;
@@ -5910,7 +7041,7 @@ export enum EmailTypes {
 
 export class AppointmentColorSetting implements IAppointmentColorSetting {
     appointmentStatus?: AppointmentStatus;
-    backgroundColor?: string;
+    backgroundColor!: string;
 
     constructor(data?: IAppointmentColorSetting) {
         if (data) {
@@ -5945,7 +7076,7 @@ export class AppointmentColorSetting implements IAppointmentColorSetting {
 
 export interface IAppointmentColorSetting {
     appointmentStatus?: AppointmentStatus;
-    backgroundColor?: string;
+    backgroundColor: string;
 }
 
 export enum AppointmentStatus {
@@ -6152,6 +7283,54 @@ export interface IViewTenantResponse {
     id: number;
 }
 
+export class SearchRequestBaseClass implements ISearchRequestBaseClass {
+    pageNumber?: number;
+    pageSize?: number;
+    sortOrder?: string | undefined;
+    sortField?: string | undefined;
+
+    constructor(data?: ISearchRequestBaseClass) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.pageNumber = _data["pageNumber"];
+            this.pageSize = _data["pageSize"];
+            this.sortOrder = _data["sortOrder"];
+            this.sortField = _data["sortField"];
+        }
+    }
+
+    static fromJS(data: any): SearchRequestBaseClass {
+        data = typeof data === 'object' ? data : {};
+        let result = new SearchRequestBaseClass();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["pageNumber"] = this.pageNumber;
+        data["pageSize"] = this.pageSize;
+        data["sortOrder"] = this.sortOrder;
+        data["sortField"] = this.sortField;
+        return data;
+    }
+}
+
+export interface ISearchRequestBaseClass {
+    pageNumber?: number;
+    pageSize?: number;
+    sortOrder?: string | undefined;
+    sortField?: string | undefined;
+}
+
 export class SearchTenantRequest extends SearchRequestBaseClass implements ISearchTenantRequest {
     freeText?: string | undefined;
     isActive?: boolean | undefined;
@@ -6277,11 +7456,11 @@ export interface IGetTenantSubscriptionResponse {
 }
 
 export class TenantSubscriptionInvoiceResponse implements ITenantSubscriptionInvoiceResponse {
-    tenantSubscriptionInvoiceId?: number;
+    tenantSubscriptionInvoiceId!: number;
     stripeInvoiceId?: string | undefined;
-    periodFrom?: moment.Moment;
-    periodTo?: moment.Moment;
-    stripePaymentStatus?: string;
+    periodFrom!: moment.Moment;
+    periodTo!: moment.Moment;
+    stripePaymentStatus!: string;
 
     constructor(data?: ITenantSubscriptionInvoiceResponse) {
         if (data) {
@@ -6321,11 +7500,11 @@ export class TenantSubscriptionInvoiceResponse implements ITenantSubscriptionInv
 }
 
 export interface ITenantSubscriptionInvoiceResponse {
-    tenantSubscriptionInvoiceId?: number;
+    tenantSubscriptionInvoiceId: number;
     stripeInvoiceId?: string | undefined;
-    periodFrom?: moment.Moment;
-    periodTo?: moment.Moment;
-    stripePaymentStatus?: string;
+    periodFrom: moment.Moment;
+    periodTo: moment.Moment;
+    stripePaymentStatus: string;
 }
 
 export class DownloadFileResponse implements IDownloadFileResponse {
@@ -6374,16 +7553,17 @@ export interface IDownloadFileResponse {
 
 export class ViewUserDetailsResponse implements IViewUserDetailsResponse {
     id?: string;
-    userName?: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    isActive?: boolean;
-    emailConfirmed?: boolean;
+    userName!: string;
+    firstName!: string;
+    lastName!: string;
+    email!: string;
+    isActive!: boolean;
+    emailConfirmed!: boolean;
     phoneNumber?: string | undefined;
     imageUrl?: string | undefined;
     timeZone!: string;
     isTwoFactorAuthenticationEnabled?: boolean | undefined;
+    reportsToUserId?: string | undefined;
 
     constructor(data?: IViewUserDetailsResponse) {
         if (data) {
@@ -6407,6 +7587,7 @@ export class ViewUserDetailsResponse implements IViewUserDetailsResponse {
             this.imageUrl = _data["imageUrl"];
             this.timeZone = _data["timeZone"];
             this.isTwoFactorAuthenticationEnabled = _data["isTwoFactorAuthenticationEnabled"];
+            this.reportsToUserId = _data["reportsToUserId"];
         }
     }
 
@@ -6430,22 +7611,24 @@ export class ViewUserDetailsResponse implements IViewUserDetailsResponse {
         data["imageUrl"] = this.imageUrl;
         data["timeZone"] = this.timeZone;
         data["isTwoFactorAuthenticationEnabled"] = this.isTwoFactorAuthenticationEnabled;
+        data["reportsToUserId"] = this.reportsToUserId;
         return data;
     }
 }
 
 export interface IViewUserDetailsResponse {
     id?: string;
-    userName?: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    isActive?: boolean;
-    emailConfirmed?: boolean;
+    userName: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    isActive: boolean;
+    emailConfirmed: boolean;
     phoneNumber?: string | undefined;
     imageUrl?: string | undefined;
     timeZone: string;
     isTwoFactorAuthenticationEnabled?: boolean | undefined;
+    reportsToUserId?: string | undefined;
 }
 
 export class UpdateTenantRequest implements IUpdateTenantRequest {
@@ -6498,7 +7681,7 @@ export interface IUpdateTenantRequest {
 
 export class ViewLookUpsResponse implements IViewLookUpsResponse {
     id?: number;
-    lookUpCodeType?: LookUpCodeTypes;
+    lookUpCodeType!: LookUpCodeTypes;
     description?: string | undefined;
 
     constructor(data?: IViewLookUpsResponse) {
@@ -6536,7 +7719,7 @@ export class ViewLookUpsResponse implements IViewLookUpsResponse {
 
 export interface IViewLookUpsResponse {
     id?: number;
-    lookUpCodeType?: LookUpCodeTypes;
+    lookUpCodeType: LookUpCodeTypes;
     description?: string | undefined;
 }
 
@@ -6610,9 +7793,9 @@ export interface IPaginationResponseOfViewLookUpCodeValuesResponse {
 
 export class ViewLookUpCodeValuesResponse implements IViewLookUpCodeValuesResponse {
     id?: number;
-    lookUpValue?: string;
-    displayOrder?: number;
-    isActive?: boolean;
+    lookUpValue!: string;
+    displayOrder!: number;
+    isActive!: boolean;
 
     constructor(data?: IViewLookUpCodeValuesResponse) {
         if (data) {
@@ -6651,9 +7834,9 @@ export class ViewLookUpCodeValuesResponse implements IViewLookUpCodeValuesRespon
 
 export interface IViewLookUpCodeValuesResponse {
     id?: number;
-    lookUpValue?: string;
-    displayOrder?: number;
-    isActive?: boolean;
+    lookUpValue: string;
+    displayOrder: number;
+    isActive: boolean;
 }
 
 export class SearchLookUpCodeValuesRequest extends SearchRequestBaseClass implements ISearchLookUpCodeValuesRequest {
@@ -6783,6 +7966,400 @@ export interface IUpdateLookUpCodeValueRequest {
     lookUpValue: string;
     displayOrder: number;
     isActive: boolean;
+}
+
+export class DropDownStrValueResponse implements IDropDownStrValueResponse {
+    value!: string;
+    text!: string;
+    isSelected?: boolean;
+
+    constructor(data?: IDropDownStrValueResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.value = _data["value"];
+            this.text = _data["text"];
+            this.isSelected = _data["isSelected"];
+        }
+    }
+
+    static fromJS(data: any): DropDownStrValueResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new DropDownStrValueResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["value"] = this.value;
+        data["text"] = this.text;
+        data["isSelected"] = this.isSelected;
+        return data;
+    }
+}
+
+export interface IDropDownStrValueResponse {
+    value: string;
+    text: string;
+    isSelected?: boolean;
+}
+
+export class DropDownStrValuePlaceResponse extends DropDownStrValueResponse implements IDropDownStrValuePlaceResponse {
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    latitude?: number | undefined;
+    longtitude?: number | undefined;
+
+    constructor(data?: IDropDownStrValuePlaceResponse) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.city = _data["city"];
+            this.state = _data["state"];
+            this.postalCode = _data["postalCode"];
+            this.latitude = _data["latitude"];
+            this.longtitude = _data["longtitude"];
+        }
+    }
+
+    static override fromJS(data: any): DropDownStrValuePlaceResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new DropDownStrValuePlaceResponse();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["city"] = this.city;
+        data["state"] = this.state;
+        data["postalCode"] = this.postalCode;
+        data["latitude"] = this.latitude;
+        data["longtitude"] = this.longtitude;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface IDropDownStrValuePlaceResponse extends IDropDownStrValueResponse {
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    latitude?: number | undefined;
+    longtitude?: number | undefined;
+}
+
+export class ViewNexusLookUpsResponse implements IViewNexusLookUpsResponse {
+    id!: number;
+    lookUpCodeType!: NexusLookUpCodeTypes;
+    description?: string | undefined;
+
+    constructor(data?: IViewNexusLookUpsResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.lookUpCodeType = _data["lookUpCodeType"];
+            this.description = _data["description"];
+        }
+    }
+
+    static fromJS(data: any): ViewNexusLookUpsResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewNexusLookUpsResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["lookUpCodeType"] = this.lookUpCodeType;
+        data["description"] = this.description;
+        return data;
+    }
+}
+
+export interface IViewNexusLookUpsResponse {
+    id: number;
+    lookUpCodeType: NexusLookUpCodeTypes;
+    description?: string | undefined;
+}
+
+export class PaginationResponseOfViewNexusLookUpCodeValuesResponse implements IPaginationResponseOfViewNexusLookUpCodeValuesResponse {
+    data?: ViewNexusLookUpCodeValuesResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+
+    constructor(data?: IPaginationResponseOfViewNexusLookUpCodeValuesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["data"])) {
+                this.data = [] as any;
+                for (let item of _data["data"])
+                    this.data!.push(ViewNexusLookUpCodeValuesResponse.fromJS(item));
+            }
+            this.currentPage = _data["currentPage"];
+            this.totalPages = _data["totalPages"];
+            this.totalCount = _data["totalCount"];
+            this.pageSize = _data["pageSize"];
+            this.hasPreviousPage = _data["hasPreviousPage"];
+            this.hasNextPage = _data["hasNextPage"];
+        }
+    }
+
+    static fromJS(data: any): PaginationResponseOfViewNexusLookUpCodeValuesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginationResponseOfViewNexusLookUpCodeValuesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.data)) {
+            data["data"] = [];
+            for (let item of this.data)
+                data["data"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["currentPage"] = this.currentPage;
+        data["totalPages"] = this.totalPages;
+        data["totalCount"] = this.totalCount;
+        data["pageSize"] = this.pageSize;
+        data["hasPreviousPage"] = this.hasPreviousPage;
+        data["hasNextPage"] = this.hasNextPage;
+        return data;
+    }
+}
+
+export interface IPaginationResponseOfViewNexusLookUpCodeValuesResponse {
+    data?: ViewNexusLookUpCodeValuesResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+}
+
+export class ViewNexusLookUpCodeValuesResponse implements IViewNexusLookUpCodeValuesResponse {
+    id!: number;
+    lookUpValue!: string;
+    displayOrder!: number;
+    isActive!: boolean;
+    isDefault!: boolean;
+
+    constructor(data?: IViewNexusLookUpCodeValuesResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.lookUpValue = _data["lookUpValue"];
+            this.displayOrder = _data["displayOrder"];
+            this.isActive = _data["isActive"];
+            this.isDefault = _data["isDefault"];
+        }
+    }
+
+    static fromJS(data: any): ViewNexusLookUpCodeValuesResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewNexusLookUpCodeValuesResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["lookUpValue"] = this.lookUpValue;
+        data["displayOrder"] = this.displayOrder;
+        data["isActive"] = this.isActive;
+        data["isDefault"] = this.isDefault;
+        return data;
+    }
+}
+
+export interface IViewNexusLookUpCodeValuesResponse {
+    id: number;
+    lookUpValue: string;
+    displayOrder: number;
+    isActive: boolean;
+    isDefault: boolean;
+}
+
+export class SearchNexusLookUpCodeValuesRequest extends SearchRequestBaseClass implements ISearchNexusLookUpCodeValuesRequest {
+    type!: NexusLookUpCodeTypes;
+
+    constructor(data?: ISearchNexusLookUpCodeValuesRequest) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.type = _data["type"];
+        }
+    }
+
+    static override fromJS(data: any): SearchNexusLookUpCodeValuesRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SearchNexusLookUpCodeValuesRequest();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["type"] = this.type;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface ISearchNexusLookUpCodeValuesRequest extends ISearchRequestBaseClass {
+    type: NexusLookUpCodeTypes;
+}
+
+export class CreateNexusLookUpCodeValueRequest implements ICreateNexusLookUpCodeValueRequest {
+    lookUpValue!: string;
+    displayOrder!: number;
+    lookUpCodeId?: number;
+    isActive!: boolean;
+    isDefault!: boolean;
+
+    constructor(data?: ICreateNexusLookUpCodeValueRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.lookUpValue = _data["lookUpValue"];
+            this.displayOrder = _data["displayOrder"];
+            this.lookUpCodeId = _data["lookUpCodeId"];
+            this.isActive = _data["isActive"];
+            this.isDefault = _data["isDefault"];
+        }
+    }
+
+    static fromJS(data: any): CreateNexusLookUpCodeValueRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateNexusLookUpCodeValueRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["lookUpValue"] = this.lookUpValue;
+        data["displayOrder"] = this.displayOrder;
+        data["lookUpCodeId"] = this.lookUpCodeId;
+        data["isActive"] = this.isActive;
+        data["isDefault"] = this.isDefault;
+        return data;
+    }
+}
+
+export interface ICreateNexusLookUpCodeValueRequest {
+    lookUpValue: string;
+    displayOrder: number;
+    lookUpCodeId?: number;
+    isActive: boolean;
+    isDefault: boolean;
+}
+
+export class UpdateNexusLookUpCodeValueRequest implements IUpdateNexusLookUpCodeValueRequest {
+    id?: number;
+    lookUpValue!: string;
+    displayOrder!: number;
+    isActive!: boolean;
+    isDefault!: boolean;
+
+    constructor(data?: IUpdateNexusLookUpCodeValueRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.lookUpValue = _data["lookUpValue"];
+            this.displayOrder = _data["displayOrder"];
+            this.isActive = _data["isActive"];
+            this.isDefault = _data["isDefault"];
+        }
+    }
+
+    static fromJS(data: any): UpdateNexusLookUpCodeValueRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateNexusLookUpCodeValueRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["lookUpValue"] = this.lookUpValue;
+        data["displayOrder"] = this.displayOrder;
+        data["isActive"] = this.isActive;
+        data["isDefault"] = this.isDefault;
+        return data;
+    }
+}
+
+export interface IUpdateNexusLookUpCodeValueRequest {
+    id?: number;
+    lookUpValue: string;
+    displayOrder: number;
+    isActive: boolean;
+    isDefault: boolean;
 }
 
 export class CreateCountryResponse implements ICreateCountryResponse {
@@ -7194,6 +8771,235 @@ export interface IUpdateCountryLocalizationRequest {
     value: string;
 }
 
+export class MyTeamSummaryResponse implements IMyTeamSummaryResponse {
+    hasReports?: boolean;
+    directCount?: number;
+    indirectCount?: number;
+
+    constructor(data?: IMyTeamSummaryResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.hasReports = _data["hasReports"];
+            this.directCount = _data["directCount"];
+            this.indirectCount = _data["indirectCount"];
+        }
+    }
+
+    static fromJS(data: any): MyTeamSummaryResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new MyTeamSummaryResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["hasReports"] = this.hasReports;
+        data["directCount"] = this.directCount;
+        data["indirectCount"] = this.indirectCount;
+        return data;
+    }
+}
+
+export interface IMyTeamSummaryResponse {
+    hasReports?: boolean;
+    directCount?: number;
+    indirectCount?: number;
+}
+
+export class MyTeamMemberResponse implements IMyTeamMemberResponse {
+    userId!: string;
+    firstName!: string;
+    lastName!: string;
+    email?: string | undefined;
+    isActive?: boolean;
+    relation?: MyTeamRelation;
+
+    constructor(data?: IMyTeamMemberResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.userId = _data["userId"];
+            this.firstName = _data["firstName"];
+            this.lastName = _data["lastName"];
+            this.email = _data["email"];
+            this.isActive = _data["isActive"];
+            this.relation = _data["relation"];
+        }
+    }
+
+    static fromJS(data: any): MyTeamMemberResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new MyTeamMemberResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["userId"] = this.userId;
+        data["firstName"] = this.firstName;
+        data["lastName"] = this.lastName;
+        data["email"] = this.email;
+        data["isActive"] = this.isActive;
+        data["relation"] = this.relation;
+        return data;
+    }
+}
+
+export interface IMyTeamMemberResponse {
+    userId: string;
+    firstName: string;
+    lastName: string;
+    email?: string | undefined;
+    isActive?: boolean;
+    relation?: MyTeamRelation;
+}
+
+export enum MyTeamRelation {
+    Direct = "Direct",
+    Indirect = "Indirect",
+}
+
+export class MyTeamStatsResponse implements IMyTeamStatsResponse {
+    leadStatus?: MyTeamStatsSliceResponse[];
+    taskProgress?: MyTeamStatsSliceResponse[];
+    leadInterest?: MyTeamStatsSliceResponse[];
+
+    constructor(data?: IMyTeamStatsResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["leadStatus"])) {
+                this.leadStatus = [] as any;
+                for (let item of _data["leadStatus"])
+                    this.leadStatus!.push(MyTeamStatsSliceResponse.fromJS(item));
+            }
+            if (Array.isArray(_data["taskProgress"])) {
+                this.taskProgress = [] as any;
+                for (let item of _data["taskProgress"])
+                    this.taskProgress!.push(MyTeamStatsSliceResponse.fromJS(item));
+            }
+            if (Array.isArray(_data["leadInterest"])) {
+                this.leadInterest = [] as any;
+                for (let item of _data["leadInterest"])
+                    this.leadInterest!.push(MyTeamStatsSliceResponse.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): MyTeamStatsResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new MyTeamStatsResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.leadStatus)) {
+            data["leadStatus"] = [];
+            for (let item of this.leadStatus)
+                data["leadStatus"].push(item ? item.toJSON() : undefined as any);
+        }
+        if (Array.isArray(this.taskProgress)) {
+            data["taskProgress"] = [];
+            for (let item of this.taskProgress)
+                data["taskProgress"].push(item ? item.toJSON() : undefined as any);
+        }
+        if (Array.isArray(this.leadInterest)) {
+            data["leadInterest"] = [];
+            for (let item of this.leadInterest)
+                data["leadInterest"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IMyTeamStatsResponse {
+    leadStatus?: MyTeamStatsSliceResponse[];
+    taskProgress?: MyTeamStatsSliceResponse[];
+    leadInterest?: MyTeamStatsSliceResponse[];
+}
+
+export class MyTeamStatsSliceResponse implements IMyTeamStatsSliceResponse {
+    key!: string;
+    label!: string;
+    count?: number;
+    memberIds?: string[];
+
+    constructor(data?: IMyTeamStatsSliceResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.key = _data["key"];
+            this.label = _data["label"];
+            this.count = _data["count"];
+            if (Array.isArray(_data["memberIds"])) {
+                this.memberIds = [] as any;
+                for (let item of _data["memberIds"])
+                    this.memberIds!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): MyTeamStatsSliceResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new MyTeamStatsSliceResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["key"] = this.key;
+        data["label"] = this.label;
+        data["count"] = this.count;
+        if (Array.isArray(this.memberIds)) {
+            data["memberIds"] = [];
+            for (let item of this.memberIds)
+                data["memberIds"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IMyTeamStatsSliceResponse {
+    key: string;
+    label: string;
+    count?: number;
+    memberIds?: string[];
+}
+
 export class ViewUserTwoFactorAuthenticationDetailsResponse implements IViewUserTwoFactorAuthenticationDetailsResponse {
     isTwoFactorAuthenticationEnabled!: boolean;
     userTwoFactorAuthenticationType!: UserTwoFactorAuthenticationTypes;
@@ -7535,10 +9341,13 @@ export class SystemPermission implements ISystemPermission {
     description?: string;
     action?: string;
     resource?: string;
-    isBasic?: boolean;
+    isSalesRepresentative?: boolean;
+    isSalesManager?: boolean;
     isRoot?: boolean;
     isAdmin?: boolean;
     name?: string;
+    /** Legacy alias used by older call sites / permission UI filters. */
+    isBasic?: boolean;
 
     constructor(data?: ISystemPermission) {
         if (data) {
@@ -7554,10 +9363,12 @@ export class SystemPermission implements ISystemPermission {
             this.description = _data["description"];
             this.action = _data["action"];
             this.resource = _data["resource"];
-            this.isBasic = _data["isBasic"];
+            this.isSalesRepresentative = _data["isSalesRepresentative"];
+            this.isSalesManager = _data["isSalesManager"];
             this.isRoot = _data["isRoot"];
             this.isAdmin = _data["isAdmin"];
             this.name = _data["name"];
+            this.isBasic = _data["isBasic"];
         }
     }
 
@@ -7573,10 +9384,12 @@ export class SystemPermission implements ISystemPermission {
         data["description"] = this.description;
         data["action"] = this.action;
         data["resource"] = this.resource;
-        data["isBasic"] = this.isBasic;
+        data["isSalesRepresentative"] = this.isSalesRepresentative;
+        data["isSalesManager"] = this.isSalesManager;
         data["isRoot"] = this.isRoot;
         data["isAdmin"] = this.isAdmin;
         data["name"] = this.name;
+        data["isBasic"] = this.isBasic;
         return data;
     }
 }
@@ -7585,10 +9398,13 @@ export interface ISystemPermission {
     description?: string;
     action?: string;
     resource?: string;
-    isBasic?: boolean;
+    isSalesRepresentative?: boolean;
+    isSalesManager?: boolean;
     isRoot?: boolean;
     isAdmin?: boolean;
     name?: string;
+    /** Legacy alias used by older call sites / permission UI filters. */
+    isBasic?: boolean;
 }
 
 export class UpdateRolePermissionsRequest implements IUpdateRolePermissionsRequest {
@@ -7904,8 +9720,8 @@ export enum UserRegistrationType {
 }
 
 export class RegisterUserResponse implements IRegisterUserResponse {
-    userId?: string;
-    message?: string;
+    userId!: string;
+    message!: string;
 
     constructor(data?: IRegisterUserResponse) {
         if (data) {
@@ -7939,8 +9755,8 @@ export class RegisterUserResponse implements IRegisterUserResponse {
 }
 
 export interface IRegisterUserResponse {
-    userId?: string;
-    message?: string;
+    userId: string;
+    message: string;
 }
 
 export class RegisterUserRequest implements IRegisterUserRequest {
@@ -8008,8 +9824,8 @@ export interface IRegisterUserRequest {
 }
 
 export class CreateUserResponse implements ICreateUserResponse {
-    userId?: string;
-    message?: string;
+    userId!: string;
+    message!: string;
 
     constructor(data?: ICreateUserResponse) {
         if (data) {
@@ -8043,8 +9859,8 @@ export class CreateUserResponse implements ICreateUserResponse {
 }
 
 export interface ICreateUserResponse {
-    userId?: string;
-    message?: string;
+    userId: string;
+    message: string;
 }
 
 export class CreateUserRequest implements ICreateUserRequest {
@@ -8055,6 +9871,7 @@ export class CreateUserRequest implements ICreateUserRequest {
     confirmPassword!: string;
     phoneNumber?: string | undefined;
     timeZone!: string;
+    reportsToUserId?: string | undefined;
 
     constructor(data?: ICreateUserRequest) {
         if (data) {
@@ -8074,6 +9891,7 @@ export class CreateUserRequest implements ICreateUserRequest {
             this.confirmPassword = _data["confirmPassword"];
             this.phoneNumber = _data["phoneNumber"];
             this.timeZone = _data["timeZone"];
+            this.reportsToUserId = _data["reportsToUserId"];
         }
     }
 
@@ -8093,6 +9911,7 @@ export class CreateUserRequest implements ICreateUserRequest {
         data["confirmPassword"] = this.confirmPassword;
         data["phoneNumber"] = this.phoneNumber;
         data["timeZone"] = this.timeZone;
+        data["reportsToUserId"] = this.reportsToUserId;
         return data;
     }
 }
@@ -8105,6 +9924,7 @@ export interface ICreateUserRequest {
     confirmPassword: string;
     phoneNumber?: string | undefined;
     timeZone: string;
+    reportsToUserId?: string | undefined;
 }
 
 export class UserRoleResponse implements IUserRoleResponse {
@@ -8206,6 +10026,7 @@ export class UpdateUserDetailsRequest implements IUpdateUserDetailsRequest {
     lastName!: string;
     phoneNumber?: string | undefined;
     timeZone!: string;
+    reportsToUserId?: string | undefined;
 
     constructor(data?: IUpdateUserDetailsRequest) {
         if (data) {
@@ -8224,6 +10045,7 @@ export class UpdateUserDetailsRequest implements IUpdateUserDetailsRequest {
             this.lastName = _data["lastName"];
             this.phoneNumber = _data["phoneNumber"];
             this.timeZone = _data["timeZone"];
+            this.reportsToUserId = _data["reportsToUserId"];
         }
     }
 
@@ -8242,6 +10064,7 @@ export class UpdateUserDetailsRequest implements IUpdateUserDetailsRequest {
         data["lastName"] = this.lastName;
         data["phoneNumber"] = this.phoneNumber;
         data["timeZone"] = this.timeZone;
+        data["reportsToUserId"] = this.reportsToUserId;
         return data;
     }
 }
@@ -8253,6 +10076,7 @@ export interface IUpdateUserDetailsRequest {
     lastName: string;
     phoneNumber?: string | undefined;
     timeZone: string;
+    reportsToUserId?: string | undefined;
 }
 
 export class ForgotPasswordRequest implements IForgotPasswordRequest {
@@ -8981,7 +10805,7 @@ export class FormPageFieldTypeBase implements IFormPageFieldTypeBase {
     fkFormPageFieldTabId?: number | undefined;
     label?: string;
     displayOrder?: number;
-    fieldKey?: string;
+    fieldKey!: string;
 
     constructor(data?: IFormPageFieldTypeBase) {
         if (data) {
@@ -9031,7 +10855,7 @@ export interface IFormPageFieldTypeBase {
     fkFormPageFieldTabId?: number | undefined;
     label?: string;
     displayOrder?: number;
-    fieldKey?: string;
+    fieldKey: string;
 }
 
 export class CreateFormPageFieldNumberRequest extends FormPageFieldTypeBase implements ICreateFormPageFieldNumberRequest {
@@ -9576,8 +11400,8 @@ export interface IPaginationResponseOfViewEmailLogResponse {
 }
 
 export class ViewEmailLogResponse implements IViewEmailLogResponse {
-    id?: number;
-    to?: string | undefined;
+    id!: number;
+    to?: string[] | undefined;
     subject?: string | undefined;
     isEmailSent?: boolean | undefined;
     createdOn?: moment.Moment;
@@ -9595,7 +11419,11 @@ export class ViewEmailLogResponse implements IViewEmailLogResponse {
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
-            this.to = _data["to"];
+            if (Array.isArray(_data["to"])) {
+                this.to = [] as any;
+                for (let item of _data["to"])
+                    this.to!.push(item);
+            }
             this.subject = _data["subject"];
             this.isEmailSent = _data["isEmailSent"];
             this.createdOn = _data["createdOn"] ? moment(_data["createdOn"].toString()) : undefined as any;
@@ -9613,7 +11441,11 @@ export class ViewEmailLogResponse implements IViewEmailLogResponse {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
-        data["to"] = this.to;
+        if (Array.isArray(this.to)) {
+            data["to"] = [];
+            for (let item of this.to)
+                data["to"].push(item);
+        }
         data["subject"] = this.subject;
         data["isEmailSent"] = this.isEmailSent;
         data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
@@ -9623,8 +11455,8 @@ export class ViewEmailLogResponse implements IViewEmailLogResponse {
 }
 
 export interface IViewEmailLogResponse {
-    id?: number;
-    to?: string | undefined;
+    id: number;
+    to?: string[] | undefined;
     subject?: string | undefined;
     isEmailSent?: boolean | undefined;
     createdOn?: moment.Moment;
@@ -9681,17 +11513,17 @@ export interface ISearchEmailLogRequest extends ISearchRequestBaseClass {
 }
 
 export class ViewEmailLogDetailResponse implements IViewEmailLogDetailResponse {
-    id?: number;
-    to?: string;
-    subject?: string;
-    emailType?: EmailTypes;
-    body?: string;
-    from?: string;
-    displayName?: string;
+    id!: number;
+    to!: string[];
+    subject!: string;
+    emailType!: EmailTypes;
+    body!: string;
+    from!: string;
+    displayName!: string;
     replyTo?: string | undefined;
     replyToName?: string | undefined;
-    bcc?: string | undefined;
-    cc?: string | undefined;
+    bcc?: string[] | undefined;
+    cc?: string[] | undefined;
     headers?: string | undefined;
     emailSmtpUsed?: string | undefined;
     isEmailSent?: boolean;
@@ -9704,12 +11536,19 @@ export class ViewEmailLogDetailResponse implements IViewEmailLogDetailResponse {
                     (this as any)[property] = (data as any)[property];
             }
         }
+        if (!data) {
+            this.to = [];
+        }
     }
 
     init(_data?: any) {
         if (_data) {
             this.id = _data["id"];
-            this.to = _data["to"];
+            if (Array.isArray(_data["to"])) {
+                this.to = [] as any;
+                for (let item of _data["to"])
+                    this.to!.push(item);
+            }
             this.subject = _data["subject"];
             this.emailType = _data["emailType"];
             this.body = _data["body"];
@@ -9717,8 +11556,16 @@ export class ViewEmailLogDetailResponse implements IViewEmailLogDetailResponse {
             this.displayName = _data["displayName"];
             this.replyTo = _data["replyTo"];
             this.replyToName = _data["replyToName"];
-            this.bcc = _data["bcc"];
-            this.cc = _data["cc"];
+            if (Array.isArray(_data["bcc"])) {
+                this.bcc = [] as any;
+                for (let item of _data["bcc"])
+                    this.bcc!.push(item);
+            }
+            if (Array.isArray(_data["cc"])) {
+                this.cc = [] as any;
+                for (let item of _data["cc"])
+                    this.cc!.push(item);
+            }
             this.headers = _data["headers"];
             this.emailSmtpUsed = _data["emailSmtpUsed"];
             this.isEmailSent = _data["isEmailSent"];
@@ -9736,7 +11583,11 @@ export class ViewEmailLogDetailResponse implements IViewEmailLogDetailResponse {
     toJSON(data?: any) {
         data = typeof data === 'object' ? data : {};
         data["id"] = this.id;
-        data["to"] = this.to;
+        if (Array.isArray(this.to)) {
+            data["to"] = [];
+            for (let item of this.to)
+                data["to"].push(item);
+        }
         data["subject"] = this.subject;
         data["emailType"] = this.emailType;
         data["body"] = this.body;
@@ -9744,8 +11595,16 @@ export class ViewEmailLogDetailResponse implements IViewEmailLogDetailResponse {
         data["displayName"] = this.displayName;
         data["replyTo"] = this.replyTo;
         data["replyToName"] = this.replyToName;
-        data["bcc"] = this.bcc;
-        data["cc"] = this.cc;
+        if (Array.isArray(this.bcc)) {
+            data["bcc"] = [];
+            for (let item of this.bcc)
+                data["bcc"].push(item);
+        }
+        if (Array.isArray(this.cc)) {
+            data["cc"] = [];
+            for (let item of this.cc)
+                data["cc"].push(item);
+        }
         data["headers"] = this.headers;
         data["emailSmtpUsed"] = this.emailSmtpUsed;
         data["isEmailSent"] = this.isEmailSent;
@@ -9755,17 +11614,17 @@ export class ViewEmailLogDetailResponse implements IViewEmailLogDetailResponse {
 }
 
 export interface IViewEmailLogDetailResponse {
-    id?: number;
-    to?: string;
-    subject?: string;
-    emailType?: EmailTypes;
-    body?: string;
-    from?: string;
-    displayName?: string;
+    id: number;
+    to: string[];
+    subject: string;
+    emailType: EmailTypes;
+    body: string;
+    from: string;
+    displayName: string;
     replyTo?: string | undefined;
     replyToName?: string | undefined;
-    bcc?: string | undefined;
-    cc?: string | undefined;
+    bcc?: string[] | undefined;
+    cc?: string[] | undefined;
     headers?: string | undefined;
     emailSmtpUsed?: string | undefined;
     isEmailSent?: boolean;
@@ -10115,7 +11974,7 @@ export interface IViewEmailTemplateResponse {
 
 export class SearchEmailTemplateRequest extends SearchRequestBaseClass implements ISearchEmailTemplateRequest {
     nameDescription?: string | undefined;
-    templateUsedFor?: EmailTemplateUsedFor | undefined;
+    templateUsedFor?: EmailTemplateUsedFor;
     isShared?: boolean | undefined;
 
     constructor(data?: ISearchEmailTemplateRequest) {
@@ -10150,8 +12009,2448 @@ export class SearchEmailTemplateRequest extends SearchRequestBaseClass implement
 
 export interface ISearchEmailTemplateRequest extends ISearchRequestBaseClass {
     nameDescription?: string | undefined;
-    templateUsedFor?: EmailTemplateUsedFor | undefined;
+    templateUsedFor?: EmailTemplateUsedFor;
     isShared?: boolean | undefined;
+}
+
+export class PaginationResponseOfViewLeadListResponse implements IPaginationResponseOfViewLeadListResponse {
+    data?: ViewLeadListResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+
+    constructor(data?: IPaginationResponseOfViewLeadListResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["data"])) {
+                this.data = [] as any;
+                for (let item of _data["data"])
+                    this.data!.push(ViewLeadListResponse.fromJS(item));
+            }
+            this.currentPage = _data["currentPage"];
+            this.totalPages = _data["totalPages"];
+            this.totalCount = _data["totalCount"];
+            this.pageSize = _data["pageSize"];
+            this.hasPreviousPage = _data["hasPreviousPage"];
+            this.hasNextPage = _data["hasNextPage"];
+        }
+    }
+
+    static fromJS(data: any): PaginationResponseOfViewLeadListResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginationResponseOfViewLeadListResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.data)) {
+            data["data"] = [];
+            for (let item of this.data)
+                data["data"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["currentPage"] = this.currentPage;
+        data["totalPages"] = this.totalPages;
+        data["totalCount"] = this.totalCount;
+        data["pageSize"] = this.pageSize;
+        data["hasPreviousPage"] = this.hasPreviousPage;
+        data["hasNextPage"] = this.hasNextPage;
+        return data;
+    }
+}
+
+export interface IPaginationResponseOfViewLeadListResponse {
+    data?: ViewLeadListResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+}
+
+export class ViewLeadListResponse implements IViewLeadListResponse {
+    id?: number;
+    businessName?: string;
+    ownerName?: string;
+    mobile?: string;
+    businessType?: string;
+    currentPOS?: string | undefined;
+    assignedToUserId?: string;
+    leadStatusId?: number;
+    leadStatusName?: string;
+    nextFollowUpDate?: moment.Moment | undefined;
+    lastActivityDate?: moment.Moment | undefined;
+    expectedRevenue?: number | undefined;
+    createdOn?: moment.Moment;
+    interestLevel?: InterestLevel;
+    isArchived?: boolean;
+
+    constructor(data?: IViewLeadListResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.businessName = _data["businessName"];
+            this.ownerName = _data["ownerName"];
+            this.mobile = _data["mobile"];
+            this.businessType = _data["businessType"];
+            this.currentPOS = _data["currentPOS"];
+            this.assignedToUserId = _data["assignedToUserId"];
+            this.leadStatusId = _data["leadStatusId"];
+            this.leadStatusName = _data["leadStatusName"];
+            this.nextFollowUpDate = _data["nextFollowUpDate"] ? moment(_data["nextFollowUpDate"].toString()) : undefined as any;
+            this.lastActivityDate = _data["lastActivityDate"] ? moment(_data["lastActivityDate"].toString()) : undefined as any;
+            this.expectedRevenue = _data["expectedRevenue"];
+            this.createdOn = _data["createdOn"] ? moment(_data["createdOn"].toString()) : undefined as any;
+            this.interestLevel = _data["interestLevel"];
+            this.isArchived = _data["isArchived"];
+        }
+    }
+
+    static fromJS(data: any): ViewLeadListResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewLeadListResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["businessName"] = this.businessName;
+        data["ownerName"] = this.ownerName;
+        data["mobile"] = this.mobile;
+        data["businessType"] = this.businessType;
+        data["currentPOS"] = this.currentPOS;
+        data["assignedToUserId"] = this.assignedToUserId;
+        data["leadStatusId"] = this.leadStatusId;
+        data["leadStatusName"] = this.leadStatusName;
+        data["nextFollowUpDate"] = this.nextFollowUpDate ? this.nextFollowUpDate.toISOString() : undefined as any;
+        data["lastActivityDate"] = this.lastActivityDate ? this.lastActivityDate.toISOString() : undefined as any;
+        data["expectedRevenue"] = this.expectedRevenue;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        data["interestLevel"] = this.interestLevel;
+        data["isArchived"] = this.isArchived;
+        return data;
+    }
+}
+
+export interface IViewLeadListResponse {
+    id?: number;
+    businessName?: string;
+    ownerName?: string;
+    mobile?: string;
+    businessType?: string;
+    currentPOS?: string | undefined;
+    assignedToUserId?: string;
+    leadStatusId?: number;
+    leadStatusName?: string;
+    nextFollowUpDate?: moment.Moment | undefined;
+    lastActivityDate?: moment.Moment | undefined;
+    expectedRevenue?: number | undefined;
+    createdOn?: moment.Moment;
+    interestLevel?: InterestLevel;
+    isArchived?: boolean;
+}
+
+export enum InterestLevel {
+    Low = "Low",
+    Medium = "Medium",
+    High = "High",
+}
+
+export enum LeadFilterType {
+    All = "All",
+    MyLeads = "MyLeads",
+    TodayFollowUps = "TodayFollowUps",
+    Overdue = "Overdue",
+    Interested = "Interested",
+    Won = "Won",
+    Lost = "Lost",
+    Archived = "Archived",
+}
+
+export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
+    id?: number;
+    businessName?: string;
+    businessType?: string;
+    currentPOS?: string | undefined;
+    website?: string | undefined;
+    gstNumber?: string | undefined;
+    pan?: string | undefined;
+    numberOfOutlets?: number | undefined;
+    expectedMonthlyBilling?: number | undefined;
+    expectedRevenue?: number | undefined;
+    companySize?: string | undefined;
+    ownerName?: string;
+    designation?: string | undefined;
+    mobile?: string;
+    whatsApp?: string | undefined;
+    email?: string | undefined;
+    alternatePhone?: string | undefined;
+    country?: string | undefined;
+    state?: string | undefined;
+    city?: string | undefined;
+    area?: string | undefined;
+    pincode?: string | undefined;
+    fullAddress?: string | undefined;
+    googleMapsLink?: string | undefined;
+    placeId?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+    leadSourceId?: number;
+    leadSourceName?: string;
+    assignedToUserId?: string;
+    priority?: LeadPriority;
+    leadStatusId?: number;
+    leadStatusName?: string;
+    expectedClosingDate?: moment.Moment | undefined;
+    interestLevel?: InterestLevel;
+    painPoints?: string | undefined;
+    competitors?: string | undefined;
+    requirements?: string | undefined;
+    lastActivityDate?: moment.Moment | undefined;
+    nextFollowUpDate?: moment.Moment | undefined;
+    isArchived?: boolean;
+    convertedOn?: moment.Moment | undefined;
+    fkConvertedCustomerId?: number | undefined;
+    createdOn?: moment.Moment;
+    activities?: ViewLeadActivityResponse[];
+    followUps?: ViewLeadFollowUpResponse[];
+    notes?: ViewEntityNoteResponse[];
+    statusHistories?: ViewLeadStatusHistoryResponse[];
+    assignmentHistories?: ViewLeadAssignmentHistoryResponse[];
+
+    constructor(data?: IViewLeadDetailResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.businessName = _data["businessName"];
+            this.businessType = _data["businessType"];
+            this.currentPOS = _data["currentPOS"];
+            this.website = _data["website"];
+            this.gstNumber = _data["gstNumber"];
+            this.pan = _data["pan"];
+            this.numberOfOutlets = _data["numberOfOutlets"];
+            this.expectedMonthlyBilling = _data["expectedMonthlyBilling"];
+            this.expectedRevenue = _data["expectedRevenue"];
+            this.companySize = _data["companySize"];
+            this.ownerName = _data["ownerName"];
+            this.designation = _data["designation"];
+            this.mobile = _data["mobile"];
+            this.whatsApp = _data["whatsApp"];
+            this.email = _data["email"];
+            this.alternatePhone = _data["alternatePhone"];
+            this.country = _data["country"];
+            this.state = _data["state"];
+            this.city = _data["city"];
+            this.area = _data["area"];
+            this.pincode = _data["pincode"];
+            this.fullAddress = _data["fullAddress"];
+            this.googleMapsLink = _data["googleMapsLink"];
+            this.placeId = _data["placeId"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+            this.leadSourceId = _data["leadSourceId"];
+            this.leadSourceName = _data["leadSourceName"];
+            this.assignedToUserId = _data["assignedToUserId"];
+            this.priority = _data["priority"];
+            this.leadStatusId = _data["leadStatusId"];
+            this.leadStatusName = _data["leadStatusName"];
+            this.expectedClosingDate = _data["expectedClosingDate"] ? moment(_data["expectedClosingDate"].toString()) : undefined as any;
+            this.interestLevel = _data["interestLevel"];
+            this.painPoints = _data["painPoints"];
+            this.competitors = _data["competitors"];
+            this.requirements = _data["requirements"];
+            this.lastActivityDate = _data["lastActivityDate"] ? moment(_data["lastActivityDate"].toString()) : undefined as any;
+            this.nextFollowUpDate = _data["nextFollowUpDate"] ? moment(_data["nextFollowUpDate"].toString()) : undefined as any;
+            this.isArchived = _data["isArchived"];
+            this.convertedOn = _data["convertedOn"] ? moment(_data["convertedOn"].toString()) : undefined as any;
+            this.fkConvertedCustomerId = _data["fkConvertedCustomerId"];
+            this.createdOn = _data["createdOn"] ? moment(_data["createdOn"].toString()) : undefined as any;
+            if (Array.isArray(_data["activities"])) {
+                this.activities = [] as any;
+                for (let item of _data["activities"])
+                    this.activities!.push(ViewLeadActivityResponse.fromJS(item));
+            }
+            if (Array.isArray(_data["followUps"])) {
+                this.followUps = [] as any;
+                for (let item of _data["followUps"])
+                    this.followUps!.push(ViewLeadFollowUpResponse.fromJS(item));
+            }
+            if (Array.isArray(_data["notes"])) {
+                this.notes = [] as any;
+                for (let item of _data["notes"])
+                    this.notes!.push(ViewEntityNoteResponse.fromJS(item));
+            }
+            if (Array.isArray(_data["statusHistories"])) {
+                this.statusHistories = [] as any;
+                for (let item of _data["statusHistories"])
+                    this.statusHistories!.push(ViewLeadStatusHistoryResponse.fromJS(item));
+            }
+            if (Array.isArray(_data["assignmentHistories"])) {
+                this.assignmentHistories = [] as any;
+                for (let item of _data["assignmentHistories"])
+                    this.assignmentHistories!.push(ViewLeadAssignmentHistoryResponse.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ViewLeadDetailResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewLeadDetailResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["businessName"] = this.businessName;
+        data["businessType"] = this.businessType;
+        data["currentPOS"] = this.currentPOS;
+        data["website"] = this.website;
+        data["gstNumber"] = this.gstNumber;
+        data["pan"] = this.pan;
+        data["numberOfOutlets"] = this.numberOfOutlets;
+        data["expectedMonthlyBilling"] = this.expectedMonthlyBilling;
+        data["expectedRevenue"] = this.expectedRevenue;
+        data["companySize"] = this.companySize;
+        data["ownerName"] = this.ownerName;
+        data["designation"] = this.designation;
+        data["mobile"] = this.mobile;
+        data["whatsApp"] = this.whatsApp;
+        data["email"] = this.email;
+        data["alternatePhone"] = this.alternatePhone;
+        data["country"] = this.country;
+        data["state"] = this.state;
+        data["city"] = this.city;
+        data["area"] = this.area;
+        data["pincode"] = this.pincode;
+        data["fullAddress"] = this.fullAddress;
+        data["googleMapsLink"] = this.googleMapsLink;
+        data["placeId"] = this.placeId;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        data["leadSourceId"] = this.leadSourceId;
+        data["leadSourceName"] = this.leadSourceName;
+        data["assignedToUserId"] = this.assignedToUserId;
+        data["priority"] = this.priority;
+        data["leadStatusId"] = this.leadStatusId;
+        data["leadStatusName"] = this.leadStatusName;
+        data["expectedClosingDate"] = this.expectedClosingDate ? this.expectedClosingDate.toISOString() : undefined as any;
+        data["interestLevel"] = this.interestLevel;
+        data["painPoints"] = this.painPoints;
+        data["competitors"] = this.competitors;
+        data["requirements"] = this.requirements;
+        data["lastActivityDate"] = this.lastActivityDate ? this.lastActivityDate.toISOString() : undefined as any;
+        data["nextFollowUpDate"] = this.nextFollowUpDate ? this.nextFollowUpDate.toISOString() : undefined as any;
+        data["isArchived"] = this.isArchived;
+        data["convertedOn"] = this.convertedOn ? this.convertedOn.toISOString() : undefined as any;
+        data["fkConvertedCustomerId"] = this.fkConvertedCustomerId;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        if (Array.isArray(this.activities)) {
+            data["activities"] = [];
+            for (let item of this.activities)
+                data["activities"].push(item ? item.toJSON() : undefined as any);
+        }
+        if (Array.isArray(this.followUps)) {
+            data["followUps"] = [];
+            for (let item of this.followUps)
+                data["followUps"].push(item ? item.toJSON() : undefined as any);
+        }
+        if (Array.isArray(this.notes)) {
+            data["notes"] = [];
+            for (let item of this.notes)
+                data["notes"].push(item ? item.toJSON() : undefined as any);
+        }
+        if (Array.isArray(this.statusHistories)) {
+            data["statusHistories"] = [];
+            for (let item of this.statusHistories)
+                data["statusHistories"].push(item ? item.toJSON() : undefined as any);
+        }
+        if (Array.isArray(this.assignmentHistories)) {
+            data["assignmentHistories"] = [];
+            for (let item of this.assignmentHistories)
+                data["assignmentHistories"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IViewLeadDetailResponse {
+    id?: number;
+    businessName?: string;
+    businessType?: string;
+    currentPOS?: string | undefined;
+    website?: string | undefined;
+    gstNumber?: string | undefined;
+    pan?: string | undefined;
+    numberOfOutlets?: number | undefined;
+    expectedMonthlyBilling?: number | undefined;
+    expectedRevenue?: number | undefined;
+    companySize?: string | undefined;
+    ownerName?: string;
+    designation?: string | undefined;
+    mobile?: string;
+    whatsApp?: string | undefined;
+    email?: string | undefined;
+    alternatePhone?: string | undefined;
+    country?: string | undefined;
+    state?: string | undefined;
+    city?: string | undefined;
+    area?: string | undefined;
+    pincode?: string | undefined;
+    fullAddress?: string | undefined;
+    googleMapsLink?: string | undefined;
+    placeId?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+    leadSourceId?: number;
+    leadSourceName?: string;
+    assignedToUserId?: string;
+    priority?: LeadPriority;
+    leadStatusId?: number;
+    leadStatusName?: string;
+    expectedClosingDate?: moment.Moment | undefined;
+    interestLevel?: InterestLevel;
+    painPoints?: string | undefined;
+    competitors?: string | undefined;
+    requirements?: string | undefined;
+    lastActivityDate?: moment.Moment | undefined;
+    nextFollowUpDate?: moment.Moment | undefined;
+    isArchived?: boolean;
+    convertedOn?: moment.Moment | undefined;
+    fkConvertedCustomerId?: number | undefined;
+    createdOn?: moment.Moment;
+    activities?: ViewLeadActivityResponse[];
+    followUps?: ViewLeadFollowUpResponse[];
+    notes?: ViewEntityNoteResponse[];
+    statusHistories?: ViewLeadStatusHistoryResponse[];
+    assignmentHistories?: ViewLeadAssignmentHistoryResponse[];
+}
+
+export enum LeadPriority {
+    Low = "Low",
+    Medium = "Medium",
+    High = "High",
+    Urgent = "Urgent",
+}
+
+export class ViewLeadActivityResponse implements IViewLeadActivityResponse {
+    id?: number;
+    fkLeadPKId?: number;
+    activityType?: LeadActivityType;
+    activityDate?: moment.Moment;
+    activityTime?: string | undefined;
+    durationMinutes?: number | undefined;
+    outcome?: string | undefined;
+    notes?: string | undefined;
+    nextFollowUpDate?: moment.Moment | undefined;
+    createdOn?: moment.Moment;
+
+    constructor(data?: IViewLeadActivityResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.fkLeadPKId = _data["fkLeadPKId"];
+            this.activityType = _data["activityType"];
+            this.activityDate = _data["activityDate"] ? moment(_data["activityDate"].toString()) : undefined as any;
+            this.activityTime = _data["activityTime"];
+            this.durationMinutes = _data["durationMinutes"];
+            this.outcome = _data["outcome"];
+            this.notes = _data["notes"];
+            this.nextFollowUpDate = _data["nextFollowUpDate"] ? moment(_data["nextFollowUpDate"].toString()) : undefined as any;
+            this.createdOn = _data["createdOn"] ? moment(_data["createdOn"].toString()) : undefined as any;
+        }
+    }
+
+    static fromJS(data: any): ViewLeadActivityResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewLeadActivityResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["fkLeadPKId"] = this.fkLeadPKId;
+        data["activityType"] = this.activityType;
+        data["activityDate"] = this.activityDate ? this.activityDate.toISOString() : undefined as any;
+        data["activityTime"] = this.activityTime;
+        data["durationMinutes"] = this.durationMinutes;
+        data["outcome"] = this.outcome;
+        data["notes"] = this.notes;
+        data["nextFollowUpDate"] = this.nextFollowUpDate ? this.nextFollowUpDate.toISOString() : undefined as any;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        return data;
+    }
+}
+
+export interface IViewLeadActivityResponse {
+    id?: number;
+    fkLeadPKId?: number;
+    activityType?: LeadActivityType;
+    activityDate?: moment.Moment;
+    activityTime?: string | undefined;
+    durationMinutes?: number | undefined;
+    outcome?: string | undefined;
+    notes?: string | undefined;
+    nextFollowUpDate?: moment.Moment | undefined;
+    createdOn?: moment.Moment;
+}
+
+export enum LeadActivityType {
+    Call = "Call",
+    Meeting = "Meeting",
+    Demo = "Demo",
+    Visit = "Visit",
+    WhatsApp = "WhatsApp",
+    Email = "Email",
+    Proposal = "Proposal",
+    Note = "Note",
+    Task = "Task",
+}
+
+export class ViewLeadFollowUpResponse implements IViewLeadFollowUpResponse {
+    id?: number;
+    nextFollowUpDate?: moment.Moment;
+    followUpType?: FollowUpType;
+    followUpStatus?: FollowUpStatus;
+    reminderNote?: string | undefined;
+
+    constructor(data?: IViewLeadFollowUpResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.nextFollowUpDate = _data["nextFollowUpDate"] ? moment(_data["nextFollowUpDate"].toString()) : undefined as any;
+            this.followUpType = _data["followUpType"];
+            this.followUpStatus = _data["followUpStatus"];
+            this.reminderNote = _data["reminderNote"];
+        }
+    }
+
+    static fromJS(data: any): ViewLeadFollowUpResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewLeadFollowUpResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["nextFollowUpDate"] = this.nextFollowUpDate ? this.nextFollowUpDate.toISOString() : undefined as any;
+        data["followUpType"] = this.followUpType;
+        data["followUpStatus"] = this.followUpStatus;
+        data["reminderNote"] = this.reminderNote;
+        return data;
+    }
+}
+
+export interface IViewLeadFollowUpResponse {
+    id?: number;
+    nextFollowUpDate?: moment.Moment;
+    followUpType?: FollowUpType;
+    followUpStatus?: FollowUpStatus;
+    reminderNote?: string | undefined;
+}
+
+export enum FollowUpType {
+    Call = "Call",
+    Meeting = "Meeting",
+    Demo = "Demo",
+    Visit = "Visit",
+    WhatsApp = "WhatsApp",
+    Email = "Email",
+    Other = "Other",
+}
+
+export enum FollowUpStatus {
+    Pending = "Pending",
+    Completed = "Completed",
+    Missed = "Missed",
+    Cancelled = "Cancelled",
+}
+
+export class ViewEntityNoteResponse implements IViewEntityNoteResponse {
+    id?: number;
+    entityNoteType?: EntityNoteType;
+    fkEntityPKId?: number;
+    noteText?: string;
+    createdOn?: moment.Moment;
+
+    constructor(data?: IViewEntityNoteResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.entityNoteType = _data["entityNoteType"];
+            this.fkEntityPKId = _data["fkEntityPKId"];
+            this.noteText = _data["noteText"];
+            this.createdOn = _data["createdOn"] ? moment(_data["createdOn"].toString()) : undefined as any;
+        }
+    }
+
+    static fromJS(data: any): ViewEntityNoteResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewEntityNoteResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["entityNoteType"] = this.entityNoteType;
+        data["fkEntityPKId"] = this.fkEntityPKId;
+        data["noteText"] = this.noteText;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        return data;
+    }
+}
+
+export interface IViewEntityNoteResponse {
+    id?: number;
+    entityNoteType?: EntityNoteType;
+    fkEntityPKId?: number;
+    noteText?: string;
+    createdOn?: moment.Moment;
+}
+
+export enum EntityNoteType {
+    Lead = "Lead",
+    LeadSummary = "LeadSummary",
+    Customer = "Customer",
+    Support = "Support",
+}
+
+export class ViewLeadStatusHistoryResponse implements IViewLeadStatusHistoryResponse {
+    id?: number;
+    fromStatusId?: number | undefined;
+    fromStatusName?: string | undefined;
+    toStatusId?: number;
+    toStatusName?: string;
+    changedByUserId?: string;
+    changedOn?: moment.Moment;
+    remarks?: string | undefined;
+
+    constructor(data?: IViewLeadStatusHistoryResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.fromStatusId = _data["fromStatusId"];
+            this.fromStatusName = _data["fromStatusName"];
+            this.toStatusId = _data["toStatusId"];
+            this.toStatusName = _data["toStatusName"];
+            this.changedByUserId = _data["changedByUserId"];
+            this.changedOn = _data["changedOn"] ? moment(_data["changedOn"].toString()) : undefined as any;
+            this.remarks = _data["remarks"];
+        }
+    }
+
+    static fromJS(data: any): ViewLeadStatusHistoryResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewLeadStatusHistoryResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["fromStatusId"] = this.fromStatusId;
+        data["fromStatusName"] = this.fromStatusName;
+        data["toStatusId"] = this.toStatusId;
+        data["toStatusName"] = this.toStatusName;
+        data["changedByUserId"] = this.changedByUserId;
+        data["changedOn"] = this.changedOn ? this.changedOn.toISOString() : undefined as any;
+        data["remarks"] = this.remarks;
+        return data;
+    }
+}
+
+export interface IViewLeadStatusHistoryResponse {
+    id?: number;
+    fromStatusId?: number | undefined;
+    fromStatusName?: string | undefined;
+    toStatusId?: number;
+    toStatusName?: string;
+    changedByUserId?: string;
+    changedOn?: moment.Moment;
+    remarks?: string | undefined;
+}
+
+export class ViewLeadAssignmentHistoryResponse implements IViewLeadAssignmentHistoryResponse {
+    id?: number;
+    fromUserId?: string | undefined;
+    toUserId?: string;
+    assignedByUserId?: string;
+    assignedOn?: moment.Moment;
+    remarks?: string | undefined;
+
+    constructor(data?: IViewLeadAssignmentHistoryResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.fromUserId = _data["fromUserId"];
+            this.toUserId = _data["toUserId"];
+            this.assignedByUserId = _data["assignedByUserId"];
+            this.assignedOn = _data["assignedOn"] ? moment(_data["assignedOn"].toString()) : undefined as any;
+            this.remarks = _data["remarks"];
+        }
+    }
+
+    static fromJS(data: any): ViewLeadAssignmentHistoryResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewLeadAssignmentHistoryResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["fromUserId"] = this.fromUserId;
+        data["toUserId"] = this.toUserId;
+        data["assignedByUserId"] = this.assignedByUserId;
+        data["assignedOn"] = this.assignedOn ? this.assignedOn.toISOString() : undefined as any;
+        data["remarks"] = this.remarks;
+        return data;
+    }
+}
+
+export interface IViewLeadAssignmentHistoryResponse {
+    id?: number;
+    fromUserId?: string | undefined;
+    toUserId?: string;
+    assignedByUserId?: string;
+    assignedOn?: moment.Moment;
+    remarks?: string | undefined;
+}
+
+export class CreateLeadResponse implements ICreateLeadResponse {
+    id?: number;
+    message?: string;
+
+    constructor(data?: ICreateLeadResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): CreateLeadResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateLeadResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface ICreateLeadResponse {
+    id?: number;
+    message?: string;
+}
+
+export class CreateLeadRequest implements ICreateLeadRequest {
+    businessName!: string;
+    businessType!: string;
+    currentPOS?: string | undefined;
+    website?: string | undefined;
+    gstNumber?: string | undefined;
+    pan?: string | undefined;
+    numberOfOutlets?: number | undefined;
+    expectedMonthlyBilling?: number | undefined;
+    expectedRevenue?: number | undefined;
+    companySize?: string | undefined;
+    ownerName!: string;
+    designation?: string | undefined;
+    mobile!: string;
+    whatsApp?: string | undefined;
+    email?: string | undefined;
+    alternatePhone?: string | undefined;
+    country?: string | undefined;
+    state?: string | undefined;
+    city?: string | undefined;
+    area?: string | undefined;
+    pincode?: string | undefined;
+    fullAddress?: string | undefined;
+    googleMapsLink?: string | undefined;
+    placeId?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+    leadSourceId!: number;
+    assignToYourself?: boolean;
+    assignedToUserId?: string | undefined;
+    priority?: LeadPriority;
+    leadStatusId?: number | undefined;
+    expectedClosingDate?: moment.Moment | undefined;
+    interestLevel?: InterestLevel;
+    notes?: string | undefined;
+    painPoints?: string | undefined;
+    competitors?: string | undefined;
+    requirements?: string | undefined;
+
+    constructor(data?: ICreateLeadRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.businessName = _data["businessName"];
+            this.businessType = _data["businessType"];
+            this.currentPOS = _data["currentPOS"];
+            this.website = _data["website"];
+            this.gstNumber = _data["gstNumber"];
+            this.pan = _data["pan"];
+            this.numberOfOutlets = _data["numberOfOutlets"];
+            this.expectedMonthlyBilling = _data["expectedMonthlyBilling"];
+            this.expectedRevenue = _data["expectedRevenue"];
+            this.companySize = _data["companySize"];
+            this.ownerName = _data["ownerName"];
+            this.designation = _data["designation"];
+            this.mobile = _data["mobile"];
+            this.whatsApp = _data["whatsApp"];
+            this.email = _data["email"];
+            this.alternatePhone = _data["alternatePhone"];
+            this.country = _data["country"];
+            this.state = _data["state"];
+            this.city = _data["city"];
+            this.area = _data["area"];
+            this.pincode = _data["pincode"];
+            this.fullAddress = _data["fullAddress"];
+            this.googleMapsLink = _data["googleMapsLink"];
+            this.placeId = _data["placeId"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+            this.leadSourceId = _data["leadSourceId"];
+            this.assignToYourself = _data["assignToYourself"];
+            this.assignedToUserId = _data["assignedToUserId"];
+            this.priority = _data["priority"];
+            this.leadStatusId = _data["leadStatusId"];
+            this.expectedClosingDate = _data["expectedClosingDate"] ? moment(_data["expectedClosingDate"].toString()) : undefined as any;
+            this.interestLevel = _data["interestLevel"];
+            this.notes = _data["notes"];
+            this.painPoints = _data["painPoints"];
+            this.competitors = _data["competitors"];
+            this.requirements = _data["requirements"];
+        }
+    }
+
+    static fromJS(data: any): CreateLeadRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateLeadRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["businessName"] = this.businessName;
+        data["businessType"] = this.businessType;
+        data["currentPOS"] = this.currentPOS;
+        data["website"] = this.website;
+        data["gstNumber"] = this.gstNumber;
+        data["pan"] = this.pan;
+        data["numberOfOutlets"] = this.numberOfOutlets;
+        data["expectedMonthlyBilling"] = this.expectedMonthlyBilling;
+        data["expectedRevenue"] = this.expectedRevenue;
+        data["companySize"] = this.companySize;
+        data["ownerName"] = this.ownerName;
+        data["designation"] = this.designation;
+        data["mobile"] = this.mobile;
+        data["whatsApp"] = this.whatsApp;
+        data["email"] = this.email;
+        data["alternatePhone"] = this.alternatePhone;
+        data["country"] = this.country;
+        data["state"] = this.state;
+        data["city"] = this.city;
+        data["area"] = this.area;
+        data["pincode"] = this.pincode;
+        data["fullAddress"] = this.fullAddress;
+        data["googleMapsLink"] = this.googleMapsLink;
+        data["placeId"] = this.placeId;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        data["leadSourceId"] = this.leadSourceId;
+        data["assignToYourself"] = this.assignToYourself;
+        data["assignedToUserId"] = this.assignedToUserId;
+        data["priority"] = this.priority;
+        data["leadStatusId"] = this.leadStatusId;
+        data["expectedClosingDate"] = this.expectedClosingDate ? this.expectedClosingDate.toISOString() : undefined as any;
+        data["interestLevel"] = this.interestLevel;
+        data["notes"] = this.notes;
+        data["painPoints"] = this.painPoints;
+        data["competitors"] = this.competitors;
+        data["requirements"] = this.requirements;
+        return data;
+    }
+}
+
+export interface ICreateLeadRequest {
+    businessName: string;
+    businessType: string;
+    currentPOS?: string | undefined;
+    website?: string | undefined;
+    gstNumber?: string | undefined;
+    pan?: string | undefined;
+    numberOfOutlets?: number | undefined;
+    expectedMonthlyBilling?: number | undefined;
+    expectedRevenue?: number | undefined;
+    companySize?: string | undefined;
+    ownerName: string;
+    designation?: string | undefined;
+    mobile: string;
+    whatsApp?: string | undefined;
+    email?: string | undefined;
+    alternatePhone?: string | undefined;
+    country?: string | undefined;
+    state?: string | undefined;
+    city?: string | undefined;
+    area?: string | undefined;
+    pincode?: string | undefined;
+    fullAddress?: string | undefined;
+    googleMapsLink?: string | undefined;
+    placeId?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+    leadSourceId: number;
+    assignToYourself?: boolean;
+    assignedToUserId?: string | undefined;
+    priority?: LeadPriority;
+    leadStatusId?: number | undefined;
+    expectedClosingDate?: moment.Moment | undefined;
+    interestLevel?: InterestLevel;
+    notes?: string | undefined;
+    painPoints?: string | undefined;
+    competitors?: string | undefined;
+    requirements?: string | undefined;
+}
+
+export class UpdateLeadRequest implements IUpdateLeadRequest {
+    id!: number;
+    businessName!: string;
+    businessType!: string;
+    currentPOS?: string | undefined;
+    website?: string | undefined;
+    gstNumber?: string | undefined;
+    pan?: string | undefined;
+    numberOfOutlets?: number | undefined;
+    expectedMonthlyBilling?: number | undefined;
+    expectedRevenue?: number | undefined;
+    companySize?: string | undefined;
+    ownerName!: string;
+    designation?: string | undefined;
+    mobile!: string;
+    whatsApp?: string | undefined;
+    email?: string | undefined;
+    alternatePhone?: string | undefined;
+    country?: string | undefined;
+    state?: string | undefined;
+    city?: string | undefined;
+    area?: string | undefined;
+    pincode?: string | undefined;
+    fullAddress?: string | undefined;
+    googleMapsLink?: string | undefined;
+    placeId?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+    leadSourceId!: number;
+    assignToYourself?: boolean;
+    assignedToUserId?: string | undefined;
+    priority?: LeadPriority;
+    leadStatusId?: number;
+    expectedClosingDate?: moment.Moment | undefined;
+    interestLevel?: InterestLevel;
+    painPoints?: string | undefined;
+    competitors?: string | undefined;
+    requirements?: string | undefined;
+    isArchived?: boolean;
+
+    constructor(data?: IUpdateLeadRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.businessName = _data["businessName"];
+            this.businessType = _data["businessType"];
+            this.currentPOS = _data["currentPOS"];
+            this.website = _data["website"];
+            this.gstNumber = _data["gstNumber"];
+            this.pan = _data["pan"];
+            this.numberOfOutlets = _data["numberOfOutlets"];
+            this.expectedMonthlyBilling = _data["expectedMonthlyBilling"];
+            this.expectedRevenue = _data["expectedRevenue"];
+            this.companySize = _data["companySize"];
+            this.ownerName = _data["ownerName"];
+            this.designation = _data["designation"];
+            this.mobile = _data["mobile"];
+            this.whatsApp = _data["whatsApp"];
+            this.email = _data["email"];
+            this.alternatePhone = _data["alternatePhone"];
+            this.country = _data["country"];
+            this.state = _data["state"];
+            this.city = _data["city"];
+            this.area = _data["area"];
+            this.pincode = _data["pincode"];
+            this.fullAddress = _data["fullAddress"];
+            this.googleMapsLink = _data["googleMapsLink"];
+            this.placeId = _data["placeId"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+            this.leadSourceId = _data["leadSourceId"];
+            this.assignToYourself = _data["assignToYourself"];
+            this.assignedToUserId = _data["assignedToUserId"];
+            this.priority = _data["priority"];
+            this.leadStatusId = _data["leadStatusId"];
+            this.expectedClosingDate = _data["expectedClosingDate"] ? moment(_data["expectedClosingDate"].toString()) : undefined as any;
+            this.interestLevel = _data["interestLevel"];
+            this.painPoints = _data["painPoints"];
+            this.competitors = _data["competitors"];
+            this.requirements = _data["requirements"];
+            this.isArchived = _data["isArchived"];
+        }
+    }
+
+    static fromJS(data: any): UpdateLeadRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateLeadRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["businessName"] = this.businessName;
+        data["businessType"] = this.businessType;
+        data["currentPOS"] = this.currentPOS;
+        data["website"] = this.website;
+        data["gstNumber"] = this.gstNumber;
+        data["pan"] = this.pan;
+        data["numberOfOutlets"] = this.numberOfOutlets;
+        data["expectedMonthlyBilling"] = this.expectedMonthlyBilling;
+        data["expectedRevenue"] = this.expectedRevenue;
+        data["companySize"] = this.companySize;
+        data["ownerName"] = this.ownerName;
+        data["designation"] = this.designation;
+        data["mobile"] = this.mobile;
+        data["whatsApp"] = this.whatsApp;
+        data["email"] = this.email;
+        data["alternatePhone"] = this.alternatePhone;
+        data["country"] = this.country;
+        data["state"] = this.state;
+        data["city"] = this.city;
+        data["area"] = this.area;
+        data["pincode"] = this.pincode;
+        data["fullAddress"] = this.fullAddress;
+        data["googleMapsLink"] = this.googleMapsLink;
+        data["placeId"] = this.placeId;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        data["leadSourceId"] = this.leadSourceId;
+        data["assignToYourself"] = this.assignToYourself;
+        data["assignedToUserId"] = this.assignedToUserId;
+        data["priority"] = this.priority;
+        data["leadStatusId"] = this.leadStatusId;
+        data["expectedClosingDate"] = this.expectedClosingDate ? this.expectedClosingDate.toISOString() : undefined as any;
+        data["interestLevel"] = this.interestLevel;
+        data["painPoints"] = this.painPoints;
+        data["competitors"] = this.competitors;
+        data["requirements"] = this.requirements;
+        data["isArchived"] = this.isArchived;
+        return data;
+    }
+}
+
+export interface IUpdateLeadRequest {
+    id: number;
+    businessName: string;
+    businessType: string;
+    currentPOS?: string | undefined;
+    website?: string | undefined;
+    gstNumber?: string | undefined;
+    pan?: string | undefined;
+    numberOfOutlets?: number | undefined;
+    expectedMonthlyBilling?: number | undefined;
+    expectedRevenue?: number | undefined;
+    companySize?: string | undefined;
+    ownerName: string;
+    designation?: string | undefined;
+    mobile: string;
+    whatsApp?: string | undefined;
+    email?: string | undefined;
+    alternatePhone?: string | undefined;
+    country?: string | undefined;
+    state?: string | undefined;
+    city?: string | undefined;
+    area?: string | undefined;
+    pincode?: string | undefined;
+    fullAddress?: string | undefined;
+    googleMapsLink?: string | undefined;
+    placeId?: string | undefined;
+    latitude?: number | undefined;
+    longitude?: number | undefined;
+    leadSourceId: number;
+    assignToYourself?: boolean;
+    assignedToUserId?: string | undefined;
+    priority?: LeadPriority;
+    leadStatusId?: number;
+    expectedClosingDate?: moment.Moment | undefined;
+    interestLevel?: InterestLevel;
+    painPoints?: string | undefined;
+    competitors?: string | undefined;
+    requirements?: string | undefined;
+    isArchived?: boolean;
+}
+
+export class UpdateLeadStatusRequest implements IUpdateLeadStatusRequest {
+    leadStatusId!: number;
+    remarks?: string | undefined;
+
+    constructor(data?: IUpdateLeadStatusRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.leadStatusId = _data["leadStatusId"];
+            this.remarks = _data["remarks"];
+        }
+    }
+
+    static fromJS(data: any): UpdateLeadStatusRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateLeadStatusRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["leadStatusId"] = this.leadStatusId;
+        data["remarks"] = this.remarks;
+        return data;
+    }
+}
+
+export interface IUpdateLeadStatusRequest {
+    leadStatusId: number;
+    remarks?: string | undefined;
+}
+
+export class AssignLeadRequest implements IAssignLeadRequest {
+    assignToYourself?: boolean;
+    assignedToUserId?: string | undefined;
+    remarks?: string | undefined;
+
+    constructor(data?: IAssignLeadRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.assignToYourself = _data["assignToYourself"];
+            this.assignedToUserId = _data["assignedToUserId"];
+            this.remarks = _data["remarks"];
+        }
+    }
+
+    static fromJS(data: any): AssignLeadRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new AssignLeadRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["assignToYourself"] = this.assignToYourself;
+        data["assignedToUserId"] = this.assignedToUserId;
+        data["remarks"] = this.remarks;
+        return data;
+    }
+}
+
+export interface IAssignLeadRequest {
+    assignToYourself?: boolean;
+    assignedToUserId?: string | undefined;
+    remarks?: string | undefined;
+}
+
+export class UpdateLeadFollowUpDateRequest implements IUpdateLeadFollowUpDateRequest {
+    nextFollowUpDate!: moment.Moment;
+
+    constructor(data?: IUpdateLeadFollowUpDateRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.nextFollowUpDate = _data["nextFollowUpDate"] ? moment(_data["nextFollowUpDate"].toString()) : undefined as any;
+        }
+    }
+
+    static fromJS(data: any): UpdateLeadFollowUpDateRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateLeadFollowUpDateRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["nextFollowUpDate"] = this.nextFollowUpDate ? this.nextFollowUpDate.toISOString() : undefined as any;
+        return data;
+    }
+}
+
+export interface IUpdateLeadFollowUpDateRequest {
+    nextFollowUpDate: moment.Moment;
+}
+
+export class CreateLeadActivityRequest implements ICreateLeadActivityRequest {
+    activityType!: LeadActivityType;
+    activityDate!: moment.Moment;
+    activityTime?: string | undefined;
+    durationMinutes?: number | undefined;
+    outcome?: string | undefined;
+    notes?: string | undefined;
+    nextFollowUpDate?: moment.Moment | undefined;
+    followUpType?: FollowUpType | undefined;
+    reminderNote?: string | undefined;
+
+    constructor(data?: ICreateLeadActivityRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.activityType = _data["activityType"];
+            this.activityDate = _data["activityDate"] ? moment(_data["activityDate"].toString()) : undefined as any;
+            this.activityTime = _data["activityTime"];
+            this.durationMinutes = _data["durationMinutes"];
+            this.outcome = _data["outcome"];
+            this.notes = _data["notes"];
+            this.nextFollowUpDate = _data["nextFollowUpDate"] ? moment(_data["nextFollowUpDate"].toString()) : undefined as any;
+            this.followUpType = _data["followUpType"];
+            this.reminderNote = _data["reminderNote"];
+        }
+    }
+
+    static fromJS(data: any): CreateLeadActivityRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateLeadActivityRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["activityType"] = this.activityType;
+        data["activityDate"] = this.activityDate ? this.activityDate.toISOString() : undefined as any;
+        data["activityTime"] = this.activityTime;
+        data["durationMinutes"] = this.durationMinutes;
+        data["outcome"] = this.outcome;
+        data["notes"] = this.notes;
+        data["nextFollowUpDate"] = this.nextFollowUpDate ? this.nextFollowUpDate.toISOString() : undefined as any;
+        data["followUpType"] = this.followUpType;
+        data["reminderNote"] = this.reminderNote;
+        return data;
+    }
+}
+
+export interface ICreateLeadActivityRequest {
+    activityType: LeadActivityType;
+    activityDate: moment.Moment;
+    activityTime?: string | undefined;
+    durationMinutes?: number | undefined;
+    outcome?: string | undefined;
+    notes?: string | undefined;
+    nextFollowUpDate?: moment.Moment | undefined;
+    followUpType?: FollowUpType | undefined;
+    reminderNote?: string | undefined;
+}
+
+export class CreateEntityNoteRequest implements ICreateEntityNoteRequest {
+    entityNoteType!: EntityNoteType;
+    noteText!: string;
+
+    constructor(data?: ICreateEntityNoteRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.entityNoteType = _data["entityNoteType"];
+            this.noteText = _data["noteText"];
+        }
+    }
+
+    static fromJS(data: any): CreateEntityNoteRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateEntityNoteRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["entityNoteType"] = this.entityNoteType;
+        data["noteText"] = this.noteText;
+        return data;
+    }
+}
+
+export interface ICreateEntityNoteRequest {
+    entityNoteType: EntityNoteType;
+    noteText: string;
+}
+
+export class PaginationResponseOfViewLeadVisitResponse implements IPaginationResponseOfViewLeadVisitResponse {
+    data?: ViewLeadVisitResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+
+    constructor(data?: IPaginationResponseOfViewLeadVisitResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["data"])) {
+                this.data = [] as any;
+                for (let item of _data["data"])
+                    this.data!.push(ViewLeadVisitResponse.fromJS(item));
+            }
+            this.currentPage = _data["currentPage"];
+            this.totalPages = _data["totalPages"];
+            this.totalCount = _data["totalCount"];
+            this.pageSize = _data["pageSize"];
+            this.hasPreviousPage = _data["hasPreviousPage"];
+            this.hasNextPage = _data["hasNextPage"];
+        }
+    }
+
+    static fromJS(data: any): PaginationResponseOfViewLeadVisitResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginationResponseOfViewLeadVisitResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.data)) {
+            data["data"] = [];
+            for (let item of this.data)
+                data["data"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["currentPage"] = this.currentPage;
+        data["totalPages"] = this.totalPages;
+        data["totalCount"] = this.totalCount;
+        data["pageSize"] = this.pageSize;
+        data["hasPreviousPage"] = this.hasPreviousPage;
+        data["hasNextPage"] = this.hasNextPage;
+        return data;
+    }
+}
+
+export interface IPaginationResponseOfViewLeadVisitResponse {
+    data?: ViewLeadVisitResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+}
+
+export class ViewLeadVisitResponse implements IViewLeadVisitResponse {
+    id?: number;
+    fkLeadPKId?: number;
+    visitTime?: moment.Moment;
+    createdOn?: moment.Moment;
+    gpsLogs?: ViewGpsLogResponse[];
+    images?: ViewLeadImageResponse[];
+
+    constructor(data?: IViewLeadVisitResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.fkLeadPKId = _data["fkLeadPKId"];
+            this.visitTime = _data["visitTime"] ? moment(_data["visitTime"].toString()) : undefined as any;
+            this.createdOn = _data["createdOn"] ? moment(_data["createdOn"].toString()) : undefined as any;
+            if (Array.isArray(_data["gpsLogs"])) {
+                this.gpsLogs = [] as any;
+                for (let item of _data["gpsLogs"])
+                    this.gpsLogs!.push(ViewGpsLogResponse.fromJS(item));
+            }
+            if (Array.isArray(_data["images"])) {
+                this.images = [] as any;
+                for (let item of _data["images"])
+                    this.images!.push(ViewLeadImageResponse.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ViewLeadVisitResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewLeadVisitResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["fkLeadPKId"] = this.fkLeadPKId;
+        data["visitTime"] = this.visitTime ? this.visitTime.toISOString() : undefined as any;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        if (Array.isArray(this.gpsLogs)) {
+            data["gpsLogs"] = [];
+            for (let item of this.gpsLogs)
+                data["gpsLogs"].push(item ? item.toJSON() : undefined as any);
+        }
+        if (Array.isArray(this.images)) {
+            data["images"] = [];
+            for (let item of this.images)
+                data["images"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IViewLeadVisitResponse {
+    id?: number;
+    fkLeadPKId?: number;
+    visitTime?: moment.Moment;
+    createdOn?: moment.Moment;
+    gpsLogs?: ViewGpsLogResponse[];
+    images?: ViewLeadImageResponse[];
+}
+
+export class ViewGpsLogResponse implements IViewGpsLogResponse {
+    id?: number;
+    latitude?: number;
+    longitude?: number;
+    loggedAt?: moment.Moment;
+    distanceMeters?: number | undefined;
+    status?: VerificationStatus | undefined;
+
+    constructor(data?: IViewGpsLogResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+            this.loggedAt = _data["loggedAt"] ? moment(_data["loggedAt"].toString()) : undefined as any;
+            this.distanceMeters = _data["distanceMeters"];
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): ViewGpsLogResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewGpsLogResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        data["loggedAt"] = this.loggedAt ? this.loggedAt.toISOString() : undefined as any;
+        data["distanceMeters"] = this.distanceMeters;
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface IViewGpsLogResponse {
+    id?: number;
+    latitude?: number;
+    longitude?: number;
+    loggedAt?: moment.Moment;
+    distanceMeters?: number | undefined;
+    status?: VerificationStatus | undefined;
+}
+
+export enum VerificationStatus {
+    Pending = "Pending",
+    Verified = "Verified",
+    Failed = "Failed",
+}
+
+export class ViewLeadImageResponse implements IViewLeadImageResponse {
+    id?: number;
+    imageUrl?: string;
+    caption?: string | undefined;
+
+    constructor(data?: IViewLeadImageResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.imageUrl = _data["imageUrl"];
+            this.caption = _data["caption"];
+        }
+    }
+
+    static fromJS(data: any): ViewLeadImageResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewLeadImageResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["imageUrl"] = this.imageUrl;
+        data["caption"] = this.caption;
+        return data;
+    }
+}
+
+export interface IViewLeadImageResponse {
+    id?: number;
+    imageUrl?: string;
+    caption?: string | undefined;
+}
+
+export class SearchLeadVisitRequest extends SearchRequestBaseClass implements ISearchLeadVisitRequest {
+    fkLeadPKId?: number | undefined;
+
+    constructor(data?: ISearchLeadVisitRequest) {
+        super(data);
+    }
+
+    override init(_data?: any) {
+        super.init(_data);
+        if (_data) {
+            this.fkLeadPKId = _data["fkLeadPKId"];
+        }
+    }
+
+    static override fromJS(data: any): SearchLeadVisitRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SearchLeadVisitRequest();
+        result.init(data);
+        return result;
+    }
+
+    override toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fkLeadPKId"] = this.fkLeadPKId;
+        super.toJSON(data);
+        return data;
+    }
+}
+
+export interface ISearchLeadVisitRequest extends ISearchRequestBaseClass {
+    fkLeadPKId?: number | undefined;
+}
+
+export class CreateLeadVisitResponse implements ICreateLeadVisitResponse {
+    id?: number;
+    message?: string;
+
+    constructor(data?: ICreateLeadVisitResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): CreateLeadVisitResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateLeadVisitResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface ICreateLeadVisitResponse {
+    id?: number;
+    message?: string;
+}
+
+export class CreateLeadVisitRequest implements ICreateLeadVisitRequest {
+    fkLeadPKId!: number;
+    visitTime!: moment.Moment;
+    gpsLogs?: LogGpsRequest[];
+    images?: AddLeadVisitImageRequest[];
+
+    constructor(data?: ICreateLeadVisitRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.fkLeadPKId = _data["fkLeadPKId"];
+            this.visitTime = _data["visitTime"] ? moment(_data["visitTime"].toString()) : undefined as any;
+            if (Array.isArray(_data["gpsLogs"])) {
+                this.gpsLogs = [] as any;
+                for (let item of _data["gpsLogs"])
+                    this.gpsLogs!.push(LogGpsRequest.fromJS(item));
+            }
+            if (Array.isArray(_data["images"])) {
+                this.images = [] as any;
+                for (let item of _data["images"])
+                    this.images!.push(AddLeadVisitImageRequest.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): CreateLeadVisitRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateLeadVisitRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["fkLeadPKId"] = this.fkLeadPKId;
+        data["visitTime"] = this.visitTime ? this.visitTime.toISOString() : undefined as any;
+        if (Array.isArray(this.gpsLogs)) {
+            data["gpsLogs"] = [];
+            for (let item of this.gpsLogs)
+                data["gpsLogs"].push(item ? item.toJSON() : undefined as any);
+        }
+        if (Array.isArray(this.images)) {
+            data["images"] = [];
+            for (let item of this.images)
+                data["images"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface ICreateLeadVisitRequest {
+    fkLeadPKId: number;
+    visitTime: moment.Moment;
+    gpsLogs?: LogGpsRequest[];
+    images?: AddLeadVisitImageRequest[];
+}
+
+export class LogGpsRequest implements ILogGpsRequest {
+    latitude!: number;
+    longitude!: number;
+    loggedAt?: moment.Moment;
+
+    constructor(data?: ILogGpsRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.latitude = _data["latitude"];
+            this.longitude = _data["longitude"];
+            this.loggedAt = _data["loggedAt"] ? moment(_data["loggedAt"].toString()) : undefined as any;
+        }
+    }
+
+    static fromJS(data: any): LogGpsRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new LogGpsRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["latitude"] = this.latitude;
+        data["longitude"] = this.longitude;
+        data["loggedAt"] = this.loggedAt ? this.loggedAt.toISOString() : undefined as any;
+        return data;
+    }
+}
+
+export interface ILogGpsRequest {
+    latitude: number;
+    longitude: number;
+    loggedAt?: moment.Moment;
+}
+
+export class AddLeadVisitImageRequest implements IAddLeadVisitImageRequest {
+    image!: FileUploadRequest;
+    caption?: string | undefined;
+
+    constructor(data?: IAddLeadVisitImageRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+        if (!data) {
+            this.image = new FileUploadRequest();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.image = _data["image"] ? FileUploadRequest.fromJS(_data["image"]) : new FileUploadRequest();
+            this.caption = _data["caption"];
+        }
+    }
+
+    static fromJS(data: any): AddLeadVisitImageRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new AddLeadVisitImageRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["image"] = this.image ? this.image.toJSON() : undefined as any;
+        data["caption"] = this.caption;
+        return data;
+    }
+}
+
+export interface IAddLeadVisitImageRequest {
+    image: FileUploadRequest;
+    caption?: string | undefined;
+}
+
+export class CreateLeadWithVisitResponse implements ICreateLeadWithVisitResponse {
+    leadId?: number;
+    leadVisitId?: number;
+    message?: string;
+
+    constructor(data?: ICreateLeadWithVisitResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.leadId = _data["leadId"];
+            this.leadVisitId = _data["leadVisitId"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): CreateLeadWithVisitResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateLeadWithVisitResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["leadId"] = this.leadId;
+        data["leadVisitId"] = this.leadVisitId;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface ICreateLeadWithVisitResponse {
+    leadId?: number;
+    leadVisitId?: number;
+    message?: string;
+}
+
+export class CreateLeadWithVisitRequest implements ICreateLeadWithVisitRequest {
+    lead!: CreateLeadRequest;
+    visitTime!: moment.Moment;
+    gpsLogs?: LogGpsRequest[];
+    images?: AddLeadVisitImageRequest[];
+
+    constructor(data?: ICreateLeadWithVisitRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+        if (!data) {
+            this.lead = new CreateLeadRequest();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.lead = _data["lead"] ? CreateLeadRequest.fromJS(_data["lead"]) : new CreateLeadRequest();
+            this.visitTime = _data["visitTime"] ? moment(_data["visitTime"].toString()) : undefined as any;
+            if (Array.isArray(_data["gpsLogs"])) {
+                this.gpsLogs = [] as any;
+                for (let item of _data["gpsLogs"])
+                    this.gpsLogs!.push(LogGpsRequest.fromJS(item));
+            }
+            if (Array.isArray(_data["images"])) {
+                this.images = [] as any;
+                for (let item of _data["images"])
+                    this.images!.push(AddLeadVisitImageRequest.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): CreateLeadWithVisitRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateLeadWithVisitRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["lead"] = this.lead ? this.lead.toJSON() : undefined as any;
+        data["visitTime"] = this.visitTime ? this.visitTime.toISOString() : undefined as any;
+        if (Array.isArray(this.gpsLogs)) {
+            data["gpsLogs"] = [];
+            for (let item of this.gpsLogs)
+                data["gpsLogs"].push(item ? item.toJSON() : undefined as any);
+        }
+        if (Array.isArray(this.images)) {
+            data["images"] = [];
+            for (let item of this.images)
+                data["images"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface ICreateLeadWithVisitRequest {
+    lead: CreateLeadRequest;
+    visitTime: moment.Moment;
+    gpsLogs?: LogGpsRequest[];
+    images?: AddLeadVisitImageRequest[];
+}
+
+export class UpdateLeadWithVisitResponse implements IUpdateLeadWithVisitResponse {
+    leadId?: number;
+    leadVisitId?: number;
+    message?: string;
+
+    constructor(data?: IUpdateLeadWithVisitResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.leadId = _data["leadId"];
+            this.leadVisitId = _data["leadVisitId"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): UpdateLeadWithVisitResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateLeadWithVisitResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["leadId"] = this.leadId;
+        data["leadVisitId"] = this.leadVisitId;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface IUpdateLeadWithVisitResponse {
+    leadId?: number;
+    leadVisitId?: number;
+    message?: string;
+}
+
+export class UpdateLeadWithVisitRequest implements IUpdateLeadWithVisitRequest {
+    lead!: UpdateLeadRequest;
+    visitTime!: moment.Moment;
+    gpsLogs?: LogGpsRequest[];
+
+    constructor(data?: IUpdateLeadWithVisitRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+        if (!data) {
+            this.lead = new UpdateLeadRequest();
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.lead = _data["lead"] ? UpdateLeadRequest.fromJS(_data["lead"]) : new UpdateLeadRequest();
+            this.visitTime = _data["visitTime"] ? moment(_data["visitTime"].toString()) : undefined as any;
+            if (Array.isArray(_data["gpsLogs"])) {
+                this.gpsLogs = [] as any;
+                for (let item of _data["gpsLogs"])
+                    this.gpsLogs!.push(LogGpsRequest.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): UpdateLeadWithVisitRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateLeadWithVisitRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["lead"] = this.lead ? this.lead.toJSON() : undefined as any;
+        data["visitTime"] = this.visitTime ? this.visitTime.toISOString() : undefined as any;
+        if (Array.isArray(this.gpsLogs)) {
+            data["gpsLogs"] = [];
+            for (let item of this.gpsLogs)
+                data["gpsLogs"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IUpdateLeadWithVisitRequest {
+    lead: UpdateLeadRequest;
+    visitTime: moment.Moment;
+    gpsLogs?: LogGpsRequest[];
+}
+
+export class PaginationResponseOfViewTaskResponse implements IPaginationResponseOfViewTaskResponse {
+    data?: ViewTaskResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+
+    constructor(data?: IPaginationResponseOfViewTaskResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["data"])) {
+                this.data = [] as any;
+                for (let item of _data["data"])
+                    this.data!.push(ViewTaskResponse.fromJS(item));
+            }
+            this.currentPage = _data["currentPage"];
+            this.totalPages = _data["totalPages"];
+            this.totalCount = _data["totalCount"];
+            this.pageSize = _data["pageSize"];
+            this.hasPreviousPage = _data["hasPreviousPage"];
+            this.hasNextPage = _data["hasNextPage"];
+        }
+    }
+
+    static fromJS(data: any): PaginationResponseOfViewTaskResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginationResponseOfViewTaskResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.data)) {
+            data["data"] = [];
+            for (let item of this.data)
+                data["data"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["currentPage"] = this.currentPage;
+        data["totalPages"] = this.totalPages;
+        data["totalCount"] = this.totalCount;
+        data["pageSize"] = this.pageSize;
+        data["hasPreviousPage"] = this.hasPreviousPage;
+        data["hasNextPage"] = this.hasNextPage;
+        return data;
+    }
+}
+
+export interface IPaginationResponseOfViewTaskResponse {
+    data?: ViewTaskResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+}
+
+export class ViewTaskResponse implements IViewTaskResponse {
+    id?: number;
+    uuid?: string;
+    title?: string;
+    when?: moment.Moment;
+    bucket?: TaskBucket | undefined;
+    type?: TaskType | undefined;
+    priority?: TaskPriority | undefined;
+    isCompleted?: boolean;
+    createdOn?: moment.Moment;
+
+    constructor(data?: IViewTaskResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.uuid = _data["uuid"];
+            this.title = _data["title"];
+            this.when = _data["when"] ? moment(_data["when"].toString()) : undefined as any;
+            this.bucket = _data["bucket"];
+            this.type = _data["type"];
+            this.priority = _data["priority"];
+            this.isCompleted = _data["isCompleted"];
+            this.createdOn = _data["createdOn"] ? moment(_data["createdOn"].toString()) : undefined as any;
+        }
+    }
+
+    static fromJS(data: any): ViewTaskResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewTaskResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["uuid"] = this.uuid;
+        data["title"] = this.title;
+        data["when"] = this.when ? this.when.toISOString() : undefined as any;
+        data["bucket"] = this.bucket;
+        data["type"] = this.type;
+        data["priority"] = this.priority;
+        data["isCompleted"] = this.isCompleted;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        return data;
+    }
+}
+
+export interface IViewTaskResponse {
+    id?: number;
+    uuid?: string;
+    title?: string;
+    when?: moment.Moment;
+    bucket?: TaskBucket | undefined;
+    type?: TaskType | undefined;
+    priority?: TaskPriority | undefined;
+    isCompleted?: boolean;
+    createdOn?: moment.Moment;
+}
+
+export enum TaskBucket {
+    Today = "Today",
+    Tomorrow = "Tomorrow",
+    Overdue = "Overdue",
+    Future = "Future",
+}
+
+export enum TaskType {
+    Task = "Task",
+    Call = "Call",
+    Email = "Email",
+    Meeting = "Meeting",
+}
+
+export enum TaskPriority {
+    Low = "Low",
+    Medium = "Medium",
+    High = "High",
+}
+
+export class CreateTaskResponse implements ICreateTaskResponse {
+    id?: number;
+    uuid?: string;
+    message?: string;
+
+    constructor(data?: ICreateTaskResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.uuid = _data["uuid"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): CreateTaskResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateTaskResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["uuid"] = this.uuid;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface ICreateTaskResponse {
+    id?: number;
+    uuid?: string;
+    message?: string;
+}
+
+export class CreateTaskRequest implements ICreateTaskRequest {
+    title!: string;
+    when!: moment.Moment;
+    bucket?: TaskBucket | undefined;
+    type?: TaskType | undefined;
+    priority?: TaskPriority | undefined;
+
+    constructor(data?: ICreateTaskRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.title = _data["title"];
+            this.when = _data["when"] ? moment(_data["when"].toString()) : undefined as any;
+            this.bucket = _data["bucket"];
+            this.type = _data["type"];
+            this.priority = _data["priority"];
+        }
+    }
+
+    static fromJS(data: any): CreateTaskRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateTaskRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["title"] = this.title;
+        data["when"] = this.when ? this.when.toISOString() : undefined as any;
+        data["bucket"] = this.bucket;
+        data["type"] = this.type;
+        data["priority"] = this.priority;
+        return data;
+    }
+}
+
+export interface ICreateTaskRequest {
+    title: string;
+    when: moment.Moment;
+    bucket?: TaskBucket | undefined;
+    type?: TaskType | undefined;
+    priority?: TaskPriority | undefined;
+}
+
+export class UpdateTaskRequest implements IUpdateTaskRequest {
+    id!: number;
+    title!: string;
+    when!: moment.Moment;
+    bucket?: TaskBucket | undefined;
+    type?: TaskType | undefined;
+    priority?: TaskPriority | undefined;
+
+    constructor(data?: IUpdateTaskRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.title = _data["title"];
+            this.when = _data["when"] ? moment(_data["when"].toString()) : undefined as any;
+            this.bucket = _data["bucket"];
+            this.type = _data["type"];
+            this.priority = _data["priority"];
+        }
+    }
+
+    static fromJS(data: any): UpdateTaskRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateTaskRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["title"] = this.title;
+        data["when"] = this.when ? this.when.toISOString() : undefined as any;
+        data["bucket"] = this.bucket;
+        data["type"] = this.type;
+        data["priority"] = this.priority;
+        return data;
+    }
+}
+
+export interface IUpdateTaskRequest {
+    id: number;
+    title: string;
+    when: moment.Moment;
+    bucket?: TaskBucket | undefined;
+    type?: TaskType | undefined;
+    priority?: TaskPriority | undefined;
+}
+
+export class MarkTaskCompletedRequest implements IMarkTaskCompletedRequest {
+    isCompleted!: boolean;
+
+    constructor(data?: IMarkTaskCompletedRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.isCompleted = _data["isCompleted"];
+        }
+    }
+
+    static fromJS(data: any): MarkTaskCompletedRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new MarkTaskCompletedRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["isCompleted"] = this.isCompleted;
+        return data;
+    }
+}
+
+export interface IMarkTaskCompletedRequest {
+    isCompleted: boolean;
 }
 
 export class CreateAppointmentResponse implements ICreateAppointmentResponse {
@@ -10494,7 +14793,7 @@ export class ViewAppointmentParticipantResponse implements IViewAppointmentParti
     id!: number;
     participantDetail!: ViewUserDetailsResponse;
     appointmentParticipantRole!: AppointmentParticipantRole;
-    appointmentParticipantResponseStatus?: AppointmentParticipantResponseStatus;
+    appointmentParticipantResponseStatus!: AppointmentParticipantResponseStatus;
     respondedAt?: moment.Moment | undefined;
     notes?: string | undefined;
     declinedReason?: string | undefined;
@@ -10502,7 +14801,7 @@ export class ViewAppointmentParticipantResponse implements IViewAppointmentParti
     approveForDate?: moment.Moment | undefined;
     approveTimeFrom?: moment.Moment | undefined;
     approveTimeTo?: moment.Moment | undefined;
-    timeZone?: string;
+    timeZone!: string;
 
     constructor(data?: IViewAppointmentParticipantResponse) {
         if (data) {
@@ -10562,7 +14861,7 @@ export interface IViewAppointmentParticipantResponse {
     id: number;
     participantDetail: ViewUserDetailsResponse;
     appointmentParticipantRole: AppointmentParticipantRole;
-    appointmentParticipantResponseStatus?: AppointmentParticipantResponseStatus;
+    appointmentParticipantResponseStatus: AppointmentParticipantResponseStatus;
     respondedAt?: moment.Moment | undefined;
     notes?: string | undefined;
     declinedReason?: string | undefined;
@@ -10570,7 +14869,7 @@ export interface IViewAppointmentParticipantResponse {
     approveForDate?: moment.Moment | undefined;
     approveTimeFrom?: moment.Moment | undefined;
     approveTimeTo?: moment.Moment | undefined;
-    timeZone?: string;
+    timeZone: string;
 }
 
 export enum AppointmentParticipantResponseStatus {
@@ -10693,13 +14992,13 @@ export enum AppointmentAvailabilityProposedWindowStatus {
 }
 
 export class SearchAppointmentsRequest extends SearchRequestBaseClass implements ISearchAppointmentsRequest {
-    appointmentStatus?: AppointmentStatus | undefined;
+    appointmentStatus?: AppointmentStatus;
     searchText?: string | undefined;
-    locationType?: AppointmentLocationType | undefined;
+    locationType?: AppointmentLocationType;
     hostUserId?: string | undefined;
     guestUserId?: string | undefined;
-    startDate?: moment.Moment;
-    endDate?: moment.Moment;
+    startDate!: moment.Moment;
+    endDate!: moment.Moment;
 
     constructor(data?: ISearchAppointmentsRequest) {
         super(data);
@@ -10740,13 +15039,13 @@ export class SearchAppointmentsRequest extends SearchRequestBaseClass implements
 }
 
 export interface ISearchAppointmentsRequest extends ISearchRequestBaseClass {
-    appointmentStatus?: AppointmentStatus | undefined;
+    appointmentStatus?: AppointmentStatus;
     searchText?: string | undefined;
-    locationType?: AppointmentLocationType | undefined;
+    locationType?: AppointmentLocationType;
     hostUserId?: string | undefined;
     guestUserId?: string | undefined;
-    startDate?: moment.Moment;
-    endDate?: moment.Moment;
+    startDate: moment.Moment;
+    endDate: moment.Moment;
 }
 
 export class ViewAppointmentRequestResponse implements IViewAppointmentRequestResponse {
@@ -11000,7 +15299,7 @@ export class ViewParticipantAppointmentRequestResponse implements IViewParticipa
     hostDetails!: ViewParticipantAppointmentParticipantResponse;
     participantDetails!: ViewParticipantAppointmentParticipantResponse;
     availabilityWindow!: ViewParticipantAppointmentAvailabilityWindowResponse[];
-    bookedWindow?: ViewParticipantAppointmentAvailabilityBookedWindowResponse[];
+    bookedWindow!: ViewParticipantAppointmentAvailabilityBookedWindowResponse[];
 
     constructor(data?: IViewParticipantAppointmentRequestResponse) {
         if (data) {
@@ -11013,6 +15312,7 @@ export class ViewParticipantAppointmentRequestResponse implements IViewParticipa
             this.hostDetails = new ViewParticipantAppointmentParticipantResponse();
             this.participantDetails = new ViewParticipantAppointmentParticipantResponse();
             this.availabilityWindow = [];
+            this.bookedWindow = [];
         }
     }
 
@@ -11083,16 +15383,16 @@ export interface IViewParticipantAppointmentRequestResponse {
     hostDetails: ViewParticipantAppointmentParticipantResponse;
     participantDetails: ViewParticipantAppointmentParticipantResponse;
     availabilityWindow: ViewParticipantAppointmentAvailabilityWindowResponse[];
-    bookedWindow?: ViewParticipantAppointmentAvailabilityBookedWindowResponse[];
+    bookedWindow: ViewParticipantAppointmentAvailabilityBookedWindowResponse[];
 }
 
 export class ViewParticipantAppointmentParticipantResponse implements IViewParticipantAppointmentParticipantResponse {
     participantDetail!: ViewUserDetailsResponse;
     appointmentParticipantRole!: AppointmentParticipantRole;
-    appointmentParticipantResponseStatus?: AppointmentParticipantResponseStatus;
+    appointmentParticipantResponseStatus!: AppointmentParticipantResponseStatus;
     respondedAt?: moment.Moment | undefined;
     notes?: string | undefined;
-    timeZone?: string;
+    timeZone!: string;
     meetingParticipantPresenceStatus?: MeetingParticipantPresenceStatus;
 
     constructor(data?: IViewParticipantAppointmentParticipantResponse) {
@@ -11142,10 +15442,10 @@ export class ViewParticipantAppointmentParticipantResponse implements IViewParti
 export interface IViewParticipantAppointmentParticipantResponse {
     participantDetail: ViewUserDetailsResponse;
     appointmentParticipantRole: AppointmentParticipantRole;
-    appointmentParticipantResponseStatus?: AppointmentParticipantResponseStatus;
+    appointmentParticipantResponseStatus: AppointmentParticipantResponseStatus;
     respondedAt?: moment.Moment | undefined;
     notes?: string | undefined;
-    timeZone?: string;
+    timeZone: string;
     meetingParticipantPresenceStatus?: MeetingParticipantPresenceStatus;
 }
 

@@ -16,8 +16,6 @@ namespace FlowPilot.Infrastructure.Orbit.CRM;
 
 public class LeadVisitService : ILeadVisitService
 {
-    private const decimal VerificationThresholdMeters = 100m;
-
     private readonly ApplicationDbContext _db;
     private readonly IFileStorageService _fileStorage;
     private readonly IDateTimeService _dateTimeService;
@@ -106,7 +104,11 @@ public class LeadVisitService : ILeadVisitService
         return visit;
     }
 
-    public async Task<CreateLeadVisitResponse> CreateAsync(CreateLeadVisitRequest request, CancellationToken cancellationToken = default)
+    public async Task<CreateLeadVisitResponse> CreateAsync(
+        CreateLeadVisitRequest request,
+        CancellationToken cancellationToken = default,
+        decimal? referenceLatitude = null,
+        decimal? referenceLongitude = null)
     {
         var lead = await _db.Leads
             .AsNoTracking()
@@ -116,15 +118,18 @@ public class LeadVisitService : ILeadVisitService
 
         _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
 
+        var refLatitude = referenceLatitude ?? lead.Latitude;
+        var refLongitude = referenceLongitude ?? lead.Longitude;
+
         var visit = new LeadVisits
         {
             FKLeadPKId = request.FKLeadPKId,
             VisitTime = request.VisitTime,
         };
 
-        foreach (var gps in request.GpsLogs)
+        foreach (var gps in request.GpsLogs ?? [])
         {
-            visit.GpsLogs.Add(BuildGpsLog(gps, lead.Latitude, lead.Longitude));
+            visit.GpsLogs.Add(BuildGpsLog(gps, refLatitude, refLongitude));
         }
 
         foreach (var image in request.Images)
@@ -151,19 +156,57 @@ public class LeadVisitService : ILeadVisitService
     {
         var leadResponse = await _leadService.CreateAsync(request.Lead, cancellationToken);
 
-        var visitResponse = await CreateAsync(new CreateLeadVisitRequest
-        {
-            FKLeadPKId = leadResponse.Id,
-            VisitTime = request.VisitTime,
-            GpsLogs = request.GpsLogs,
-            Images = request.Images,
-        }, cancellationToken);
+        var visitResponse = await CreateAsync(
+            new CreateLeadVisitRequest
+            {
+                FKLeadPKId = leadResponse.Id,
+                VisitTime = request.VisitTime,
+                GpsLogs = request.GpsLogs,
+                Images = request.Images,
+            },
+            cancellationToken,
+            request.Lead.Latitude,
+            request.Lead.Longitude);
 
         return new CreateLeadWithVisitResponse
         {
             LeadId = leadResponse.Id,
             LeadVisitId = visitResponse.Id,
             Message = SuccessMessages.CommonRecordCreated,
+        };
+    }
+
+    public async Task<UpdateLeadWithVisitResponse> UpdateWithLeadAsync(
+        DefaultIdType id,
+        UpdateLeadWithVisitRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var visit = await _db.LeadVisits.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        _ = visit ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead visit"));
+
+        request.Lead.Id = visit.FKLeadPKId;
+
+        await _leadService.UpdateAsync(visit.FKLeadPKId, request.Lead, cancellationToken);
+
+        visit.VisitTime = request.VisitTime;
+
+        var refLatitude = request.Lead.Latitude;
+        var refLongitude = request.Lead.Longitude;
+
+        foreach (var gps in request.GpsLogs ?? [])
+        {
+            var gpsLog = BuildGpsLog(gps, refLatitude, refLongitude);
+            gpsLog.FKLeadVisitPKId = visit.Id;
+            await _db.GpsLogs.AddAsync(gpsLog, cancellationToken);
+        }
+
+        await _db.SaveChangesAsync(cancellationToken);
+
+        return new UpdateLeadWithVisitResponse
+        {
+            LeadId = visit.FKLeadPKId,
+            LeadVisitId = visit.Id,
+            Message = SuccessMessages.CommonRecordUpdated,
         };
     }
 
@@ -240,49 +283,16 @@ public class LeadVisitService : ILeadVisitService
             Latitude = request.Latitude,
             Longitude = request.Longitude,
             LoggedAt = request.LoggedAt == default ? _dateTimeService.UtcNow : request.LoggedAt,
+            Verification = new GpsVerifications(),
         };
 
-        if (referenceLatitude.HasValue && referenceLongitude.HasValue)
-        {
-            var distance = CalculateDistanceMeters(
-                (double)referenceLatitude.Value,
-                (double)referenceLongitude.Value,
-                (double)request.Latitude,
-                (double)request.Longitude);
-
-            gpsLog.Verification = new GpsVerifications
-            {
-                DistanceMeters = distance,
-                Status = distance <= VerificationThresholdMeters ? VerificationStatus.Verified : VerificationStatus.Failed,
-            };
-        }
-        else
-        {
-            gpsLog.Verification = new GpsVerifications
-            {
-                DistanceMeters = null,
-                Status = VerificationStatus.Pending,
-            };
-        }
+        GpsVerificationHelper.Apply(
+            gpsLog.Verification,
+            request.Latitude,
+            request.Longitude,
+            referenceLatitude,
+            referenceLongitude);
 
         return gpsLog;
     }
-
-    private static decimal CalculateDistanceMeters(double lat1, double lon1, double lat2, double lon2)
-    {
-        const double earthRadiusMeters = 6371000d;
-
-        var dLat = DegreesToRadians(lat2 - lat1);
-        var dLon = DegreesToRadians(lon2 - lon1);
-
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2)
-                + Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2))
-                * Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-
-        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-
-        return (decimal)(earthRadiusMeters * c);
-    }
-
-    private static double DegreesToRadians(double degrees) => degrees * Math.PI / 180d;
 }

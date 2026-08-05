@@ -5,11 +5,11 @@ import { Link } from 'react-router-dom'
 const Footer = () => {
 	return (
 		<React.Fragment>
-			<footer className="footer h-16 flex items-center px-6 bg-white shadow dark:bg-gray-800 mt-auto">
+			<footer className="footer h-16 flex items-center px-6 bg-white shadow dark:bg-gray-800 mt-auto text-gray-600 dark:text-gray-300">
 				<div className="flex md:justify-between justify-center w-full gap-4">
 					<div>
 						{new Date().getFullYear()} © {BrandingDetails.CLIENT_NAME} -{' '}
-						<Link to={BrandingDetails.CLIENT_WEBSITE} target="_blank">
+						<Link to={BrandingDetails.CLIENT_WEBSITE} target="_blank" className="text-primary hover:underline">
 							{BrandingDetails.CLIENT_WEBSITE}
 						</Link>
 					</div>

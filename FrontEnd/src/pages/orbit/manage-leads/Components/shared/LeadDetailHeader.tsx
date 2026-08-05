@@ -22,7 +22,7 @@ const LeadDetailHeader: React.FC<LeadDetailHeaderProps> = ({ lead, users }) => (
 					<div className="mt-3 flex flex-wrap gap-2">
 						<LeadStatusBadge statusName={lead.leadStatusName} />
 						<span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{lead.businessType}</span>
-						{lead.leadSource && <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{lead.leadSource}</span>}
+						{lead.leadSourceName && <span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{lead.leadSourceName}</span>}
 					</div>
 				</div>
 				<div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:min-w-[28rem]">

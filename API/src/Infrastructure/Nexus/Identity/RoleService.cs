@@ -1,3 +1,4 @@
+using System.Data;
 using FlowPilot.Application.Common.Exceptions;
 using FlowPilot.Application.Common.Interfaces;
 using FlowPilot.Application.Nexus.Identity.Roles;
@@ -11,7 +12,6 @@ using FlowPilot.Infrastructure.SystemConstants;
 using FlowPilot.Shared.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using System.Data;
 
 namespace FlowPilot.Infrastructure.Nexus.Identity;
 internal class RoleService : IRoleService
@@ -158,8 +158,9 @@ internal class RoleService : IRoleService
     public async Task<string> UpdatePermissionsAsync(UpdateRolePermissionsRequest request, CancellationToken cancellationToken)
     {
         var role = await _nexusDbContext.Roles.SingleOrDefaultAsync(x => x.Id == request.RoleId && x.FKTenantPKId == _currentUser.GetTenant());
+        _ = role ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Role"));
 
-        if (SystemRoles.GetRoleNameWithoutTenantName(role.Name) == SystemRoles.Admin)
+        if (SystemRoles.IsDefaultForTenant(role.Name!))
         {
             throw new ConflictException(ErrorMessages.UpdateCantModifyPermission);
         }

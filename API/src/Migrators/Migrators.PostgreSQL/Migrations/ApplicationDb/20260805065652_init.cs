@@ -5,7 +5,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Migrators.PostgreSQL.Migrations
+namespace Migrators.PostgreSQL.Migrations.ApplicationDb
 {
     /// <inheritdoc />
     public partial class init : Migration
@@ -434,7 +434,7 @@ namespace Migrators.PostgreSQL.Migrations
                     ExpectedMonthlyBilling = table.Column<decimal>(type: "numeric", nullable: true),
                     ExpectedRevenue = table.Column<decimal>(type: "numeric", nullable: true),
                     CompanySize = table.Column<string>(type: "text", nullable: true),
-                    LeadSource = table.Column<string>(type: "text", nullable: false),
+                    FKLeadSourceId = table.Column<int>(type: "integer", nullable: false),
                     FKAssignedToUserId = table.Column<string>(type: "text", nullable: false),
                     Priority = table.Column<int>(type: "integer", nullable: false),
                     FKLeadStatusId = table.Column<int>(type: "integer", nullable: false),
@@ -470,6 +470,12 @@ namespace Migrators.PostgreSQL.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Leads", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Leads_LookUpCodeValues_FKLeadSourceId",
+                        column: x => x.FKLeadSourceId,
+                        principalSchema: "dbo",
+                        principalTable: "LookUpCodeValues",
+                        principalColumn: "Id");
                     table.ForeignKey(
                         name: "FK_Leads_LookUpCodeValues_FKLeadStatusId",
                         column: x => x.FKLeadStatusId,
@@ -968,6 +974,12 @@ namespace Migrators.PostgreSQL.Migrations
                 schema: "dbo",
                 table: "LeadImages",
                 column: "FKLeadVisitPKId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Leads_FKLeadSourceId",
+                schema: "dbo",
+                table: "Leads",
+                column: "FKLeadSourceId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Leads_FKLeadStatusId",

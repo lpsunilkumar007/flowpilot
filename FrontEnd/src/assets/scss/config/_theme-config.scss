@@ -9,12 +9,12 @@
 :root {
 	--tw-body-font-family: 'Figtree', 'sans-serif';
 
-	--tw-body-bg: #f2f2f7;
-	--tw-body-color: #6c757d;
+	--tw-body-bg: #f5f5f5;
+	--tw-body-color: #64748b;
 
 	&:is([data-mode='dark']) {
-		--tw-body-bg: #2d333c;
-		--tw-body-color: #aab8c5;
+		--tw-body-bg: #0b1a2e;
+		--tw-body-color: #94a3b8;
 	}
 }
 
@@ -55,18 +55,18 @@ html[data-menu-color='light'] {
 
 // Dark Menu
 html[data-menu-color='dark'] {
-	--tw-menu-bg: #212529;
-	--tw-menu-item-color: theme(colors.gray.400);
+	--tw-menu-bg: #052049;
+	--tw-menu-item-color: #94a3b8;
 	--tw-menu-item-active-color: theme(colors.white);
-	--tw-menu-item-hover-color: theme(colors.white);
+	--tw-menu-item-hover-color: #00c2d1;
 }
 
 html[data-mode='dark'][data-menu-color='dark'],
 html[data-mode='dark'][data-menu-color='light'] {
-	--tw-menu-bg: #313a46;
-	--tw-menu-item-color: theme(colors.gray.400);
+	--tw-menu-bg: #052049;
+	--tw-menu-item-color: #94a3b8;
 	--tw-menu-item-active-color: theme(colors.white);
-	--tw-menu-item-hover-color: theme(colors.white);
+	--tw-menu-item-hover-color: #00c2d1;
 }
 
 // Brand Menu
@@ -92,15 +92,15 @@ html[data-topbar-color='light'] {
 // Dark Topbar
 html[data-topbar-color='dark'],
 html[data-mode='dark'][data-topbar-color='light'] {
-	--tw-topbar-bg: theme(backgroundColor.gray.800);
-	--tw-topbar-item-color: rgb(131, 145, 162);
-	--tw-topbar-item-active-color: rgb(188, 206, 228);
-	--tw-topbar-item-hover-color: rgb(188, 206, 228);
+	--tw-topbar-bg: #052049;
+	--tw-topbar-item-color: #94a3b8;
+	--tw-topbar-item-active-color: theme(colors.white);
+	--tw-topbar-item-hover-color: #00c2d1;
 }
 
 // Brand Topbar
 html[data-topbar-color='brand'] {
-	--tw-topbar-bg: linear-gradient(135deg, #6379c3 0%, #3e60d5 60%);
+	--tw-topbar-bg: linear-gradient(135deg, #00c2d1 0%, #0b8a96 60%);
 	--tw-topbar-item-color: theme(colors.gray.300);
 	--tw-topbar-item-active-color: theme(colors.white);
 	--tw-topbar-item-hover-color: theme(colors.white);
@@ -108,22 +108,22 @@ html[data-topbar-color='brand'] {
 
 /* Dark mode styles for AG Grid */
 html[data-mode='dark'] {
-	--tw-grid-bg: theme(backgroundColor.gray.800);
-	--tw-grid-header-bg: theme(backgroundColor.gray.800);
-	--tw-grid-text-color: rgba(156, 163, 175, 1);
-	--tw-grid-header-text-color: rgba(156, 163, 175, 1);
-	--tw-grid-cell-bg: theme(backgroundColor.gray.800);
-	--tw-grid-cell-text-color: rgba(156, 163, 175, 1);
-	--tw-grid-row-hover-bg: theme(backgroundColor.gray.800);
-	--tw-grid-border-color: rgba(75, 85, 99, 1);
+	--tw-grid-bg: #052049;
+	--tw-grid-header-bg: #0f2744;
+	--tw-grid-text-color: rgba(148, 163, 184, 1);
+	--tw-grid-header-text-color: rgba(148, 163, 184, 1);
+	--tw-grid-cell-bg: #052049;
+	--tw-grid-cell-text-color: rgba(148, 163, 184, 1);
+	--tw-grid-row-hover-bg: #0f2744;
+	--tw-grid-border-color: rgba(15, 39, 68, 1);
 	--tw-grid-border-width: 1px;
 	--tw-grid-border-style: solid;
 }
 
 /* Dark mode styles for react-multi-select */
 html[data-mode='dark'] {
-	--tw-select2-bg: theme(backgroundColor.gray.800);
-	--tw-select2-border-color: rgba(75, 85, 99, 1);
+	--tw-select2-bg: #052049;
+	--tw-select2-border-color: rgba(15, 39, 68, 1);
 	--tw-select2-border-width: 1px;
 	--tw-select2-border-style: solid;
 }

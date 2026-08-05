@@ -117,7 +117,7 @@ const ViewLeadBasicInfo: React.FC<ViewLeadBasicInfoProps> = ({ leadId, users, on
 								}
 							/>
 							<InfoRow icon="ri-user-line" label={t('Manage.Leads.AssignedTo', 'Assigned To')} value={getUserDisplayName(users, lead.assignedToUserId)} />
-							<InfoRow icon="ri-megaphone-line" label={t('Manage.Leads.LeadSource', 'Lead Source')} value={lead.leadSource} />
+							<InfoRow icon="ri-megaphone-line" label={t('Manage.Leads.LeadSource', 'Lead Source')} value={lead.leadSourceName} />
 							<InfoRow icon="ri-calendar-check-line" label={t('Manage.Leads.NextFollowUpDate', 'Next Follow-up Date')} value={lead.nextFollowUpDate ? formatHelper.MomentDateFormat(lead.nextFollowUpDate) : '—'} />
 						</div>
 					</div>

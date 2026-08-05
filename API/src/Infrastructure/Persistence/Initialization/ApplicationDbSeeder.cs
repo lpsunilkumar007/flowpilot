@@ -120,9 +120,17 @@ internal class ApplicationDbSeeder
 
     private async Task SeedLookTypeUps(ApplicationDbContext dbContext, Tenants tenant, CancellationToken cancellationToken)
     {
+        await SeedLeadStatusLookUpValuesAsync(dbContext, tenant, cancellationToken);
+        await SeedLeadSourceLookUpValuesAsync(dbContext, tenant, cancellationToken);
+        await dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private static async Task SeedLeadStatusLookUpValuesAsync(ApplicationDbContext dbContext, Tenants tenant, CancellationToken cancellationToken)
+    {
         var status = await dbContext.LookUpCodes.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.LookUpCodeType == LookUpCodeTypes.LeadStatus && x.TenantId == tenant.Id, cancellationToken);
         if (status is null)
             return;
+
         foreach (LeadStatus type in Enum.GetValues(typeof(LeadStatus)))
         {
             bool exists = await dbContext.LookUpCodeValues.IgnoreQueryFilters().Include(m => m.LookUpCode).AnyAsync(x => x.LookUpCode.LookUpCodeType == LookUpCodeTypes.LeadStatus && x.TenantId == tenant.Id && x.LookUpValue == type.ToString(), cancellationToken);
@@ -139,8 +147,31 @@ internal class ApplicationDbSeeder
                 });
             }
         }
+    }
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+    private static async Task SeedLeadSourceLookUpValuesAsync(ApplicationDbContext dbContext, Tenants tenant, CancellationToken cancellationToken)
+    {
+        var leadSource = await dbContext.LookUpCodes.IgnoreQueryFilters().FirstOrDefaultAsync(x => x.LookUpCodeType == LookUpCodeTypes.LeadSource && x.TenantId == tenant.Id, cancellationToken);
+        if (leadSource is null)
+            return;
+
+        foreach (LeadSource type in Enum.GetValues(typeof(LeadSource)))
+        {
+            string lookUpValue = type.GetDescription();
+            bool exists = await dbContext.LookUpCodeValues.IgnoreQueryFilters().Include(m => m.LookUpCode).AnyAsync(x => x.LookUpCode.LookUpCodeType == LookUpCodeTypes.LeadSource && x.TenantId == tenant.Id && x.LookUpValue == lookUpValue, cancellationToken);
+
+            if (!exists)
+            {
+                await dbContext.LookUpCodeValues.AddAsync(new LookUpCodeValues
+                {
+                    LookUpValue = lookUpValue,
+                    DisplayOrder = (int)type,
+                    FKLookUpCodePKId = leadSource.Id,
+                    IsActive = true,
+                    TenantId = tenant.Id
+                });
+            }
+        }
     }
 
     private async Task SeedSettings(ApplicationDbContext dbContext, Tenants tenant, CancellationToken cancellationToken)

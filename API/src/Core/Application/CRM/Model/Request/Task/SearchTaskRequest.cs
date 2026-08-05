@@ -12,4 +12,7 @@ public class SearchTaskRequest : SearchRequestBaseClass
     public TaskType? Type { get; set; }
 
     public TaskPriority? Priority { get; set; }
+
+    /// <summary>When set, returns tasks created by this user (subject to reporting hierarchy).</summary>
+    public string? CreatedByUserId { get; set; }
 }

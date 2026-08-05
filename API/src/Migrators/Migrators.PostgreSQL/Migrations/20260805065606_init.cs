@@ -4,7 +4,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Migrators.PostgreSQL.Migrations.NexusDb
+namespace Migrators.PostgreSQL.Migrations
 {
     /// <inheritdoc />
     public partial class init : Migration
@@ -261,6 +261,7 @@ namespace Migrators.PostgreSQL.Migrations.NexusDb
                     UserTwoFactorAuthenticationType = table.Column<int>(type: "integer", nullable: false),
                     FacebookJson = table.Column<string>(type: "text", nullable: true),
                     GoogleJson = table.Column<string>(type: "text", nullable: true),
+                    FKReportsToUserId = table.Column<string>(type: "text", nullable: true),
                     UserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "character varying(256)", maxLength: 256, nullable: true),
@@ -279,6 +280,13 @@ namespace Migrators.PostgreSQL.Migrations.NexusDb
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_AspNetUsers", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_AspNetUsers_AspNetUsers_FKReportsToUserId",
+                        column: x => x.FKReportsToUserId,
+                        principalSchema: "dbo",
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_AspNetUsers_Tenants_FKTenantId",
                         column: x => x.FKTenantId,
@@ -568,6 +576,12 @@ namespace Migrators.PostgreSQL.Migrations.NexusDb
                 schema: "dbo",
                 table: "AspNetUsers",
                 column: "NormalizedEmail");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AspNetUsers_FKReportsToUserId",
+                schema: "dbo",
+                table: "AspNetUsers",
+                column: "FKReportsToUserId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetUsers_FKTenantId",

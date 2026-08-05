@@ -13,6 +13,7 @@ import { LeadFilterType, type PaginationResponseOfViewLeadListResponse } from '@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
+import { useSearchParams } from 'react-router-dom'
 import { leadCardClass } from '../helpers/leadDisplay.helper'
 import LeadFilterChips, { type LeadFilterOption } from './shared/LeadFilterChips'
 import LeadListCard from './shared/LeadListCard'
@@ -37,7 +38,12 @@ const FILTER_OPTIONS: LeadFilterOption[] = [
 const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	const { t } = useTranslation()
 	const { userHasPermission } = usePermission()
-	const canFilterByAssignee = userHasPermission(PermissionTypes.Permissions_Users_View)
+	const [searchParams] = useSearchParams()
+	const teamMode = searchParams.get('teamMode')
+	const teamAssignedToUserId = searchParams.get('assignedToUserId') || undefined
+	const isTeamContext = Boolean(teamMode && teamAssignedToUserId)
+	const isIndirectTeam = teamMode === 'indirect'
+	const canFilterByAssignee = userHasPermission(PermissionTypes.Permissions_Users_View) && !isTeamContext
 	const userData = useSelector((state: RootState) => state.Auth.userData) as ViewUserDetailsResponse | undefined
 	const currentUserId = userData?.id
 
@@ -46,25 +52,29 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
 	const [filterType, setFilterType] = useState(LeadFilterType.All)
 	const [searchText, setSearchText] = useState('')
-	const [assignedToUserId, setAssignedToUserId] = useState<string | undefined>()
+	const [assignedToUserId, setAssignedToUserId] = useState<string | undefined>(teamAssignedToUserId)
+
+	useEffect(() => {
+		if (teamAssignedToUserId) setAssignedToUserId(teamAssignedToUserId)
+	}, [teamAssignedToUserId])
 
 	const usersForDisplay = useMemo(() => {
-		if (canFilterByAssignee) return users
+		if (canFilterByAssignee || isTeamContext) return users
 		if (!currentUserId) return []
 		const name = `${userData?.firstName ?? ''} ${userData?.lastName ?? ''}`.trim() || userData?.email || currentUserId
 		return [{ strValue: currentUserId, text: name }]
-	}, [canFilterByAssignee, users, currentUserId, userData?.firstName, userData?.lastName, userData?.email])
+	}, [canFilterByAssignee, isTeamContext, users, currentUserId, userData?.firstName, userData?.lastName, userData?.email])
 
 	useEffect(() => {
-		if (!canFilterByAssignee) return
-		DropDownService.getSystemUsers(true)
+		if (!canFilterByAssignee && !isTeamContext) return
+		DropDownService.getSystemUsers(false)
 			.then((list) => setUsers(list ?? []))
 			.catch(() => setUsers([]))
-	}, [canFilterByAssignee])
+	}, [canFilterByAssignee, isTeamContext])
 
 	const fetchLeads = useCallback(
 		async (pageNumber: number, overrides?: { filterType?: LeadFilterType; searchText?: string; assignedToUserId?: string }) => {
-			const assigneeFilter = canFilterByAssignee ? (overrides?.assignedToUserId ?? assignedToUserId) : undefined
+			const assigneeFilter = canFilterByAssignee || isTeamContext ? (overrides?.assignedToUserId ?? assignedToUserId) : undefined
 			const searchModel = {
 				pageNumber,
 				pageSize: PagingVariables.DefaultPageSize,
@@ -82,13 +92,13 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 				{ setLoading }
 			)
 		},
-		[filterType, searchText, assignedToUserId, canFilterByAssignee]
+		[filterType, searchText, assignedToUserId, canFilterByAssignee, isTeamContext]
 	)
 
 	useEffect(() => {
 		fetchLeads(0)
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [reloadLeads])
+	}, [reloadLeads, assignedToUserId, isTeamContext])
 
 	const handleFilterChange = (value: LeadFilterType) => {
 		setFilterType(value)
@@ -100,8 +110,9 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	const handleReset = () => {
 		setFilterType(LeadFilterType.All)
 		setSearchText('')
-		setAssignedToUserId(undefined)
-		fetchLeads(0, { filterType: LeadFilterType.All, searchText: '', assignedToUserId: undefined })
+		const resetAssignee = isTeamContext ? teamAssignedToUserId : undefined
+		setAssignedToUserId(resetAssignee)
+		fetchLeads(0, { filterType: LeadFilterType.All, searchText: '', assignedToUserId: resetAssignee })
 	}
 
 	if (loading && !rowData) return <AnimationSkeleton />
@@ -110,6 +121,7 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 
 	return (
 		<div className="space-y-6">
+			{isTeamContext && <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-gray-700 dark:text-gray-200">{isIndirectTeam ? t('Manage.Leads.TeamMode_Indirect', 'Viewing team member leads (read-only).') : t('Manage.Leads.TeamMode_Direct', 'Viewing team member leads.')}</div>}
 			<div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 				<LeadStatCard label={t('Manage.Leads.Stat_Total', 'Total leads')} value={rowData?.totalCount ?? 0} icon="ri-group-line" />
 				<LeadStatCard label={t('Manage.Leads.Stat_Page', 'On this page')} value={leads.length} icon="ri-layout-grid-line" accent="primary" />
@@ -124,15 +136,7 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 				</div>
 
 				<div className={`grid gap-4 lg:items-end ${canFilterByAssignee ? 'lg:grid-cols-[1fr_auto_auto]' : 'lg:grid-cols-[1fr_auto]'}`}>
-					<FormInput
-						label={t('Manage.Leads.Filter_Search', 'Search leads')}
-						name="searchText"
-						type="text"
-						className="form-input"
-						value={searchText}
-						onChange={(e) => setSearchText(e.target.value)}
-						placeholder={t('Manage.Leads.SearchPlaceholder', 'Business, owner, phone, email, GST, lead ID...')}
-					/>
+					<FormInput label={t('Manage.Leads.Filter_Search', 'Search leads')} name="searchText" type="text" className="form-input" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder={t('Manage.Leads.SearchPlaceholder', 'Business, owner, phone, email, GST, lead ID...')} />
 					{canFilterByAssignee && (
 						<FormInput label={t('Manage.Leads.Filter_AssignedTo', 'Assigned to')} name="assignedToUserId" type="bottom-sheet" className="form-select" value={assignedToUserId ?? ''} onChange={(e) => setAssignedToUserId(e.target.value || undefined)}>
 							<option value="">{t('Common.All', 'All')}</option>
@@ -173,12 +177,12 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 					</div>
 					{rowData && (
 						<Pagination
-							currentPage={rowData.currentPage}
-							totalPages={rowData.totalPages}
-							hasPreviousPage={rowData.hasPreviousPage}
-							hasNextPage={rowData.hasNextPage}
-							onPageChange={(page) => fetchLeads(page)}
-						/>
+						currentPage={rowData.currentPage}
+						totalPages={rowData.totalPages}
+						hasPreviousPage={rowData.hasPreviousPage}
+						hasNextPage={rowData.hasNextPage}
+						onPageChange={(page) => fetchLeads(page)}
+					/>
 					)}
 				</>
 			)}

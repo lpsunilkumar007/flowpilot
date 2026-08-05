@@ -705,6 +705,7 @@ public class LocalizationService : ILocalizationService
         new() { Key = "Manage.Leads.Calendar_Heading", Value = "Calendar" },
         new() { Key = "Manage.SalesPipeline_Heading", Value = "Sales Pipeline" },
         new() { Key = "Manage.Leads.Updated", Value = "Lead updated successfully" },
+        new() { Key = "Manage.MyTeam_Heading", Value = "My Team" },
 
         // Tasks
         new() { Key = "Manage.Tasks_Heading", Value = "Tasks" },

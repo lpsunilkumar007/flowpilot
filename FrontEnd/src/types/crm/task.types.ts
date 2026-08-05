@@ -66,6 +66,7 @@ export interface SearchTaskRequest {
 	bucket?: TaskBucket
 	type?: TaskType
 	priority?: TaskPriority
+	createdByUserId?: string
 }
 
 export interface PaginationResponseOfViewTaskResponse {

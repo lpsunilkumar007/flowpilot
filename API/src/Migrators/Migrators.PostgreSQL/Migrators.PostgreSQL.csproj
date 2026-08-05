@@ -19,4 +19,9 @@
     <PackageReference Update="Roslynator.Analyzers" Version="4.15.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Migrations\AuditingDb\" />
+    <Folder Include="Migrations\NexusDb\" />
+  </ItemGroup>
+
 </Project>

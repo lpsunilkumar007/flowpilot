@@ -4,6 +4,7 @@ using FlowPilot.Application.Common.Models;
 using FlowPilot.Application.CRM;
 using FlowPilot.Application.CRM.Model.Request.Task;
 using FlowPilot.Application.CRM.Model.Response.Task;
+using FlowPilot.Application.Nexus.Identity.Users;
 using FlowPilot.Domain.CRM;
 using FlowPilot.Domain.Enums.CRM;
 using FlowPilot.Infrastructure.Persistence.Context;
@@ -17,17 +18,23 @@ public class TaskService : ITaskService
     private readonly ApplicationDbContext _db;
     private readonly IDateTimeService _dateTimeService;
     private readonly ICurrentUser _currentUser;
+    private readonly IReportingHierarchyService _reportingHierarchyService;
 
-    public TaskService(ApplicationDbContext db, IDateTimeService dateTimeService, ICurrentUser currentUser)
+    public TaskService(
+        ApplicationDbContext db,
+        IDateTimeService dateTimeService,
+        ICurrentUser currentUser,
+        IReportingHierarchyService reportingHierarchyService)
     {
         _db = db;
         _dateTimeService = dateTimeService;
         _currentUser = currentUser;
+        _reportingHierarchyService = reportingHierarchyService;
     }
 
     public async Task<PaginationResponse<ViewTaskResponse>> SearchAsync(SearchTaskRequest request, CancellationToken cancellationToken = default)
     {
-        var query = BuildTaskQuery(request);
+        var query = await BuildTaskQueryAsync(request, cancellationToken);
         var today = _dateTimeService.UtcNow;
         var tomorrow = today.AddDays(1);
         var dayAfterTomorrow = today.AddDays(2);
@@ -59,6 +66,7 @@ public class TaskService : ITaskService
             .SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
 
         _ = tasks ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Task"));
+        await EnsureCanReadTaskAsync(tasks.CreatedBy, cancellationToken);
 
         return MapToResponse(tasks, _dateTimeService.UtcNow.Date);
     }
@@ -90,6 +98,7 @@ public class TaskService : ITaskService
     {
         var task = await _db.Tasks.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         _ = task ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Task"));
+        await EnsureCanWriteTaskAsync(task.CreatedBy, cancellationToken);
 
         task.Title = request.Title.Trim();
         task.When = request.When;
@@ -105,6 +114,7 @@ public class TaskService : ITaskService
     {
         var task = await _db.Tasks.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         _ = task ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Task"));
+        await EnsureCanWriteTaskAsync(task.CreatedBy, cancellationToken);
 
         task.IsCompleted = request.IsCompleted;
         await _db.SaveChangesAsync(cancellationToken);
@@ -115,6 +125,7 @@ public class TaskService : ITaskService
     {
         var task = await _db.Tasks.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
         _ = task ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Task"));
+        await EnsureCanWriteTaskAsync(task.CreatedBy, cancellationToken);
 
         task.IsDeleted = true;
         await _db.SaveChangesAsync(cancellationToken);
@@ -122,7 +133,7 @@ public class TaskService : ITaskService
         return string.Format(SuccessMessages.RecordDeletedSuccessfully, "Task");
     }
 
-    private IQueryable<Tasks> BuildTaskQuery(SearchTaskRequest request)
+    private async Task<IQueryable<Tasks>> BuildTaskQueryAsync(SearchTaskRequest request, CancellationToken cancellationToken)
     {
         var query = _db.Tasks.AsNoTracking().AsQueryable();
         var today = _dateTimeService.UtcNow;
@@ -156,10 +167,53 @@ public class TaskService : ITaskService
             var term = request.SearchText.Trim().ToLower();
             query = query.Where(x => x.Title.ToLower().Contains(term) || x.Uuid.ToString().Contains(term));
         }
- 
-        query = query.Where(x => x.CreatedBy == _currentUser.GetUserId());
+
+        if (!string.IsNullOrWhiteSpace(request.CreatedByUserId))
+        {
+            if (!await _reportingHierarchyService.CanReadAsync(request.CreatedByUserId, cancellationToken))
+            {
+                throw new ForbiddenException(ErrorMessages.NotAuthorized);
+            }
+
+            if (!Guid.TryParse(request.CreatedByUserId, out var createdByGuid))
+            {
+                throw new ForbiddenException(ErrorMessages.NotAuthorized);
+            }
+
+            query = query.Where(x => x.CreatedBy == createdByGuid);
+        }
+        else
+        {
+            query = query.Where(x => x.CreatedBy == _currentUser.GetUserId());
+        }
 
         return query.OrderBy(x => x.When).ThenByDescending(x => x.CreatedOn);
+    }
+
+    private async Task EnsureCanReadTaskAsync(Guid createdBy, CancellationToken cancellationToken)
+    {
+        if (createdBy == _currentUser.GetUserId())
+        {
+            return;
+        }
+
+        if (!await _reportingHierarchyService.CanReadAsync(createdBy.ToString(), cancellationToken))
+        {
+            throw new ForbiddenException(ErrorMessages.NotAuthorized);
+        }
+    }
+
+    private async Task EnsureCanWriteTaskAsync(Guid createdBy, CancellationToken cancellationToken)
+    {
+        if (createdBy == _currentUser.GetUserId())
+        {
+            return;
+        }
+
+        if (!await _reportingHierarchyService.CanWriteAsync(createdBy.ToString(), cancellationToken))
+        {
+            throw new ForbiddenException(ErrorMessages.NotAuthorized);
+        }
     }
 
     private static TaskBucket ComputeBucket(DateTimeOffset when, DateTime today)

@@ -36,7 +36,7 @@ const EditLeadLandingPage = () => {
 		const load = async () => {
 			setLoading(true)
 			try {
-				const [leadRes, userList] = await Promise.all([leadService.getById(Number(id)), DropDownService.getSystemUsers(true)])
+				const [leadRes, userList] = await Promise.all([leadService.getById(Number(id)), DropDownService.getSystemUsers(false)])
 				setLead(leadRes)
 				setUsers(userList ?? [])
 			} finally {

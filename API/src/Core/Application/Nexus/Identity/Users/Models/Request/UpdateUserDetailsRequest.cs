@@ -17,5 +17,7 @@ public class UpdateUserDetailsRequest
 
     [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
     public required string TimeZone { get; set; }
+
+    public string? ReportsToUserId { get; set; }
 }
 

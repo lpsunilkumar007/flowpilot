@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
 #nullable disable
 
-namespace Migrators.PostgreSQL.Migrations.NexusDb
+namespace Migrators.PostgreSQL.Migrations
 {
     [DbContext(typeof(NexusDbContext))]
     partial class NexusDbContextModelSnapshot : ModelSnapshot
@@ -174,6 +174,9 @@ namespace Migrators.PostgreSQL.Migrations.NexusDb
                     b.Property<bool>("EmailConfirmed")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("FKReportsToUserId")
+                        .HasColumnType("text");
+
                     b.Property<int>("FKTenantId")
                         .HasColumnType("integer");
 
@@ -250,6 +253,8 @@ namespace Migrators.PostgreSQL.Migrations.NexusDb
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("FKReportsToUserId");
 
                     b.HasIndex("FKTenantId");
 
@@ -899,11 +904,18 @@ namespace Migrators.PostgreSQL.Migrations.NexusDb
 
             modelBuilder.Entity("FlowPilot.Infrastructure.Nexus.Identity.DbModels.ApplicationUser", b =>
                 {
+                    b.HasOne("FlowPilot.Infrastructure.Nexus.Identity.DbModels.ApplicationUser", "ReportsTo")
+                        .WithMany("DirectReports")
+                        .HasForeignKey("FKReportsToUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("FlowPilot.Infrastructure.Nexus.MultiTenant.DbModels.Tenants", "Tenant")
                         .WithMany("ApplicationUsers")
                         .HasForeignKey("FKTenantId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("ReportsTo");
 
                     b.Navigation("Tenant");
                 });
@@ -1018,6 +1030,11 @@ namespace Migrators.PostgreSQL.Migrations.NexusDb
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("FlowPilot.Infrastructure.Nexus.Identity.DbModels.ApplicationUser", b =>
+                {
+                    b.Navigation("DirectReports");
                 });
 
             modelBuilder.Entity("FlowPilot.Infrastructure.Nexus.Localization.DbModels.Country", b =>

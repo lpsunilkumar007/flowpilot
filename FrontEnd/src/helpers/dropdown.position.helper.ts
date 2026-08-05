@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, RefObject } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 export interface DropdownPosition {
 	top: number
@@ -84,9 +84,14 @@ export const useDropdownPosition = (options: UseDropdownPositionOptions) => {
 		}
 	}, [menuWidth, menuHeight, offset])
 
-	useEffect(() => {
+	useLayoutEffect(() => {
 		if (isOpen) {
 			calculatePosition()
+		}
+	}, [isOpen, calculatePosition])
+
+	useEffect(() => {
+		if (isOpen) {
 			const handleResize = () => {
 				calculatePosition()
 			}
