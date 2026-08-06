@@ -45,7 +45,8 @@ services:
     build:
       context: ./FrontEnd
       dockerfile: Dockerfile
-
+      args:
+        VITE_API_URL: ${FLOWPILOT_FRONTEND_API_URL}
     restart: unless-stopped
 
     ports:

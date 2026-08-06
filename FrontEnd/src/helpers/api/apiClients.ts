@@ -27,7 +27,7 @@ import {
 	UsersClient,
 } from './WebApiClient'
 
-const baseUrl = config.LOCAL_API_URL || config.API_URL || 'https://localhost:7027'
+const baseUrl = config.API_URL
 const http = { fetch: authenticatedFetch }
 
 // Singleton instances - clients are stateless, safe to reuse

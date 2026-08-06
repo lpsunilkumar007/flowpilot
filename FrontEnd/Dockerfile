@@ -6,10 +6,15 @@ FROM node:22-alpine AS build
 WORKDIR /app
 
 COPY package*.json ./
-
 RUN npm ci
 
 COPY . .
+
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+
+RUN test -n "$VITE_API_URL" || \
+    (echo "ERROR: VITE_API_URL is required" && exit 1)
 
 RUN npm run build
 
