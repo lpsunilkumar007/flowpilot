@@ -2,6 +2,7 @@ import DataGridWithoutPagination from '@/components/DataGrid/DataGridWithoutPagi
 import { RoleDto } from '@/helpers/api/WebApiClient'
 import { gridHelper } from '@/helpers/grid.helper'
 import withSuspense from '@/helpers/suspense.helper'
+import { formatRoleDisplayName } from '@/pages/orbit/manage-users/helpers/userRoles.helper'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { lazy, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -25,6 +26,7 @@ const ViewRoles: React.FC<ViewRolesProps> = (props) => {
 			sort: 'asc',
 			comparator: gridHelper.sortingComparator,
 			minWidth: 200,
+			valueFormatter: (params: { value?: string }) => formatRoleDisplayName(params.value),
 		},
 		{ field: 'description', headerName: t('Manage.Role.Grid_Description'), sortable: false, minWidth: 200 },
 		{

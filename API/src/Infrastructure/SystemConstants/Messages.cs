@@ -52,6 +52,9 @@ internal class ErrorMessages
     public static readonly string RemainingFewSeconds = "Please try after '{0}' seconds.";
     public static readonly string AuthenticatorNotConfigured = "Authenticator is not configured.";
     public static readonly string InvalidCode = "Invalid security code.";
+    public static readonly string InvalidReportsToUser = "Selected manager is invalid for this user.";
+    public static readonly string ReportsToCycle = "Cannot set manager because it would create a reporting cycle.";
+    public static readonly string AssignedSalesPersonRequired = "Please select an assigned sales person.";
 
 }
 

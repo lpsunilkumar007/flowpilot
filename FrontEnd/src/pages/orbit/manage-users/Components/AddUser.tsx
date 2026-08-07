@@ -1,13 +1,13 @@
 import { FormInput, PopupBody, PopupFooter, PopupHeader, PopupWrapper, VerticalForm } from '@/components'
-import { CreateUserRequest, DropDownItemResponse, NexusLookUpCodeTypes } from '@/helpers/api/WebApiClient'
-import { userService } from '@/services/UserService'
-import { messageHelper } from '@/helpers/message.helper'
+import { CreateUserRequest, DropDownItemResponse, NexusLookUpCodeTypes, UserDropDownItemResponse } from '@/helpers/api/WebApiClient'
 import { runWithToast } from '@/helpers/asyncToast.helper'
+import { messageHelper } from '@/helpers/message.helper'
+import useObjectState from '@/hooks/useObjectState'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { DropDownService } from '@/services/DropDownService'
+import { userService } from '@/services/UserService'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import useObjectState from '@/hooks/useObjectState'
 
 interface AddUserProps {
 	addNewUserOutPut: (isAdded: boolean) => void
@@ -15,19 +15,29 @@ interface AddUserProps {
 
 type ModalState = {
 	timeZone: DropDownItemResponse[]
+	managers: UserDropDownItemResponse[]
 	loading: boolean
 }
 
 const AddUser: React.FC<AddUserProps> = (props) => {
 	const { t } = useTranslation()
 	const loadingIndicator = () => <AnimationSkeleton />
-	const { state: modalState, setKey: setModalKey } = useObjectState<ModalState>({
+	const {
+		state: modalState,
+		setKey: setModalKey,
+		set,
+	} = useObjectState<ModalState>({
 		timeZone: [],
+		managers: [],
 		loading: true,
 	})
 
 	const onSubmit = async (formData: CreateUserRequest) => {
-		await runWithToast(() => userService.create(formData), {
+		const payload = {
+			...formData,
+			reportsToUserId: formData.reportsToUserId || undefined,
+		}
+		await runWithToast(() => userService.create(payload as CreateUserRequest), {
 			onSuccess: (response) => {
 				messageHelper.showSuccess(response.message!)
 				props.addNewUserOutPut(true)
@@ -37,18 +47,19 @@ const AddUser: React.FC<AddUserProps> = (props) => {
 
 	const onPageLoad = async () => {
 		try {
-			const userTimeZone = await DropDownService.getNexusLookUpCodeValues(NexusLookUpCodeTypes.UserTimeZone)
-			setModalKey('timeZone', userTimeZone)
-		} finally {
+			const [userTimeZone, managers] = await Promise.all([DropDownService.getNexusLookUpCodeValues(NexusLookUpCodeTypes.UserTimeZone), DropDownService.getSystemUsers(false)])
+			set({
+				timeZone: userTimeZone,
+				managers,
+				loading: false,
+			})
+		} catch {
 			setModalKey('loading', false)
 		}
 	}
 
 	useEffect(() => {
-		const fetchData = async () => {
-			await onPageLoad()
-		}
-		fetchData()
+		void onPageLoad()
 	}, [])
 
 	return (
@@ -72,6 +83,15 @@ const AddUser: React.FC<AddUserProps> = (props) => {
 									<option value="">{t('Manage.Users.Add.Placeholder_Choose', 'Choose')}</option>
 									{modalState.timeZone.map((item, index) => (
 										<option key={index} className="dark:bg-gray-700" value={item.text}>
+											{item.text}
+										</option>
+									))}
+								</FormInput>
+
+								<FormInput className="form-select" label={t('Manage.Users.Add_ReportsTo', 'Reports To')} labelClassName="form-label" containerClass="form-field" name="reportsToUserId" type="bottom-sheet">
+									<option value="">{t('Manage.Users.ReportsTo_None', 'No manager')}</option>
+									{modalState.managers.map((item) => (
+										<option key={item.strValue} className="dark:bg-gray-700" value={item.strValue}>
 											{item.text}
 										</option>
 									))}

@@ -113,7 +113,7 @@ const TabsWrapper = ({ tabs, variant = 'basic', tabClassName, defaultIndex, sele
 
 			<Tab.Panels className={`${tabPanelsClassName} mt-4 lg:mt-0`}>
 				{tabs.map((tab) => (
-					<Tab.Panel key={tab.key} className={`transition-all duration-300 transform outline-none ${panelClassName}`}>
+					<Tab.Panel key={tab.key} className={`transition-all duration-300 outline-none ${panelClassName}`}>
 						{tab.content}
 					</Tab.Panel>
 				))}

@@ -41,7 +41,9 @@ public class LookUpService : ILookUpService
 
     public async Task<List<DropDownItemResponse>> GetLookUpCodeValuesByTypeAsync(LookUpCodeTypes type)
     {
-        var result = await _applicationDbContext.LookUpCodeValues.Where(x => x.LookUpCode.LookUpCodeType == type).ToListAsync();
+        var result = await _applicationDbContext.LookUpCodeValues
+            .Where(x => x.LookUpCode.LookUpCodeType == type && x.IsActive)
+            .ToListAsync();
 
         return result.OrderBy(x => x.DisplayOrder).ThenBy(x => x.LookUpValue).Select(x => new DropDownItemResponse
         {

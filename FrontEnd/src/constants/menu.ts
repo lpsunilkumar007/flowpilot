@@ -34,6 +34,7 @@ export enum MenuLinks {
 	ManageSettings = '/administrator/manage-settings',
 	ManageAppointmentSettings = '/administrator/manage-appointment-settings/:id',
 	ApprovedAppointmentSettings = '/administrator/approved-appointment-settings/:id',
+	GoogleMapSettings = '/administrator/google-map-settings/:id',
 	ManageAppointment = '/administrator/manage-appointments',
 	AppointmentConfirmationUrl = '/appointment/confirm/:id',
 	ManageEmailTemplate = '/administrator/manage-email-template',
@@ -53,29 +54,40 @@ export enum MenuLinks {
 	TwoFactorVerification = '/auth/two-factor-verification/:sessionId',
 	Dashboard = '/dashboard',
 	ManageLeads = '/manage-leads',
+	LeadCalendar = '/manage-leads/calendar',
 	AddLead = '/manage-leads/create',
 	EditLead = '/manage-leads/:id',
+	ManageTasks = '/manage-tasks',
+	SalesPipeline = '/manage-leads/pipeline',
+	MyTeam = '/my-team',
 }
 
 const MENU_ITEMS: MenuItemTypes[] = [
-	{
-		key: 'manage_appointments',
-		label: 'Manage.Appointments_Heading',
-		isTitle: false,
-		icon: 'ri-calendar-event-line',
-		url: MenuLinks.ManageAppointment,
-	},
-	{
-		key: 'manage_forms',
-		label: 'Manage.Forms_Heading',
-		isTitle: false,
-		icon: 'ri-survey-line',
-		url: MenuLinks.ManageForms,
-	},
+	//{
+	//	key: 'manage_appointments',
+	//	label: 'Manage.Appointments_Heading',
+	//	isTitle: false,
+	//	icon: 'ri-calendar-event-line',
+	//	url: MenuLinks.ManageAppointment,
+	//},
+	//{
+	//	key: 'manage_forms',
+	//	label: 'Manage.Forms_Heading',
+	//	isTitle: false,
+	//	icon: 'ri-survey-line',
+	//	url: MenuLinks.ManageForms,
+	//},
 	{
 		key: 'sales_crm',
 		label: 'Manage.SalesCrm_Nav_Heading',
 		isTitle: true,
+	},
+	{
+		key: 'lead_calendar',
+		label: 'Manage.Leads.Calendar_Heading',
+		isTitle: false,
+		icon: 'ri-calendar-check-line',
+		url: MenuLinks.LeadCalendar,
 	},
 	{
 		key: 'manage_leads',
@@ -85,7 +97,28 @@ const MENU_ITEMS: MenuItemTypes[] = [
 		url: MenuLinks.ManageLeads,
 	},
 	{
-		key: 'manage_email_log',
+		key: 'manage_tasks',
+		label: 'Manage.Tasks_Heading',
+		isTitle: false,
+		icon: 'ri-task-line',
+		url: MenuLinks.ManageTasks,
+	},
+	{
+		key: 'sales_pipeline',
+		label: 'Manage.SalesPipeline_Heading',
+		isTitle: false,
+		icon: 'ri-funds-line',
+		url: MenuLinks.SalesPipeline,
+	},
+	{
+		key: 'my_team',
+		label: 'Manage.MyTeam_Heading',
+		isTitle: false,
+		icon: 'ri-team-line',
+		url: MenuLinks.MyTeam,
+	},
+	{
+		key: 'manage_email_nav',
 		label: 'Manage.Email_Nav_Heading',
 		isTitle: true,
 	},
@@ -105,7 +138,7 @@ const MENU_ITEMS: MenuItemTypes[] = [
 	},
 
 	{
-		key: 'administrator',
+		key: 'administrator_nav',
 		label: 'Manage.Admin_Nav_Heading',
 		isTitle: true,
 	},
@@ -126,12 +159,41 @@ const getMenuItems = () => {
 
 	// Define a mapping of item keys to the required permissions
 	const permissionMapping: Record<string, PermissionTypes[]> = {
-		administrator: [PermissionTypes.Permissions_Users_View, PermissionTypes.Permissions_Roles_View, PermissionTypes.Permissions_ManageLookUps_View, PermissionTypes.Permissions_CountryLocalization_View, PermissionTypes.Permissions_ManageNexusLookUps_View, PermissionTypes.Permissions_ManageSettings_View],
+		sales_crm: [
+			PermissionTypes.Permissions_ManageLeads_View,
+			PermissionTypes.Permissions_ManageLeadCalendar_View,
+			PermissionTypes.Permissions_ManageTasks_View,
+			PermissionTypes.Permissions_ManageSalePipelines_View,
+		],
+		lead_calendar: [PermissionTypes.Permissions_ManageLeadCalendar_View],
+		manage_leads: [PermissionTypes.Permissions_ManageLeads_View],
+		manage_tasks: [PermissionTypes.Permissions_ManageTasks_View],
+		sales_pipeline: [PermissionTypes.Permissions_ManageSalePipelines_View],
+		my_team: [PermissionTypes.Permissions_ManageLeads_View, PermissionTypes.Permissions_ManageTasks_View],
+		manage_email_nav: [PermissionTypes.Permissions_EmailLog_View, PermissionTypes.Permissions_EmailTemplates_View],
 		manage_email_log: [PermissionTypes.Permissions_EmailLog_View],
 		manage_emailTemplates: [PermissionTypes.Permissions_EmailTemplates_View],
-		manage_forms: [PermissionTypes.Permissions_ManageForm_View],
-		manage_leads: [PermissionTypes.Permissions_ManageLeads_View],
-		manage_appointments: [PermissionTypes.Permissions_ManageAppointments_View, PermissionTypes.Permissions_ManageSettings_View],
+		administrator_nav: [
+			PermissionTypes.Permissions_Users_View,
+			PermissionTypes.Permissions_Roles_View,
+			PermissionTypes.Permissions_ManageLookUps_View,
+			PermissionTypes.Permissions_CountryLocalization_View,
+			PermissionTypes.Permissions_ManageNexusLookUps_View,
+			PermissionTypes.Permissions_ManageSettings_View,
+			PermissionTypes.Permissions_Tenants_View,
+		],
+		administrator: [
+			PermissionTypes.Permissions_Users_View,
+			PermissionTypes.Permissions_Roles_View,
+			PermissionTypes.Permissions_ManageLookUps_View,
+			PermissionTypes.Permissions_CountryLocalization_View,
+			PermissionTypes.Permissions_ManageNexusLookUps_View,
+			PermissionTypes.Permissions_ManageSettings_View,
+			PermissionTypes.Permissions_Tenants_View,
+		],
+
+		//manage_forms: [PermissionTypes.Permissions_ManageForm_View],
+		//manage_appointments: [PermissionTypes.Permissions_ManageAppointments_View, PermissionTypes.Permissions_ManageSettings_View],
 	}
 
 	const menuWithPermissions = MENU_ITEMS.map((item) => {
@@ -184,6 +246,6 @@ const findMenuItem = (menuItems: MenuItemTypes[] | undefined, menuItemKey: MenuI
 	return null
 }
 
-export { getMenuItems, findAllParent, findMenuItem }
+export { findAllParent, findMenuItem, getMenuItems }
 
 export { MENU_ITEMS }

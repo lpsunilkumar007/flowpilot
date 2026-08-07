@@ -1,13 +1,15 @@
 import { EmptyState, PageBreadcrumbsWithLinks } from '@/components'
 import { MenuLinks } from '@/constants/menu'
+import { PermissionTypes } from '@/constants/permissions'
+import type { UserDropDownItemResponse } from '@/helpers/api/WebApiClient'
 import withSuspense from '@/helpers/suspense.helper'
+import { usePermission } from '@/hooks/usePermission'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
+import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
-import { userService } from '@/services/UserService'
 import type { ViewLeadDetailResponse } from '@/types/crm/lead.types'
-import type { ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
 import { Tab } from '@headlessui/react'
-import { lazy, useEffect, useState } from 'react'
+import { lazy, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { leadCardClass } from '../helpers/leadDisplay.helper'
@@ -22,18 +24,21 @@ const ViewLeadHistory = withSuspense(lazy(() => import('./ViewLeadHistory')))
 const EditLeadLandingPage = () => {
 	const { id } = useParams<{ id: string }>()
 	const { t } = useTranslation()
+	const { userHasPermission } = usePermission()
+	const canViewActivities = userHasPermission(PermissionTypes.Permissions_ManageLeadActivities_View)
+	const canViewNotes = userHasPermission(PermissionTypes.Permissions_ManageLeadNotes_View)
 	const [loading, setLoading] = useState(true)
 	const [lead, setLead] = useState<ViewLeadDetailResponse | null>(null)
-	const [users, setUsers] = useState<ViewUserDetailsResponse[]>([])
+	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
 
 	useEffect(() => {
 		if (!id) return
 		const load = async () => {
 			setLoading(true)
 			try {
-				const [leadRes, userList] = await Promise.all([leadService.getById(Number(id)), userService.getList()])
+				const [leadRes, userList] = await Promise.all([leadService.getById(Number(id)), DropDownService.getSystemUsers(false)])
 				setLead(leadRes)
-				setUsers(userList)
+				setUsers(userList ?? [])
 			} finally {
 				setLoading(false)
 			}
@@ -43,23 +48,21 @@ const EditLeadLandingPage = () => {
 
 	const refreshLead = () => id && leadService.getById(Number(id)).then(setLead)
 
-	const tabContents = [
-		{ title: t('Manage.Leads.Tab_Overview', 'Overview'), icon: 'ri-dashboard-line', content: id ? <EditLeadOverview id={id} onLeadUpdated={refreshLead} /> : null },
-		{ title: t('Manage.Leads.Tab_Activities', 'Activities'), icon: 'ri-time-line', content: id ? <ViewLeadActivities id={id} /> : null },
-		{ title: t('Manage.Leads.Tab_FollowUps', 'Follow-ups'), icon: 'ri-calendar-check-line', content: id ? <ViewLeadFollowUps id={id} /> : null },
-		{ title: t('Manage.Leads.Tab_Notes', 'Notes'), icon: 'ri-sticky-note-line', content: id ? <ViewLeadNotes id={id} /> : null },
-		{ title: t('Manage.Leads.Tab_History', 'History'), icon: 'ri-history-line', content: id ? <ViewLeadHistory id={id} /> : null },
-	]
+	const tabContents = useMemo(
+		() =>
+			[
+				{ title: t('Manage.Leads.Tab_Overview', 'Overview'), icon: 'ri-dashboard-line', content: id ? <EditLeadOverview id={id} onLeadUpdated={refreshLead} /> : null, visible: true },
+				{ title: t('Manage.Leads.Tab_Activities', 'Activities'), icon: 'ri-time-line', content: id ? <ViewLeadActivities id={id} /> : null, visible: canViewActivities },
+				{ title: t('Manage.Leads.Tab_FollowUps', 'Follow-ups'), icon: 'ri-calendar-check-line', content: id ? <ViewLeadFollowUps id={id} /> : null, visible: true },
+				{ title: t('Manage.Leads.Tab_Notes', 'Notes'), icon: 'ri-sticky-note-line', content: id ? <ViewLeadNotes id={id} /> : null, visible: canViewNotes },
+				{ title: t('Manage.Leads.Tab_History', 'History'), icon: 'ri-history-line', content: id ? <ViewLeadHistory id={id} /> : null, visible: true },
+			].filter((tab) => tab.visible),
+		[id, t, canViewActivities, canViewNotes]
+	)
 
 	return (
 		<div className="space-y-6">
-			<PageBreadcrumbsWithLinks
-				title={t('Manage.Leads.Detail_Heading', 'Lead Details')}
-				subNames={[
-					{ label: t('Manage.Leads_Heading', 'Leads'), link: MenuLinks.ManageLeads },
-					{ label: t('Manage.Leads.Detail.Breadcrumb', 'Details') },
-				]}
-			/>
+			<PageBreadcrumbsWithLinks title={t('Manage.Leads.Detail_Heading', 'Lead Details')} subNames={[{ label: t('Manage.Leads_Heading', 'Leads'), link: MenuLinks.ManageLeads }, { label: t('Manage.Leads.Detail.Breadcrumb', 'Details') }]} />
 
 			{loading && <AnimationSkeleton />}
 			{!loading && lead && <LeadDetailHeader lead={lead} users={users} />}
@@ -69,16 +72,7 @@ const EditLeadLandingPage = () => {
 					<Tab.Group>
 						<Tab.List className="flex flex-wrap gap-2 border-b border-gray-100 bg-gray-50/80 p-3 dark:border-gray-700 dark:bg-gray-900/40">
 							{tabContents.map((tab, idx) => (
-								<Tab
-									key={idx}
-									className={({ selected }) =>
-										`inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${
-											selected
-												? 'bg-white text-primary shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-600'
-												: 'text-gray-600 hover:bg-white/70 dark:text-gray-300 dark:hover:bg-gray-800/70'
-										}`
-									}
-								>
+								<Tab key={idx} className={({ selected }) => `inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-colors ${selected ? 'bg-white text-primary shadow-sm ring-1 ring-gray-200 dark:bg-gray-800 dark:ring-gray-600' : 'text-gray-600 hover:bg-white/70 dark:text-gray-300 dark:hover:bg-gray-800/70'}`}>
 									<i className={tab.icon} />
 									{tab.title}
 								</Tab>

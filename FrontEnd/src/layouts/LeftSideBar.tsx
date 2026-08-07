@@ -1,20 +1,51 @@
-import React, { useRef } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 
 // assets
-import SimpleBar from 'simplebar-react'
-import AppMenu from './Menu'
-import LogoBox from '../components/LogoBox'
-import { useDispatch, useSelector } from 'react-redux'
-import { AppDispatch, RootState } from '../redux/store'
-import { changeSideBarType } from '../redux/actions'
-import { SideBarType } from '../constants'
 import { getMenuItems } from '@/constants/menu'
+import { myTeamService } from '@/services/MyTeamService'
+import { useDispatch, useSelector } from 'react-redux'
+import SimpleBar from 'simplebar-react'
+import LogoBox from '../components/LogoBox'
+import { SideBarType } from '../constants'
+import { changeSideBarType } from '../redux/actions'
+import { AppDispatch, RootState } from '../redux/store'
+import AppMenu from './Menu'
 
 /* Sidebar content */
 const SideBarContent = () => {
+	const menuItems = getMenuItems()
+	const hasMyTeamPermission = useMemo(() => menuItems.some((item) => item.key === 'my_team'), [menuItems])
+	const [showMyTeam, setShowMyTeam] = useState(false)
+
+	useEffect(() => {
+		if (!hasMyTeamPermission) {
+			setShowMyTeam(false)
+			return
+		}
+
+		let cancelled = false
+		myTeamService
+			.getSummary()
+			.then((summary) => {
+				if (!cancelled) setShowMyTeam(Boolean(summary?.hasReports))
+			})
+			.catch(() => {
+				if (!cancelled) setShowMyTeam(false)
+			})
+
+		return () => {
+			cancelled = true
+		}
+	}, [hasMyTeamPermission])
+
+	const visibleMenuItems = useMemo(
+		() => menuItems.filter((item) => item.key !== 'my_team' || showMyTeam),
+		[menuItems, showMyTeam]
+	)
+
 	return (
 		<>
-			<AppMenu menuItems={getMenuItems()} />
+			<AppMenu menuItems={visibleMenuItems} />
 		</>
 	)
 }

@@ -1,5 +1,9 @@
 namespace FlowPilot.Domain.Enums.CRM;
 
+/// <summary>
+/// Default lead status values used only when seeding LookUpCodeValues.
+/// Runtime status handling must use LookupCodeValues, not this enum.
+/// </summary>
 public enum LeadStatus
 {
     New = 0,

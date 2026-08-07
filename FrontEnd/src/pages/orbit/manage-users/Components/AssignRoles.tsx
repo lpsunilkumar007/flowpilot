@@ -9,8 +9,9 @@ import { useAnyPermissions } from '@/hooks/usePermission'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { roleService } from '@/services/RoleService'
 import { userService } from '@/services/UserService'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { formatRoleDisplayName } from '../helpers/userRoles.helper'
 
 interface AssignRolesProps {
 	assignRoleOutPut: (isAdded: boolean) => void
@@ -21,34 +22,63 @@ const AssignRoles: React.FC<AssignRolesProps> = (props) => {
 	const { t } = useTranslation()
 	const [loading, setLoading] = useState(true)
 	const [allRoles, setAllRoles] = useState<RoleDto[]>([])
-	//const [userRoles, setUserRoles] = useState<UserRoleResponse[]>([])
 	const [updateUserRolesRequest, setUpdateUserRolesRequest] = useState<UserRolesRequest>()
 
 	const { hasAnyPermissions } = useAnyPermissions()
 	const loadingIndicator = () => <AnimationSkeleton />
 
-	const getColumnDefs = () =>
-		[
-			{ headerName: t('Manage.AssignRole.Grid_Name', 'Name'), field: 'name', sort: 'asc', sortingOrder: ['asc', 'desc'], comparator: gridHelper.sortingComparator },
-			{ headerName: t('Manage.AssignRole.Grid_Description', 'Description'), field: 'description', sortable: false },
-			{
-				headerName: t('Manage.AssignRole.Grid_Select', 'Select'),
-				field: 'selected',
-				sortable: false,
-				cellRenderer: (params: any) => {
-					const role = updateUserRolesRequest?.userRoles?.find((x) => x.roleId === params.data.id)
-					const isChecked = role && role.enabled
-					return <input type="checkbox" checked={isChecked} onChange={() => handleCheckboxChange(params.data.id)} />
+	const handleCheckboxChange = (roleId: string) => {
+		if (updateUserRolesRequest?.userRoles) {
+			const updatedRoles = updateUserRolesRequest.userRoles.map((role) => {
+				if (role.roleId === roleId) {
+					return new UserRoleResponse({
+						...role,
+						enabled: !role.enabled,
+					})
+				}
+				return role
+			})
+			setUpdateUserRolesRequest(
+				new UserRolesRequest({
+					...updateUserRolesRequest,
+					userRoles: updatedRoles,
+				})
+			)
+		}
+	}
+
+	const columnDefs = useMemo(
+		() =>
+			[
+				{
+					headerName: t('Manage.AssignRole.Grid_Name', 'Name'),
+					field: 'name',
+					sort: 'asc',
+					sortingOrder: ['asc', 'desc'],
+					comparator: gridHelper.sortingComparator,
+					valueFormatter: (params: { value?: string }) => formatRoleDisplayName(params.value),
 				},
-			},
-		] as any
+				{ headerName: t('Manage.AssignRole.Grid_Description', 'Description'), field: 'description', sortable: false },
+				{
+					headerName: t('Manage.AssignRole.Grid_Select', 'Select'),
+					field: 'selected',
+					sortable: false,
+					cellRenderer: (params: any) => {
+						const role = updateUserRolesRequest?.userRoles?.find((x) => x.roleId === params.data.id)
+						const isChecked = role && role.enabled
+						return <input type="checkbox" className="form-checkbox rounded text-primary h-4 w-4" checked={!!isChecked} onChange={() => handleCheckboxChange(params.data.id)} />
+					},
+				},
+			] as any,
+		[t, updateUserRolesRequest]
+	)
 
 	useEffect(() => {
 		const fetchData = async () => {
 			await fetchAllRoles()
 			await fetchUserRoles()
 		}
-		fetchData()
+		void fetchData()
 	}, [])
 
 	const fetchAllRoles = async () => {
@@ -63,37 +93,21 @@ const AssignRoles: React.FC<AssignRolesProps> = (props) => {
 	const fetchUserRoles = async () => {
 		try {
 			const userRoles = await userService.getRoles(props.id)
-			const updateUserRolesRequest = new UserRolesRequest()
-			updateUserRolesRequest.userRoles = userRoles
-			setUpdateUserRolesRequest(updateUserRolesRequest)
-			//setUserRoles(userRoles)
+			const request = new UserRolesRequest()
+			request.userRoles = userRoles
+			setUpdateUserRolesRequest(request)
 		} finally {
 			setLoading(false)
 		}
 	}
-	const handleCheckboxChange = (roleId: string) => {
-		if (updateUserRolesRequest?.userRoles) {
-			const updatedRoles = updateUserRolesRequest.userRoles.map((role) => {
-				if (role.roleId === roleId) {
-					const updatedRole = new UserRoleResponse({
-						...role,
-						enabled: !role.enabled,
-					})
-					return updatedRole
-				}
-				return role
-			})
-			const updatedRequest = new UserRolesRequest({
-				...updateUserRolesRequest,
-				userRoles: updatedRoles,
-			})
-			setUpdateUserRolesRequest(updatedRequest)
-		}
-	}
+
 	const onSubmit = async () => {
 		if (!updateUserRolesRequest) return
 		await runWithToast(() => userService.assignRoles(props.id, updateUserRolesRequest), {
-			onSuccess: (response) => messageHelper.showSuccess(response!),
+			onSuccess: (response) => {
+				messageHelper.showSuccess(response!)
+				props.assignRoleOutPut(true)
+			},
 		})
 	}
 
@@ -104,7 +118,7 @@ const AssignRoles: React.FC<AssignRolesProps> = (props) => {
 				{loading && loadingIndicator()}
 				{!loading && updateUserRolesRequest && (
 					<PopupBody>
-						<DataGridWithoutPagination rowData={allRoles} columnDefs={getColumnDefs()} />
+						<DataGridWithoutPagination rowData={allRoles} columnDefs={columnDefs} />
 					</PopupBody>
 				)}
 

@@ -47,4 +47,12 @@ public class SettingsController : VersionNeutralApiController
     {
         return await _settingService.GetSettingByCodeAsync<ApprovedAppointmentSetting>(Domain.Enums.SettingTypes.ApprovedAppointment);
     }
+
+    [HttpGet("get-google-map-settings")]
+    [MustHavePermission(SystemAction.View, SystemResource.ManageSettings)]
+    [OpenApiOperation("Get Google Map Settings", "")]
+    public async Task<string> GetGoogleMapSettings()
+    {
+        return await _settingService.GetSettingByCodeAsync<string>(Domain.Enums.SettingTypes.GoogleMapKey);
+    }
 }

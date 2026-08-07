@@ -1,7 +1,9 @@
-import { FormInput, VerticalForm } from '@/components'
-import { messageHelper } from '@/helpers/message.helper'
+import { EmptyState, FormInput, VerticalForm } from '@/components'
+import { PermissionTypes } from '@/constants/permissions'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { formatHelper } from '@/helpers/format.helper'
+import { messageHelper } from '@/helpers/message.helper'
+import { usePermission } from '@/hooks/usePermission'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { leadService } from '@/services/LeadService'
 import { EntityNoteType, type CreateEntityNoteRequest, type ViewEntityNoteResponse } from '@/types/crm/lead.types'
@@ -16,10 +18,18 @@ interface ViewLeadNotesProps {
 
 const ViewLeadNotes: React.FC<ViewLeadNotesProps> = ({ id }) => {
 	const { t } = useTranslation()
+	const { userHasPermission } = usePermission()
+	const canView = userHasPermission(PermissionTypes.Permissions_ManageLeadNotes_View)
+	const canCreate = userHasPermission(PermissionTypes.Permissions_ManageLeadNotes_Create)
 	const [loading, setLoading] = useState(true)
 	const [notes, setNotes] = useState<ViewEntityNoteResponse[]>([])
 
 	const load = async () => {
+		if (!canView) {
+			setNotes([])
+			setLoading(false)
+			return
+		}
 		setLoading(true)
 		try {
 			const res = await leadService.getNotes(Number(id))
@@ -31,7 +41,7 @@ const ViewLeadNotes: React.FC<ViewLeadNotesProps> = ({ id }) => {
 
 	useEffect(() => {
 		load()
-	}, [id])
+	}, [id, canView])
 
 	const onSubmit = async (formInfo: CreateEntityNoteRequest) => {
 		await runWithToast(
@@ -51,18 +61,28 @@ const ViewLeadNotes: React.FC<ViewLeadNotesProps> = ({ id }) => {
 
 	if (loading) return <AnimationSkeleton />
 
+	if (!canView) {
+		return (
+			<div className="p-4">
+				<EmptyState title={t('Common.NoPermission', 'You do not have permission to view notes')} />
+			</div>
+		)
+	}
+
 	return (
 		<div className="space-y-6 p-4">
-			<LeadSectionCard title={t('Manage.Leads.AddNote', 'Add note')} subtitle={t('Manage.Leads.AddNote_Sub', 'Capture context for your team')} icon="ri-quill-pen-line">
-				<VerticalForm<CreateEntityNoteRequest> onSubmit={onSubmit} defaultValues={{ entityNoteType: EntityNoteType.Lead, noteText: '' }}>
-					<FormInput label={t('Manage.Leads.NoteText', 'Note')} required name="noteText" type="textarea" className="form-input" />
-					<div className="mt-4 flex justify-end">
-						<button type="submit" className="btn btn-primary">
-							{t('Manage.Leads.SaveNote', 'Save note')}
-						</button>
-					</div>
-				</VerticalForm>
-			</LeadSectionCard>
+			{canCreate && (
+				<LeadSectionCard title={t('Manage.Leads.AddNote', 'Add note')} subtitle={t('Manage.Leads.AddNote_Sub', 'Capture context for your team')} icon="ri-quill-pen-line">
+					<VerticalForm<CreateEntityNoteRequest> onSubmit={onSubmit} defaultValues={{ entityNoteType: EntityNoteType.Lead, noteText: '' }}>
+						<FormInput label={t('Manage.Leads.NoteText', 'Note')} required name="noteText" type="textarea" className="form-input" />
+						<div className="mt-4 flex justify-end">
+							<button type="submit" className="btn btn-primary">
+								{t('Manage.Leads.SaveNote', 'Save note')}
+							</button>
+						</div>
+					</VerticalForm>
+				</LeadSectionCard>
+			)}
 
 			<LeadSectionCard title={t('Manage.Leads.NotesList', 'Notes')} subtitle={`${notes.length} ${notes.length === 1 ? 'entry' : 'entries'}`} icon="ri-sticky-note-line">
 				{notes.length === 0 ? (

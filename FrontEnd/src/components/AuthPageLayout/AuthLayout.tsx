@@ -2,8 +2,7 @@ import { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 // images
-import logo from '@/assets/images/logo.png'
-import logoDark from '@/assets/images/logo-dark.png'
+import logoMark from '@/assets/images/logo-sm.png'
 import { BrandingDetails } from '@/constants'
 
 interface AccountLayoutProps {
@@ -24,11 +23,9 @@ const AuthLayout = ({ pageImage, authTitle, helpText, bottomLinks, children }: A
 					<div className="max-w-md px-4 mx-auto">
 						<div className="card overflow-hidden">
 							<div className="p-9 bg-primary">
-								<Link to="/" className="flex justify-center">
-									{/* <img src={logo} alt="logo" className="h-6 block dark:hidden" />
-									<img src={logoDark} alt="logo" className="h-6 hidden dark:block" /> */}
-									<img src={logo} alt="logo" className="block dark:hidden" />
-									<img src={logoDark} alt="logo" className="hidden dark:block" />
+								<Link to="/auth/login" className="flex items-center justify-center gap-3">
+									<img src={logoMark} alt="" className="h-12 w-12 object-contain" />
+									<span className="text-2xl font-semibold tracking-tight text-white">Flow Pilot</span>
 								</Link>
 							</div>
 							<div className="p-9">

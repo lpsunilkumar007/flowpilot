@@ -1,12 +1,12 @@
+using FlowPilot.Infrastructure.Common;
 using Hangfire;
 using Hangfire.Console;
+using Hangfire.PostgreSql;
 //using Hangfire.Console.Extensions;
 using Hangfire.SqlServer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Serilog;
-using FlowPilot.Infrastructure.Common;
 
 namespace FlowPilot.Infrastructure.BackgroundJobs;
 internal static class Startup
@@ -40,10 +40,10 @@ internal static class Startup
     private static IGlobalConfiguration UseDatabase(this IGlobalConfiguration hangfireConfig, string dbProvider, string connectionString, IConfiguration config) =>
         dbProvider.ToLowerInvariant() switch
         {
-            //DbProviderKeys.Npgsql =>
-            //    hangfireConfig.UsePostgreSqlStorage(connectionString, config.GetSection("HangfireSettings:Storage:Options").Get<PostgreSqlStorageOptions>()),
-            DbProviderKeys.SqlServer =>
-                hangfireConfig.UseSqlServerStorage(connectionString, config.GetSection("HangfireSettings:Storage:Options").Get<SqlServerStorageOptions>()),
+            DbProviderKeys.Npgsql =>
+               hangfireConfig.UsePostgreSqlStorage(connectionString, config.GetSection("HangfireSettings:Storage:Options").Get<PostgreSqlStorageOptions>()),
+            //DbProviderKeys.SqlServer =>
+            //    hangfireConfig.UseSqlServerStorage(connectionString, config.GetSection("HangfireSettings:Storage:Options").Get<SqlServerStorageOptions>()),
             //DbProviderKeys.SqLite =>
             //    hangfireConfig.UseSQLiteStorage(connectionString, config.GetSection("HangfireSettings:Storage:Options").Get<SQLiteStorageOptions>()),
             //DbProviderKeys.MySql =>

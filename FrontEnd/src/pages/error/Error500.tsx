@@ -6,7 +6,7 @@ import { PageBreadcrumb } from '../../components'
 import AuthContainer from '../../components/AuthPageLayout/AuthContainer'
 
 //image
-import logo from '@/assets/images/logo.png'
+import logoMark from '@/assets/images/logo-sm.png'
 import startMan from '@/assets/images/svg/startman.svg'
 import { BrandingDetails } from '@/constants'
 
@@ -31,8 +31,9 @@ const Error500 = () => {
 						<div className="max-w-md px-4 mx-auto">
 							<div className="card overflow-hidden">
 								<div className="p-9 bg-primary">
-									<Link to="/" className="flex justify-center">
-										<img src={logo} alt="logo-light" className="h-6" />
+									<Link to="/" className="flex items-center justify-center gap-3">
+										<img src={logoMark} alt="" className="h-12 w-12 object-contain" />
+										<span className="text-2xl font-semibold tracking-tight text-white">Flow Pilot</span>
 									</Link>
 								</div>
 

@@ -59,6 +59,12 @@ public class NexusDbContext : NexusBaseDbContext
 
         modelBuilder.HasDefaultSchema(SchemaNames.dbo);
 
+        modelBuilder.Entity<ApplicationUser>()
+            .HasOne(u => u.ReportsTo)
+            .WithMany(u => u.DirectReports)
+            .HasForeignKey(u => u.FKReportsToUserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         base.OnModelCreating(modelBuilder);
     }
 }

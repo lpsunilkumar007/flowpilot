@@ -1,4 +1,3 @@
-using System.Net;
 using System.Text;
 using FlowPilot.Application.Common.Exceptions;
 using FlowPilot.Application.Common.FileStorage;
@@ -15,7 +14,6 @@ using FlowPilot.Infrastructure.SystemConstants;
 using FlowPilot.Shared.Authorization;
 using FlowPilot.Shared.Notifications;
 using Mapster;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
 using OtpNet;
@@ -108,6 +106,7 @@ internal partial class UserService
 
         var user = new ApplicationUser
         {
+            Id = Guid.NewGuid().ToString(),
             Email = request.Email,
             FirstName = request.FirstName,
             LastName = request.LastName,
@@ -117,8 +116,15 @@ internal partial class UserService
             FKTenantId = tenantId,
             TimeZone = request.TimeZone,
             UserRegistrationType = UserRegistrationType.ManageUser,
-            UserTwoFactorAuthenticationType = isDefaultTwoFactorEnabled ? UserTwoFactorAuthenticationTypes.Email : UserTwoFactorAuthenticationTypes.None
+            UserTwoFactorAuthenticationType = isDefaultTwoFactorEnabled ? UserTwoFactorAuthenticationTypes.Email : UserTwoFactorAuthenticationTypes.None,
+            FKReportsToUserId = string.IsNullOrWhiteSpace(request.ReportsToUserId) ? null : request.ReportsToUserId
         };
+
+        await _reportingHierarchyService.EnsureValidReportsToAsync(
+            user.Id,
+            user.FKReportsToUserId,
+            tenantId,
+            cancellationToken);
 
         var result = await _userManager.CreateAsync(user, request.Password);
         if (!result.Succeeded)
@@ -126,7 +132,7 @@ internal partial class UserService
             throw new BadRequestException(ErrorMessages.IdentityValidationError, result.GetErrors());
         }
 
-        await _userManager.AddToRoleAsync(user, SystemRoles.FormatTenantRoleName(SystemRoles.Basic, user.FKTenantId));
+        await _userManager.AddToRoleAsync(user, SystemRoles.FormatTenantRoleName(SystemRoles.SalesRepresentative, user.FKTenantId));
 
         return new CreateUserResponse { Message = string.Format(SuccessMessages.UserCreated, user.UserName), UserId = user.Id };
     }
@@ -156,6 +162,7 @@ internal partial class UserService
                 PhoneNumber = item.PhoneNumber,
                 ImageUrl = item.ImageUrl,
                 TimeZone = !string.IsNullOrEmpty(item.TimeZone) ? item.TimeZone : defaultTimeZone,
+                ReportsToUserId = item.FKReportsToUserId,
             });
         }
 
@@ -191,6 +198,7 @@ internal partial class UserService
                 PhoneNumber = item.PhoneNumber,
                 ImageUrl = imageBase64,
                 TimeZone = item.TimeZone,
+                ReportsToUserId = item.FKReportsToUserId,
             });
         }
 
@@ -214,6 +222,7 @@ internal partial class UserService
         _ = user ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "User"));
 
         var userProfileDetails = user.Adapt<ViewUserDetailsResponse>();
+        userProfileDetails.ReportsToUserId = user.FKReportsToUserId;
         if (!string.IsNullOrEmpty(userProfileDetails.ImageUrl))
         {
             userProfileDetails.ImageUrl = _fileStorage.FileToBase64String(userProfileDetails.ImageUrl);
@@ -272,6 +281,25 @@ internal partial class UserService
         return userList;
     }
 
+    public async Task<List<UserDropDownItemResponse>> GetDirectReportUsersForDropDownAsync(CancellationToken cancellationToken = default)
+    {
+        string currentUserId = _currentUser.GetUserId().ToString();
+
+        var users = await _userManager.Users
+            .AsNoTracking()
+            .Where(x => x.FKTenantId == _currentUser.GetTenant() && x.FKReportsToUserId == currentUserId)
+            .OrderBy(x => x.FirstName)
+            .ThenBy(x => x.LastName)
+            .ToListAsync(cancellationToken);
+
+        return users.Select(item => new UserDropDownItemResponse
+        {
+            TimeZone = item.TimeZone,
+            StrValue = item.Id,
+            Text = string.Format("{0} {1}", item.FirstName, item.LastName),
+        }).ToList();
+    }
+
     public async Task<ViewUserDetailsDto> GetByIdAsync(string userId, CancellationToken cancellationToken)
     {
         var user = await _userManager.Users
@@ -281,7 +309,20 @@ internal partial class UserService
 
         _ = user ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "User"));
 
-        return user.Adapt<ViewUserDetailsDto>();
+        return new ViewUserDetailsDto
+        {
+            Id = new Guid(user.Id),
+            UserName = user.UserName,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email!,
+            IsActive = user.IsActive,
+            EmailConfirmed = user.EmailConfirmed,
+            PhoneNumber = user.PhoneNumber,
+            ImageUrl = user.ImageUrl,
+            TimeZone = user.TimeZone,
+            ReportsToUserId = user.FKReportsToUserId,
+        };
     }
 
     public async Task<string> UpdateUserAsync(UpdateUserDetailsRequest request, CancellationToken cancellationToken)
@@ -320,6 +361,10 @@ internal partial class UserService
         // user.EmailConfirmed = request.EmailConfirmed;
 
         user.TimeZone = request.TimeZone;
+
+        string? reportsTo = string.IsNullOrWhiteSpace(request.ReportsToUserId) ? null : request.ReportsToUserId;
+        await _reportingHierarchyService.EnsureValidReportsToAsync(user.Id, reportsTo, user.FKTenantId, cancellationToken);
+        user.FKReportsToUserId = reportsTo;
 
         await _userManager.UpdateAsync(user);
 
@@ -437,6 +482,7 @@ internal partial class UserService
                 PhoneNumber = item.PhoneNumber,
                 ImageUrl = item.ImageUrl,
                 TimeZone = !string.IsNullOrEmpty(item.TimeZone) ? item.TimeZone : defaultTimeZone,
+                ReportsToUserId = item.FKReportsToUserId,
             });
         }
 

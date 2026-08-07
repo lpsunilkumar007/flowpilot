@@ -52,16 +52,16 @@ const Login = () => {
 	const dispatch = useDispatch<AppDispatch>()
 
 	const { user, userLoggedIn, loading, requiresTwoFactor, twoFactorSessionId } = useSelector((state: RootState) => ({
-		user: state.Auth.user,
-		loading: state.Auth.loading,
-		requiresTwoFactor: state.Auth.requiresTwoFactor,
-		twoFactorSessionId: state.Auth.twoFactorSessionId,
-		error: state.Auth.error,
-		userLoggedIn: state.Auth.userLoggedIn,
+			user: state.Auth.user,
+			loading: state.Auth.loading,
+			requiresTwoFactor: state.Auth.requiresTwoFactor,
+			twoFactorSessionId: state.Auth.twoFactorSessionId,
+			error: state.Auth.error,
+			userLoggedIn: state.Auth.userLoggedIn,
 	}), shallowEqual)
 
 	useEffect(() => {
-		dispatch(resetAuth()as any)
+		dispatch(resetAuth() as any)
 	}, [dispatch])
 
 	/*
@@ -105,7 +105,7 @@ const Login = () => {
 			request.socialMediaType = UserRegistrationType.Facebook
 			const result = await authService.getSocialMediaToken(request)
 			if (result) {
-				dispatch(socialMediaLogin(result)as any)
+				dispatch(socialMediaLogin(result) as any)
 			} else {
 				messageHelper.showError('No result from getSocialMediaToken')
 			}
@@ -121,7 +121,7 @@ const Login = () => {
 			request.socialMediaType = UserRegistrationType.Google
 			const result = await authService.getSocialMediaToken(request)
 			if (result) {
-				dispatch(socialMediaLogin(result)as any)
+				dispatch(socialMediaLogin(result) as any)
 			} else {
 				messageHelper.showError('No result from getSocialMediaToken')
 			}
@@ -151,18 +151,18 @@ const Login = () => {
 							</button>
 						</div>
 					</VerticalForm>
-					<div className="relative my-6">
+					{/* <div className="relative my-6">
 						<div className="absolute inset-0 flex items-center">
 							<div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
 						</div>
 						<div className="relative flex justify-center text-sm">
 							<span className="px-2 bg-white dark:bg-gray-800 text-gray-500">Or continue with</span>
 						</div>
-					</div>
-					<div className="space-y-3">
+					</div> 
+					 <div className="space-y-3">
 						<FacebookLoginForm onLoginSuccess={handleFacebookLogin} />
 						<GoogleLoginForm onLoginSuccess={handleGoogleLogin} />
-					</div>
+					</div> */}
 				</AuthLayout>
 			</AuthContainer>
 		</>

@@ -1,8 +1,8 @@
+import { MenuLinks } from '@/constants/menu'
+import { SettingTypes } from '@/helpers/api/WebApiClient'
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ViewSettings from './Components/ViewSettings'
-import { SettingTypes } from '@/helpers/api/WebApiClient'
-import { MenuLinks } from '@/constants/menu'
 
 type ModalState = {
 	isRedirectSettings: boolean
@@ -30,6 +30,9 @@ const ManageSettings: React.FC = () => {
 			}
 			if (modalState.settingType === SettingTypes.ApprovedAppointment) {
 				navigate(MenuLinks.ApprovedAppointmentSettings.replace(':id', String(modalState.id)))
+			}
+			if (modalState.settingType === SettingTypes.GoogleMapKey) {
+				navigate(MenuLinks.GoogleMapSettings.replace(':id', String(modalState.id)))
 			}
 		}
 	}, [modalState.isRedirectSettings])

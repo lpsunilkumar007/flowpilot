@@ -1,7 +1,5 @@
-using System.ComponentModel.DataAnnotations;
 using FlowPilot.Application.Common.Models;
 using FlowPilot.Domain.Enums.CRM;
-using FlowPilot.Shared.Common.Validation;
 
 namespace FlowPilot.Application.CRM.Model.Request.Lead;
 
@@ -17,3 +15,4 @@ public class SearchLeadRequest : SearchRequestBaseClass
 
     public DateTimeOffset? ToDate { get; set; }
 }
+ 

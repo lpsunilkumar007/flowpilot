@@ -7,6 +7,7 @@ import type {
 	PaginationResponseOfViewLeadListResponse,
 	SearchLeadRequest,
 	UpdateLeadRequest,
+	UpdateLeadFollowUpDateRequest,
 	UpdateLeadStatusRequest,
 	ViewEntityNoteResponse,
 	ViewLeadActivityResponse,
@@ -21,6 +22,7 @@ export interface ILeadRepository {
 	update(id: number, request: UpdateLeadRequest): Promise<string>
 	updateStatus(id: number, request: UpdateLeadStatusRequest): Promise<string>
 	assign(id: number, request: AssignLeadRequest): Promise<string>
+	updateFollowUpDate(id: number, request: UpdateLeadFollowUpDateRequest): Promise<string>
 	getActivities(id: number): Promise<ViewLeadActivityResponse[]>
 	createActivity(id: number, request: CreateLeadActivityRequest): Promise<ViewLeadActivityResponse>
 	getTodayFollowUps(): Promise<ViewLeadListResponse[]>

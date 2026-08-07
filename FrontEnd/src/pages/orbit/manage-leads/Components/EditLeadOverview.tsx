@@ -1,34 +1,60 @@
 import { FormInput, VerticalForm } from '@/components'
-import { messageHelper } from '@/helpers/message.helper'
+import { PermissionTypes } from '@/constants/permissions'
+import type { UserDropDownItemResponse, ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
+import { LookUpCodeTypes } from '@/helpers/api/WebApiClient'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { formatHelper } from '@/helpers/format.helper'
+import { messageHelper } from '@/helpers/message.helper'
+import { usePermission } from '@/hooks/usePermission'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
+import { RootState } from '@/redux/store'
+import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
-import { userService } from '@/services/UserService'
-import { InterestLevel, LeadPriority, LeadStatus, type UpdateLeadRequest, type ViewLeadDetailResponse } from '@/types/crm/lead.types'
-import type { ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
+import { InterestLevel, LeadPriority, type UpdateLeadRequest, type ViewLeadDetailResponse } from '@/types/crm/lead.types'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useSelector } from 'react-redux'
+import AssignSalesPersonFields from './shared/AssignSalesPersonFields'
 import LeadSectionCard from './shared/LeadSectionCard'
+// form validation
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface EditLeadOverviewProps {
 	id: string
 	onLeadUpdated?: () => void
 }
 
+const isSameUserId = (left?: string | null, right?: string | null) => Boolean(left && right && left.localeCompare(right, undefined, { sensitivity: 'accent' }) === 0)
+
 const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }) => {
 	const { t } = useTranslation()
+	const { userHasPermission } = usePermission()
+	const canUpdate = userHasPermission(PermissionTypes.Permissions_ManageLeads_Update)
+	const userData = useSelector((state: RootState) => state.Auth.userData) as ViewUserDetailsResponse | undefined
+	const currentUserId = userData?.id
 	const [loading, setLoading] = useState(true)
 	const [lead, setLead] = useState<ViewLeadDetailResponse | null>(null)
-	const [users, setUsers] = useState<ViewUserDetailsResponse[]>([])
-	const [statusUpdate, setStatusUpdate] = useState<LeadStatus | string>('')
+	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
+	const [leadStatuses, setLeadStatuses] = useState<{ value: number; text: string }[]>([])
+	const [leadSources, setLeadSources] = useState<{ value: number; text: string }[]>([])
+	const [statusUpdate, setStatusUpdate] = useState<number | ''>('')
 	const [assignUserId, setAssignUserId] = useState('')
+	const [assignToYourself, setAssignToYourself] = useState(false)
+	const [formKey, setFormKey] = useState(0)
+
+	const syncAssigneeState = (assignedToUserId: string) => {
+		const assignedToSelf = isSameUserId(assignedToUserId, currentUserId)
+		setAssignToYourself(assignedToSelf)
+		setAssignUserId(assignedToSelf ? '' : assignedToUserId)
+	}
 
 	const reload = async () => {
 		const leadRes = await leadService.getById(Number(id))
 		setLead(leadRes)
-		setStatusUpdate(leadRes.leadStatus)
-		setAssignUserId(leadRes.assignedToUserId)
+		setStatusUpdate(leadRes.leadStatusId)
+		syncAssigneeState(leadRes.assignedToUserId)
+		setFormKey((k) => k + 1)
 		onLeadUpdated?.()
 	}
 
@@ -36,48 +62,97 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 		const load = async () => {
 			setLoading(true)
 			try {
-				const [leadRes, userList] = await Promise.all([leadService.getById(Number(id)), userService.getList()])
+				const [leadRes, userList, statusList, sourceList] = await Promise.all([
+					leadService.getById(Number(id)),
+					DropDownService.getDirectReportSystemUsers(),
+					DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus),
+					DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadSource),
+				])
 				setLead(leadRes)
-				setStatusUpdate(leadRes.leadStatus)
-				setAssignUserId(leadRes.assignedToUserId)
-				setUsers(userList)
+				setStatusUpdate(leadRes.leadStatusId)
+				const assignedToSelf = isSameUserId(leadRes.assignedToUserId, currentUserId)
+				setAssignToYourself(assignedToSelf)
+				setAssignUserId(assignedToSelf ? '' : leadRes.assignedToUserId)
+				setUsers(userList ?? [])
+				setLeadStatuses((statusList ?? []).map((item) => ({ value: item.value, text: item.text })))
+				setLeadSources((sourceList ?? []).map((item) => ({ value: item.value, text: item.text })))
 			} finally {
 				setLoading(false)
 			}
 		}
 		load()
-	}, [id])
+	}, [id, currentUserId])
+
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			id: yup.number().required('This field cannot be left empty'),
+			businessName: yup.string().required('This field cannot be left empty'),
+			businessType: yup.string().required('This field cannot be left empty'),
+			ownerName: yup.string().required('This field cannot be left empty'),
+			mobile: yup.string().required('Please enter Mobile Number'),
+			leadSourceId: yup.number().required('Please select a value'),
+			assignToYourself: yup.boolean(),
+			assignedToUserId: yup.string().when('assignToYourself', {
+				is: true,
+				then: (schema) => schema.optional().nullable(),
+				otherwise: (schema) => schema.required('Please select a value'),
+			}),
+			email: yup.string().email('Please enter a valid email address').nullable(),
+		})
+	)
+	const showBackendSuccess = (response?: string) => {
+		messageHelper.showSuccess(typeof response === 'string' && response.trim() ? response : t('Manage.Leads.Updated', 'Lead updated successfully'))
+	}
 
 	const onSubmit = async (formInfo: UpdateLeadRequest) => {
-		await runWithToast(() => leadService.update(Number(id), { ...formInfo, id: Number(id) }), {
-			onSuccess: async (msg) => {
-				messageHelper.showSuccess(msg)
-				await reload()
-			},
-		})
+		const assignToSelf = !!formInfo.assignToYourself
+		await runWithToast(
+			() =>
+				leadService.update(Number(id), {
+					...formInfo,
+					id: Number(id),
+					assignToYourself: assignToSelf,
+					assignedToUserId: assignToSelf ? undefined : formInfo.assignedToUserId,
+				}),
+			{
+				onSuccess: (response) => {
+					showBackendSuccess(response)
+					void reload()
+				},
+			}
+		)
 	}
 
 	const handleStatusUpdate = async () => {
 		if (statusUpdate === '') return
-		await runWithToast(() => leadService.updateStatus(Number(id), { leadStatus: statusUpdate as LeadStatus }), {
-			onSuccess: async (msg) => {
-				messageHelper.showSuccess(msg)
-				await reload()
+		await runWithToast(() => leadService.updateStatus(Number(id), { leadStatusId: statusUpdate as number }), {
+			onSuccess: (response) => {
+				showBackendSuccess(response)
+				void reload()
 			},
 		})
 	}
 
 	const handleAssign = async () => {
-		if (!assignUserId) return
-		await runWithToast(() => leadService.assign(Number(id), { assignedToUserId: assignUserId }), {
-			onSuccess: async (msg) => {
-				messageHelper.showSuccess(msg)
-				await reload()
-			},
-		})
+		if (!assignToYourself && !assignUserId) return
+		await runWithToast(
+			() =>
+				leadService.assign(Number(id), {
+					assignToYourself,
+					assignedToUserId: assignToYourself ? undefined : assignUserId,
+				}),
+			{
+				onSuccess: (response) => {
+					showBackendSuccess(response)
+					void reload()
+				},
+			}
+		)
 	}
 
 	if (loading || !lead) return <AnimationSkeleton />
+
+	const assignedToSelf = isSameUserId(lead.assignedToUserId, currentUserId)
 
 	const defaultValues: UpdateLeadRequest = {
 		id: lead.id,
@@ -104,10 +179,11 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 		pincode: lead.pincode,
 		fullAddress: lead.fullAddress,
 		googleMapsLink: lead.googleMapsLink,
-		leadSource: lead.leadSource,
-		assignedToUserId: lead.assignedToUserId,
+		leadSourceId: lead.leadSourceId,
+		assignToYourself: assignedToSelf,
+		assignedToUserId: assignedToSelf ? undefined : lead.assignedToUserId,
 		priority: lead.priority,
-		leadStatus: lead.leadStatus,
+		leadStatusId: lead.leadStatusId,
 		expectedClosingDate: lead.expectedClosingDate,
 		interestLevel: lead.interestLevel,
 		painPoints: lead.painPoints,
@@ -116,61 +192,86 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 		isArchived: lead.isArchived,
 	}
 
-	const statusOptions = Object.values(LeadStatus).filter((v) => typeof v === 'string') as string[]
+	const statusOptions = leadStatuses
 
 	return (
 		<div className="space-y-6 p-4">
-			<LeadSectionCard title={t('Manage.Leads.QuickActions', 'Quick actions')} subtitle={t('Manage.Leads.QuickActions_Sub', 'Update pipeline without opening the full form')} icon="ri-flashlight-line">
-				<div className="grid gap-4 md:grid-cols-2">
-					<div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-900/40">
-						<label className="form-label">{t('Manage.Leads.UpdateStatus', 'Update status')}</label>
-						<div className="mt-2 flex gap-2">
-							<select className="form-select flex-1" value={String(statusUpdate)} onChange={(e) => setStatusUpdate(e.target.value)}>
-								{statusOptions.map((opt) => (
-									<option key={opt} value={opt}>
-										{formatHelper.punctuateLabel(opt)}
-									</option>
-								))}
-							</select>
-							<button type="button" className="btn btn-primary" onClick={handleStatusUpdate}>
-								{t('Common.Update', 'Update')}
-							</button>
+			{canUpdate && (
+				<LeadSectionCard title={t('Manage.Leads.QuickActions', 'Quick actions')} subtitle={t('Manage.Leads.QuickActions_Sub', 'Update pipeline without opening the full form')} icon="ri-flashlight-line">
+					<div className="grid gap-4 md:grid-cols-2">
+						<div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-900/40">
+							<label className="form-label">{t('Manage.Leads.UpdateStatus', 'Update status')}</label>
+							<div className="mt-2 flex gap-2">
+								<select className="form-select flex-1" value={String(statusUpdate)} onChange={(e) => setStatusUpdate(Number(e.target.value))}>
+									{statusOptions.map((opt) => (
+										<option key={opt.value} value={opt.value}>
+											{formatHelper.punctuateLabel(opt.text)}
+										</option>
+									))}
+								</select>
+								<button type="button" className="btn btn-primary" onClick={handleStatusUpdate}>
+									{t('Common.Update', 'Update')}
+								</button>
+							</div>
+						</div>
+						<div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-900/40">
+							<label className="form-label">{t('Manage.Leads.Reassign', 'Reassign lead')}</label>
+							<div className="mt-2 space-y-3">
+								<div>
+									<label className="form-label" htmlFor="quickAssignToYourself">
+										{t('Manage.Leads.AssignToYourself', 'Assign to yourself')}
+									</label>
+									<div className="flex items-center">
+										<input
+											type="checkbox"
+											className="form-switch text-primary"
+											id="quickAssignToYourself"
+											checked={assignToYourself}
+											onChange={(e) => {
+												setAssignToYourself(e.target.checked)
+												if (e.target.checked) setAssignUserId('')
+											}}
+										/>
+									</div>
+								</div>
+								<div className="flex gap-2">
+									{!assignToYourself && (
+										<select className="form-select flex-1" value={assignUserId} onChange={(e) => setAssignUserId(e.target.value)}>
+											<option value="">{t('Common.Select', 'Select')}</option>
+											{users.map((u) => (
+												<option key={u.strValue} value={u.strValue}>
+													{u.text}
+												</option>
+											))}
+										</select>
+									)}
+									<button type="button" className="btn btn-primary" onClick={handleAssign}>
+										{t('Common.Assign', 'Assign')}
+									</button>
+								</div>
+							</div>
 						</div>
 					</div>
-					<div className="rounded-xl bg-gray-50 p-4 dark:bg-gray-900/40">
-						<label className="form-label">{t('Manage.Leads.Reassign', 'Reassign lead')}</label>
-						<div className="mt-2 flex gap-2">
-							<select className="form-select flex-1" value={assignUserId} onChange={(e) => setAssignUserId(e.target.value)}>
-								{users.map((u) => (
-									<option key={u.id} value={u.id}>
-										{`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email}
-									</option>
-								))}
-							</select>
-							<button type="button" className="btn btn-primary" onClick={handleAssign}>
-								{t('Common.Assign', 'Assign')}
-							</button>
-						</div>
-					</div>
-				</div>
-			</LeadSectionCard>
+				</LeadSectionCard>
+			)}
 
 			<LeadSectionCard title={t('Manage.Leads.EditDetails', 'Lead details')} subtitle={t('Manage.Leads.EditDetails_Sub', 'Keep information accurate for your team')} icon="ri-edit-box-line">
-				<VerticalForm<UpdateLeadRequest> onSubmit={onSubmit} defaultValues={defaultValues}>
+				<VerticalForm<any> key={formKey} onSubmit={onSubmit} resolver={schemaResolver} defaultValues={defaultValues}>
 					<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 						<FormInput label={t('Manage.Leads.BusinessName', 'Business Name')} required name="businessName" type="text" className="form-input" />
 						<FormInput label={t('Manage.Leads.BusinessType', 'Business Type')} required name="businessType" type="text" className="form-input" />
 						<FormInput label={t('Manage.Leads.OwnerName', 'Owner Name')} required name="ownerName" type="text" className="form-input" />
-						<FormInput label={t('Manage.Leads.Mobile', 'Mobile')} required name="mobile" type="text" className="form-input" />
-						<FormInput label={t('Manage.Leads.Email', 'Email')} name="email" type="text" className="form-input" />
-						<FormInput label={t('Manage.Leads.LeadSource', 'Lead Source')} required name="leadSource" type="text" className="form-input" />
-						<FormInput label={t('Manage.Leads.AssignedTo', 'Assigned To')} required name="assignedToUserId" type="bottom-sheet" className="form-select">
-							{users.map((u) => (
-								<option key={u.id} value={u.id}>
-									{`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email}
+						<FormInput label={t('Manage.Leads.Mobile', 'Mobile')} required name="mobile" type="number" className="form-input" />
+						<FormInput label={t('Manage.Leads.Email', 'Email')} name="email" type="email" className="form-input" />
+						<FormInput label={t('Manage.Leads.LeadSource', 'Lead Source')} required name="leadSourceId" type="bottom-sheet" className="form-select">
+							<option value="">{t('Common.Select', 'Select')}</option>
+							{leadSources.map((source) => (
+								<option key={source.value} value={source.value}>
+									{source.text}
 								</option>
 							))}
 						</FormInput>
+						<AssignSalesPersonFields users={users} assignedLabel={t('Manage.Leads.AssignedTo', 'Assigned To')} />
 						<FormInput label={t('Manage.Leads.ExpectedRevenue', 'Expected Revenue')} name="expectedRevenue" type="number" className="form-input" />
 						<FormInput label={t('Manage.Leads.Priority', 'Priority')} name="priority" type="bottom-sheet" className="form-select">
 							{Object.values(LeadPriority)
@@ -195,11 +296,13 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 						<FormInput label={t('Manage.Leads.Competitors', 'Competitors')} name="competitors" type="textarea" className="form-input" />
 						<FormInput label={t('Manage.Leads.IsArchived', 'Archived')} name="isArchived" type="checkbox" className="form-checkbox" />
 					</div>
-					<div className="mt-6 flex justify-end border-t border-gray-100 pt-4 dark:border-gray-700">
-						<button type="submit" className="btn btn-primary">
-							{t('Common.SaveChanges', 'Save changes')}
-						</button>
-					</div>
+					{canUpdate && (
+						<div className="mt-6 flex justify-end border-t border-gray-100 pt-4 dark:border-gray-700">
+							<button type="submit" className="btn btn-primary">
+								{t('Common.SaveChanges', 'Save changes')}
+							</button>
+						</div>
+					)}
 				</VerticalForm>
 			</LeadSectionCard>
 		</div>

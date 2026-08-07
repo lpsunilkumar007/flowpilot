@@ -27,7 +27,7 @@
     @apply bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700;
 }
 .choices__list--dropdown {
-    @apply bg-white dark:bg-gray-800;
+    @apply bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100;
     .choices__input {
         @apply h-9 px-3 py-2;
     }

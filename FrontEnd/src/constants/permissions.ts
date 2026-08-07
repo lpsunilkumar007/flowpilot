@@ -21,6 +21,7 @@ export enum PermissionTypes {
 	Permissions_ManageNexusLookUps_View = 'Permissions.ManageNexusLookUps.View',
 	Permissions_ManageNexusLookUps_Create = 'Permissions.ManageNexusLookUps.Create',
 	Permissions_ManageNexusLookUps_Update = 'Permissions.ManageNexusLookUps.Update',
+	Permissions_ManageNexusLookUps_Delete = 'Permissions.ManageNexusLookUps.Delete',
 
 	Permissions_EmailTemplates_View = 'Permissions.EmailTemplates.View',
 	Permissions_EmailTemplates_Create = 'Permissions.EmailTemplates.Create',
@@ -37,6 +38,7 @@ export enum PermissionTypes {
 
 	Permissions_MySubscriptions_View = 'Permissions.MySubscriptions.View',
 
+	//------------------------------------------------------------------------//
 	Permissions_ManageForm_View = 'Permissions.ManageForm.View',
 	Permissions_ManageForm_Create = 'Permissions.ManageForm.Create',
 	Permissions_ManageForm_Update = 'Permissions.ManageForm.Update',
@@ -45,10 +47,35 @@ export enum PermissionTypes {
 	Permissions_ManageAppointments_View = 'Permissions.Appointment.View',
 	Permissions_ManageAppointments_Create = 'Permissions.Appointment.Create',
 	Permissions_ManageAppointments_Update = 'Permissions.Appointment.Update',
+	//------------------------------------------------------------------------//
 
 	Permissions_ManageLeads_View = 'Permissions.ManageLeads.View',
 	Permissions_ManageLeads_Create = 'Permissions.ManageLeads.Create',
 	Permissions_ManageLeads_Update = 'Permissions.ManageLeads.Update',
-	Permissions_ManageLeads_Delete = 'Permissions.ManageLeads.Delete',
 
+	Permissions_ManageLeadCalendar_View = 'Permissions.ManageLeadCalendar.View',
+	Permissions_ManageLeadCalendar_ViewDetail = 'Permissions.ManageLeadCalendar.ViewDetail',
+	Permissions_ManageLeadCalendar_ViewInfo = 'Permissions.ManageLeadCalendar.ViewInfo',
+	Permissions_ManageLeadCalendar_ViewTasks = 'Permissions.ManageLeadCalendar.ViewTasks',
+	Permissions_ManageLeadCalendar_Update = 'Permissions.ManageLeadCalendar.Update',
+
+	Permissions_ManageTasks_View = 'Permissions.ManageTasks.View',
+	Permissions_ManageTasks_Create = 'Permissions.ManageTasks.Create',
+	Permissions_ManageTasks_Update = 'Permissions.ManageTasks.Update',
+	Permissions_ManageTasks_Delete = 'Permissions.ManageTasks.Delete',
+
+	Permissions_ManageLeadVisits_View = 'Permissions.ManageLeadVisits.View',
+	Permissions_ManageLeadVisits_Create = 'Permissions.ManageLeadVisits.Create',
+	Permissions_ManageLeadVisits_Update = 'Permissions.ManageLeadVisits.Update',
+	Permissions_ManageLeadVisits_Delete = 'Permissions.ManageLeadVisits.Delete',
+
+	Permissions_ManageLeadActivities_View = 'Permissions.ManageLeadActivities.View',
+	Permissions_ManageLeadActivities_Create = 'Permissions.ManageLeadActivities.Create',
+
+	Permissions_ManageLeadNotes_View = 'Permissions.ManageLeadNotes.View',
+	Permissions_ManageLeadNotes_Create = 'Permissions.ManageLeadNotes.Create',
+
+	Permissions_ManageSalePipelines_View = 'Permissions.ManageSalePipelines.View',
+	Permissions_ManageSalePipelines_Create = 'Permissions.ManageSalePipelines.Create',
+	Permissions_ManageSalePipelines_Update = 'Permissions.ManageSalePipelines.Update',
 }

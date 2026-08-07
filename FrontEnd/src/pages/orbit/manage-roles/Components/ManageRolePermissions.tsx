@@ -6,6 +6,7 @@ import { runWithToast } from '@/helpers/asyncToast.helper'
 import { gridHelper } from '@/helpers/grid.helper'
 import { messageHelper } from '@/helpers/message.helper'
 import { useAnyPermissions } from '@/hooks/usePermission'
+import { isDefaultSystemRole } from '@/pages/orbit/manage-users/helpers/userRoles.helper'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { roleService } from '@/services/RoleService'
 import { useEffect, useState } from 'react'
@@ -20,6 +21,7 @@ const ManageRolePermissions: React.FC<ManageRolePermissionsProps> = (props) => {
 	const [loading, setLoading] = useState(true)
 	const { hasAnyPermissions } = useAnyPermissions()
 	const [allSystemPermission, setAllSystemPermission] = useState<SystemPermission[]>([])
+	const [isDefaultRole, setIsDefaultRole] = useState(false)
 
 	const [distinctResources, setDistinctResources] = useState<string[]>()
 	const [updateRolePermissionsRequest, setUpdateRolePermissionsRequest] = useState<UpdateRolePermissionsRequest>()
@@ -35,7 +37,7 @@ const ManageRolePermissions: React.FC<ManageRolePermissionsProps> = (props) => {
 				sortable: false,
 				cellRenderer: (params: any) => {
 					const isChecked = updateRolePermissionsRequest?.permissions?.includes(params.data.name)
-					return <input type="checkbox" checked={isChecked} onChange={() => handleCheckboxChange(params.data.name)} />
+					return <input type="checkbox" className="form-checkbox rounded text-primary h-4 w-4" checked={isChecked} disabled={isDefaultRole} onChange={() => handleCheckboxChange(params.data.name)} />
 				},
 				minWidth: 200,
 				flex: 1,
@@ -63,20 +65,19 @@ const ManageRolePermissions: React.FC<ManageRolePermissionsProps> = (props) => {
 	const fetchRolePermission = async () => {
 		try {
 			const response = await roleService.getByIdWithPermissions(props.id)
+			setIsDefaultRole(isDefaultSystemRole(response.name))
 
-			// Initialize updateRolePermissionsRequest
 			const updateRolePermissionsRequest = new UpdateRolePermissionsRequest()
 			updateRolePermissionsRequest.roleId = props.id
 			updateRolePermissionsRequest.permissions = response.permissions || []
 			setUpdateRolePermissionsRequest(updateRolePermissionsRequest)
-
-			//setRolePermission(response)
 		} finally {
 			setLoading(false)
 		}
 	}
 
 	const handleCheckboxChange = (permission: string) => {
+		if (isDefaultRole) return
 		setUpdateRolePermissionsRequest((prev: any) => {
 			if (!prev) {
 				return {
@@ -99,7 +100,7 @@ const ManageRolePermissions: React.FC<ManageRolePermissionsProps> = (props) => {
 	}
 
 	const onSubmit = async () => {
-		if (!updateRolePermissionsRequest) return
+		if (!updateRolePermissionsRequest || isDefaultRole) return
 		await runWithToast(() => roleService.updatePermissions(props.id, updateRolePermissionsRequest), {
 			onSuccess: (response) => messageHelper.showSuccess(response!),
 		})
@@ -113,8 +114,13 @@ const ManageRolePermissions: React.FC<ManageRolePermissionsProps> = (props) => {
 				{!loading && (
 					<>
 						<PopupBody>
+							{isDefaultRole && (
+								<p className="mb-3 text-sm text-gray-500 dark:text-gray-400">
+									{t('Manage.Permissions.SystemRole_ReadOnly', 'System roles have fixed permissions and cannot be changed.')}
+								</p>
+							)}
 							<TabsWrapper
-                                variant="card"
+								variant="card"
 								tabListClassName="permission-tabs"
 								tabPanelsClassName="border dark:border-gray-600 p-2"
 								tabs={(distinctResources || []).map((resource) => {
@@ -139,7 +145,7 @@ const ManageRolePermissions: React.FC<ManageRolePermissionsProps> = (props) => {
 								{t('Manage.Permissions.Edit_Close', 'Close')}
 							</button>
 
-							{hasAnyPermissions([PermissionTypes.Permissions_Roles_Create, PermissionTypes.Permissions_Roles_Update]) && (
+							{!isDefaultRole && hasAnyPermissions([PermissionTypes.Permissions_Roles_Create, PermissionTypes.Permissions_Roles_Update]) && (
 								<button onClick={onSubmit} className="btn btn-primary">
 									{t('Manage.Permissions.Edit_Update', 'Update')}
 								</button>

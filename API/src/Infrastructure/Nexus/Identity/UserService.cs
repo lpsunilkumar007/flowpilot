@@ -33,6 +33,7 @@ internal partial class UserService : IUserService
     private readonly INexusLookUpService _nexusLookUpService;
     private readonly INotificationSender _notificationSender;
     private readonly LoggerSettings _loggerSettings;
+    private readonly IReportingHierarchyService _reportingHierarchyService;
 
     public UserService(
        SignInManager<ApplicationUser> signInManager,
@@ -50,7 +51,8 @@ internal partial class UserService : IUserService
        INexusLookUpService nexusLookUpService,
        IDatabaseInitializer databaseInitializer,
        INotificationSender notificationSender,
-       IOptions<LoggerSettings> loggerSettings
+       IOptions<LoggerSettings> loggerSettings,
+       IReportingHierarchyService reportingHierarchyService
 
         )
     {
@@ -70,6 +72,7 @@ internal partial class UserService : IUserService
         _databaseInitializer = databaseInitializer;
         _notificationSender = notificationSender;
         _loggerSettings = loggerSettings.Value;
+        _reportingHierarchyService = reportingHierarchyService;
     }
 
     public async Task<IdentityResult> ValidateUserAndPasswordAsync(ApplicationUser user, string password)

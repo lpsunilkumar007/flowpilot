@@ -1,16 +1,3 @@
-export enum LeadStatus {
-	New = 0,
-	Contacted = 1,
-	Qualified = 2,
-	DemoScheduled = 3,
-	DemoCompleted = 4,
-	ProposalSent = 5,
-	Negotiation = 6,
-	Won = 7,
-	Lost = 8,
-	OnHold = 9,
-}
-
 export enum LeadActivityType {
 	Call = 0,
 	Meeting = 1,
@@ -107,10 +94,11 @@ export interface CreateLeadRequest {
 	pincode?: string
 	fullAddress?: string
 	googleMapsLink?: string
-	leadSource: string
-	assignedToUserId: string
+	leadSourceId: number
+	assignToYourself?: boolean
+	assignedToUserId?: string
 	priority?: LeadPriority | string
-	leadStatus?: LeadStatus | string
+	leadStatusId?: number
 	expectedClosingDate?: string
 	interestLevel?: InterestLevel | string
 	notes?: string
@@ -122,16 +110,22 @@ export interface CreateLeadRequest {
 export interface UpdateLeadRequest extends Omit<CreateLeadRequest, 'notes'> {
 	id: number
 	isArchived?: boolean
+	leadStatusId: number
 }
 
 export interface UpdateLeadStatusRequest {
-	leadStatus: LeadStatus
+	leadStatusId: number
 	remarks?: string
 }
 
 export interface AssignLeadRequest {
-	assignedToUserId: string
+	assignToYourself?: boolean
+	assignedToUserId?: string
 	remarks?: string
+}
+
+export interface UpdateLeadFollowUpDateRequest {
+	nextFollowUpDate: string
 }
 
 export interface CreateLeadActivityRequest {
@@ -164,7 +158,8 @@ export interface ViewLeadListResponse {
 	businessType: string
 	currentPOS?: string
 	assignedToUserId: string
-	leadStatus: LeadStatus | string
+	leadStatusId: number
+	leadStatusName: string
 	nextFollowUpDate?: string
 	lastActivityDate?: string
 	expectedRevenue?: number
@@ -196,8 +191,10 @@ export interface ViewLeadFollowUpResponse {
 
 export interface ViewLeadStatusHistoryResponse {
 	id: number
-	fromStatus?: LeadStatus
-	toStatus: LeadStatus
+	fromStatusId?: number
+	fromStatusName?: string
+	toStatusId: number
+	toStatusName: string
 	changedByUserId: string
 	changedOn: string
 	remarks?: string
@@ -245,10 +242,12 @@ export interface ViewLeadDetailResponse {
 	pincode?: string
 	fullAddress?: string
 	googleMapsLink?: string
-	leadSource: string
+	leadSourceId: number
+	leadSourceName: string
 	assignedToUserId: string
 	priority: LeadPriority | string
-	leadStatus: LeadStatus | string
+	leadStatusId: number
+	leadStatusName: string
 	expectedClosingDate?: string
 	interestLevel: InterestLevel
 	painPoints?: string

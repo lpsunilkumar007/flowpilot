@@ -1,8 +1,7 @@
 import {
-	InterestLevel,
-	LeadActivityType,
-	LeadPriority,
-	LeadStatus,
+    InterestLevel,
+    LeadActivityType,
+    LeadPriority,
 } from '@/types/crm/lead.types'
 
 const DATE_FIELDS = new Set(['expectedClosingDate', 'nextFollowUpDate', 'activityDate'])
@@ -10,7 +9,6 @@ const OPTIONAL_NUMBER_FIELDS = new Set(['numberOfOutlets', 'expectedMonthlyBilli
 
 const ENUM_FIELD_MAP: Record<string, Record<string, string | number>> = {
 	priority: LeadPriority,
-	leadStatus: LeadStatus,
 	interestLevel: InterestLevel,
 	activityType: LeadActivityType,
 }
@@ -42,11 +40,34 @@ const normalizeDate = (value: unknown): string | undefined => {
 	return trimmed
 }
 
+const applyAssignToYourselfRules = (result: Record<string, unknown>, payload: Record<string, unknown>) => {
+	if (!('assignToYourself' in payload) && !('assignedToUserId' in payload)) {
+		return
+	}
+
+	const assignToYourself = Boolean(payload.assignToYourself)
+	result.assignToYourself = assignToYourself
+
+	if (assignToYourself) {
+		delete result.assignedToUserId
+		return
+	}
+
+	const assignedToUserId = payload.assignedToUserId
+	if (typeof assignedToUserId === 'string' && assignedToUserId.trim()) {
+		result.assignedToUserId = assignedToUserId.trim()
+	} else {
+		delete result.assignedToUserId
+	}
+}
+
 /** Cleans form values before sending to Lead API (avoids "" on dates/numbers and numeric enums). */
 export const sanitizeLeadApiPayload = <T extends object>(payload: T): T => {
+	const source = payload as Record<string, unknown>
 	const result: Record<string, unknown> = {}
 
-	for (const [key, value] of Object.entries(payload)) {
+	for (const [key, value] of Object.entries(source)) {
+		if (key === 'assignToYourself' || key === 'assignedToUserId') continue
 		if (value === '' || value === null) continue
 
 		if (DATE_FIELDS.has(key)) {
@@ -70,6 +91,8 @@ export const sanitizeLeadApiPayload = <T extends object>(payload: T): T => {
 
 		result[key] = value
 	}
+
+	applyAssignToYourselfRules(result, source)
 
 	return result as T
 }

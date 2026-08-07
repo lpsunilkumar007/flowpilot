@@ -27,6 +27,8 @@ public class ViewUserDetailsResponse
     public required string TimeZone { get; set; }
 
     public bool? IsTwoFactorAuthenticationEnabled { get; set; }
+
+    public string? ReportsToUserId { get; set; }
 }
 
 public class ViewUserTwoFactorAuthenticationDetailsResponse

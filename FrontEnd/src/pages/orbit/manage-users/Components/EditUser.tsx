@@ -1,6 +1,6 @@
 import { FormInput, PopupBody, PopupFooter, PopupHeader, PopupWrapper, VerticalForm } from '@/components'
 import { PermissionTypes } from '@/constants/permissions'
-import { DropDownItemResponse, NexusLookUpCodeTypes, UpdateUserDetailsRequest, ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
+import { DropDownItemResponse, NexusLookUpCodeTypes, UpdateUserDetailsRequest, UserDropDownItemResponse } from '@/helpers/api/WebApiClient'
 import { userService } from '@/services/UserService'
 import { messageHelper } from '@/helpers/message.helper'
 import { runWithToast } from '@/helpers/asyncToast.helper'
@@ -18,40 +18,56 @@ interface EditUserProps {
 
 type ModalState = {
 	timeZone: DropDownItemResponse[]
+	managers: UserDropDownItemResponse[]
 	loading: boolean
 }
 
 const EditUser: React.FC<EditUserProps> = (props) => {
 	const { t } = useTranslation()
-	const { state: modalState, setKey: setModalKey } = useObjectState<ModalState>({
+	const {
+		state: modalState,
+		setKey: setModalKey,
+		set,
+	} = useObjectState<ModalState>({
 		timeZone: [],
+		managers: [],
 		loading: true,
 	})
-	const [userDetail, setUserDetail] = useState<ViewUserDetailsResponse>()
+	const [userDetail, setUserDetail] = useState<UpdateUserDetailsRequest>()
 	const { userHasPermission } = usePermission()
 	const loadingIndicator = () => <AnimationSkeleton />
 
 	useEffect(() => {
-		const fetchData = async () => {
-			await fetchUser()
-		}
-		fetchData()
+		void fetchUser()
 	}, [props.id])
 
 	const fetchUser = async () => {
 		try {
-			const userTimeZone = await DropDownService.getNexusLookUpCodeValues(NexusLookUpCodeTypes.UserTimeZone)
-			setModalKey('timeZone', userTimeZone)
+			const [userTimeZone, managers, response] = await Promise.all([DropDownService.getNexusLookUpCodeValues(NexusLookUpCodeTypes.UserTimeZone), DropDownService.getSystemUsers(false), userService.getById(props.id)])
 
-			const response = await userService.getById(props.id)
-			setUserDetail(response)
-		} finally {
+			set({
+				timeZone: userTimeZone,
+				managers: managers.filter((m) => m.strValue !== props.id),
+				loading: false,
+			})
+
+			setUserDetail({
+				userId: props.id,
+				firstName: response.firstName || '',
+				lastName: response.lastName || '',
+				phoneNumber: response.phoneNumber,
+				timeZone: response.timeZone,
+				isActive: response.isActive,
+				reportsToUserId: response.reportsToUserId || '',
+			} as unknown as UpdateUserDetailsRequest)
+		} catch {
 			setModalKey('loading', false)
 		}
 	}
 
 	const onSubmit = async (formData: UpdateUserDetailsRequest) => {
 		formData.userId = props.id
+		formData.reportsToUserId = formData.reportsToUserId || undefined
 		await runWithToast(() => userService.updateUser(props.id, formData), {
 			onSuccess: (response) => {
 				messageHelper.showSuccess(response!)
@@ -65,7 +81,7 @@ const EditUser: React.FC<EditUserProps> = (props) => {
 			<PopupWrapper variant="default">
 				<PopupHeader title={t('Manage.Users.Edit_EditDetails', 'Edit User')} onClose={() => props.editUserOutPut(false)} />
 				{modalState.loading && loadingIndicator()}
-				{!modalState.loading && (
+				{!modalState.loading && userDetail && (
 					<VerticalForm<UpdateUserDetailsRequest> onSubmit={onSubmit} defaultValues={userDetail}>
 						<PopupBody>
 							<div className="grid lg:grid-cols-2 gap-6">
@@ -76,6 +92,14 @@ const EditUser: React.FC<EditUserProps> = (props) => {
 									<option value="">{t('Manage.Users.Edit.Placeholder_Choose', 'Choose')}</option>
 									{modalState.timeZone.map((item, index) => (
 										<option key={index} className="dark:bg-gray-700" value={item.text}>
+											{item.text}
+										</option>
+									))}
+								</FormInput>
+								<FormInput className="form-select" label={t('Manage.Users.Edit_ReportsTo', 'Reports To')} labelClassName="form-label" containerClass="form-field" name="reportsToUserId" type="bottom-sheet">
+									<option value="">{t('Manage.Users.ReportsTo_None', 'No manager')}</option>
+									{modalState.managers.map((item) => (
+										<option key={item.strValue} className="dark:bg-gray-700" value={item.strValue}>
 											{item.text}
 										</option>
 									))}

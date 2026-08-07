@@ -62,6 +62,8 @@ public interface IUserService : ITransientService
 
     Task<List<UserDropDownItemResponse>> GetUsersForDropDownAsync(bool ignoreLoggedInUser);
 
+    Task<List<UserDropDownItemResponse>> GetDirectReportUsersForDropDownAsync(CancellationToken cancellationToken = default);
+
     Task<List<ViewUserDetailsResponse>> GetTenantUsersListAsync(DefaultIdType id);
 
     Task<string> ChangePasswordForcefullyAsync(ChangePasswordForcefullyRequest model, string userId);

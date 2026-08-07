@@ -1,4 +1,6 @@
 using FlowPilot.Application.Common.Models;
+using FlowPilot.Application.GoogleMap;
+using FlowPilot.Application.GoogleMap.Request;
 using FlowPilot.Application.LookUp;
 using FlowPilot.Application.LookUp.Models.Request;
 using FlowPilot.Application.LookUp.Models.Response;
@@ -9,14 +11,16 @@ namespace FlowPilot.Host.Controllers.LookUp;
 public class LookUpController : VersionedApiController
 {
     public readonly ILookUpService _lookUpService;
+    public readonly IGoogleMapService _googleMapService;
 
-    public LookUpController(ILookUpService lookUpService)
+    public LookUpController(ILookUpService lookUpService, IGoogleMapService googleMapService)
     {
         _lookUpService = lookUpService;
+        _googleMapService = googleMapService;
     }
 
     [HttpGet("get-look-ups")]
-    [MustHavePermission(SystemAction.View, SystemResource.ManageLookUps)]
+    [RequireAnyResource(SystemAction.View, [SystemResource.ManageLookUps, SystemResource.ManageSalePipelines, SystemResource.ManageLeads])]
     [OpenApiOperation("Retrieve all look-ups", "")]
     public async Task<List<ViewLookUpsResponse>> GetLookUpCodes()
     {
@@ -24,7 +28,7 @@ public class LookUpController : VersionedApiController
     }
 
     [HttpPost("get-look-up-values")]
-    [MustHavePermission(SystemAction.View, SystemResource.ManageLookUps)]
+    [RequireAnyResource(SystemAction.View, [SystemResource.ManageLookUps, SystemResource.ManageSalePipelines, SystemResource.ManageLeads])]
     [OpenApiOperation("Retrieve look-up values", "")]
     public async Task<PaginationResponse<ViewLookUpCodeValuesResponse>> GetLookUpCodeValues(SearchLookUpCodeValuesRequest request)
     {
@@ -53,5 +57,12 @@ public class LookUpController : VersionedApiController
     public async Task<string> UpdateLookUpCodeValue(UpdateLookUpCodeValueRequest request)
     {
         return await _lookUpService.UpdateLookUpCodeValueAsync(request);
+    }
+
+    [HttpGet("address-autofill")]
+    [OpenApiOperation("Get address autocomplete suggestions", "")]
+    public async Task<List<DropDownStrValuePlaceResponse>> GetAddressSuggestions([FromQuery] string input)
+    {
+        return await _googleMapService.GetAddressSuggestionsAsync(input);
     }
 }

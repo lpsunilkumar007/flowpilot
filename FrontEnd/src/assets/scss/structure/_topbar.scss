@@ -5,7 +5,8 @@
 .app-header {
     height: $topbar-height;
     background: $topbar-bg;
-    @apply sticky top-0 shadow z-30;
+     @apply fixed top-0 end-0 z-[45] shadow;
+    inset-inline-start: $sidenav-width;
 
     .nav-link {
         color: $topbar-item-color;
@@ -37,12 +38,12 @@
         color: $topbar-item-color;
 
         input {
-      
+
             &::placeholder{
                 color: $topbar-item-color;
             }
         }
-        
+
     }
 }
 

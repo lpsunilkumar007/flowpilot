@@ -37,4 +37,11 @@ public class ApplicationUser : IdentityUser
     public string? FacebookJson { get; set; }
 
     public string? GoogleJson { get; set; }
+
+    [ForeignKey(nameof(ReportsTo))]
+    public string? FKReportsToUserId { get; set; }
+
+    public virtual ApplicationUser? ReportsTo { get; set; }
+
+    public virtual ICollection<ApplicationUser> DirectReports { get; set; } = [];
 }

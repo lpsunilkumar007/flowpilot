@@ -23,4 +23,6 @@ public class ViewUserDetailsDto
 
     [Required]
     public required string TimeZone { get; set; }
+
+    public string? ReportsToUserId { get; set; }
 }

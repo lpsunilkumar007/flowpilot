@@ -1,0 +1,62 @@
+services:
+  flowpilot-api:
+    container_name: flowpilot-api
+
+    build:
+      context: ./API
+      dockerfile: Dockerfile
+
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:${FLOWPILOT_API_PORT:-5010}:8080"
+
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+    environment:
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Production}
+      ASPNETCORE_URLS: http://+:8080
+
+      DatabaseSettings__Nexus_DBProvider: ${FLOWPILOT_DB_PROVIDER}
+      DatabaseSettings__Nexus_ConnectionString: ${FLOWPILOT_DB_CONNECTION}
+
+      DatabaseSettings__AuditTrail_DBProvider: ${FLOWPILOT_DB_PROVIDER}
+      DatabaseSettings__AuditTrail_ConnectionString: ${FLOWPILOT_DB_CONNECTION}
+
+      DatabaseSettings__Application_DBProvider: ${FLOWPILOT_DB_PROVIDER}
+      DatabaseSettings__Application_ConnectionString: ${FLOWPILOT_DB_CONNECTION}
+
+      HangfireSettings__Storage__StorageProvider: ${FLOWPILOT_HANGFIRE_PROVIDER}
+      HangfireSettings__Storage__ConnectionString: ${FLOWPILOT_HANGFIRE_CONNECTION}
+
+      HangfireSettings__Credentials__User: ${FLOWPILOT_HANGFIRE_USER}
+      HangfireSettings__Credentials__Password: ${FLOWPILOT_HANGFIRE_PASSWORD}
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  flowpilot-ui:
+    container_name: flowpilot-ui
+
+    build:
+      context: ./FrontEnd
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: ${FLOWPILOT_FRONTEND_API_URL}
+    restart: unless-stopped
+
+    ports:
+      - "127.0.0.1:${FLOWPILOT_UI_PORT:-5080}:80"
+
+    depends_on:
+      - flowpilot-api
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"

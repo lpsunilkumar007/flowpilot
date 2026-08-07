@@ -1,7 +1,7 @@
 using FlowPilot.Application.Common.Interfaces;
 using FlowPilot.Domain.Appointment;
-using FlowPilot.Domain.CRM;
 using FlowPilot.Domain.Common;
+using FlowPilot.Domain.CRM;
 using FlowPilot.Domain.Email;
 using FlowPilot.Domain.FormDesigner;
 using FlowPilot.Domain.LookUp;
@@ -64,6 +64,16 @@ public class ApplicationDbContext : BaseDbContext
     public DbSet<LeadAssignmentHistories> LeadAssignmentHistories => Set<LeadAssignmentHistories>();
 
     public DbSet<EntityNotes> EntityNotes => Set<EntityNotes>();
+
+    public DbSet<Tasks> Tasks => Set<Tasks>();
+
+    public DbSet<LeadVisits> LeadVisits => Set<LeadVisits>();
+
+    public DbSet<GpsLogs> GpsLogs => Set<GpsLogs>();
+
+    public DbSet<GpsVerifications> GpsVerifications => Set<GpsVerifications>();
+
+    public DbSet<LeadImages> LeadImages => Set<LeadImages>();
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -77,6 +87,41 @@ public class ApplicationDbContext : BaseDbContext
             fk.DeleteBehavior = DeleteBehavior.NoAction;
         }
         #endregion
+
+        modelBuilder.Entity<Tasks>()
+            .ToTable("Tasks")
+            .HasIndex(x => x.Uuid)
+            .IsUnique();
+
+        modelBuilder.Entity<Leads>()
+            .HasOne(x => x.LeadSource)
+            .WithMany()
+            .HasForeignKey(x => x.FKLeadSourceId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<Leads>()
+            .HasOne(x => x.LeadStatus)
+            .WithMany()
+            .HasForeignKey(x => x.FKLeadStatusId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<LeadStatusHistories>()
+            .HasOne(x => x.FromStatus)
+            .WithMany()
+            .HasForeignKey(x => x.FKFromStatusId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<LeadStatusHistories>()
+            .HasOne(x => x.ToStatus)
+            .WithMany()
+            .HasForeignKey(x => x.FKToStatusId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<GpsLogs>()
+            .HasOne(x => x.Verification)
+            .WithOne(x => x.GpsLog)
+            .HasForeignKey<GpsVerifications>(x => x.FKGpsLogPKId)
+            .OnDelete(DeleteBehavior.NoAction);
 
         modelBuilder.HasDefaultSchema(SchemaNames.dbo);
 

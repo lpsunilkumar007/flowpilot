@@ -23,6 +23,10 @@ const dropDownService: IDropDownRepository = {
 		return dataControllersClient.getSystemUsers(ignoreLoggedInUser)
 	},
 
+	async getDirectReportSystemUsers() {
+		return dataControllersClient.getDirectReportSystemUsers()
+	},
+
 	async getLocalizationCountries() {
 		return dataControllersClient.getLocalizationCountries()
 	},

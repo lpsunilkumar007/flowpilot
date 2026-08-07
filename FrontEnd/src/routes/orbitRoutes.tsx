@@ -1,11 +1,12 @@
+import { MenuLinks } from '@/constants/menu'
 import React from 'react'
 import PrivateRoute from './PrivateRoute'
-import { MenuLinks } from '@/constants/menu'
 import type { RoutesProps } from './utils'
 
 // Static imports (orbit)
 import ManageNexusLookUps from '@/pages/orbit/manage-nexus-lookups'
 import ApprovedAppointmentSettings from '@/pages/orbit/manage-settings/Components/ApprovedAppointmentSettings'
+import GoogleMapSettings from '@/pages/orbit/manage-settings/Components/GoogleMapSettings'
 
 // Lazy imports (orbit - auth-protected only)
 const ManageUsers = React.lazy(() => import('@/pages/orbit/manage-users'))
@@ -26,8 +27,12 @@ const ManageForms = React.lazy(() => import('@/pages/orbit/manage-forms'))
 const AddManageForm = React.lazy(() => import('@/pages/orbit/manage-forms/Components/AddFormDetails'))
 const EditFormLandingPage = React.lazy(() => import('@/pages/orbit/manage-forms/Components/EditFormLandingPage'))
 const ManageLeads = React.lazy(() => import('@/pages/orbit/manage-leads'))
+const LeadCalendar = React.lazy(() => import('@/pages/orbit/manage-leads/LeadCalendar'))
 const AddLead = React.lazy(() => import('@/pages/orbit/manage-leads/Components/AddLeadDetails'))
 const EditLeadLandingPage = React.lazy(() => import('@/pages/orbit/manage-leads/Components/EditLeadLandingPage'))
+const ManageTasks = React.lazy(() => import('@/pages/orbit/manage-tasks'))
+const ManageSalesPipeline = React.lazy(() => import('@/pages/orbit/manage-sales-pipeline'))
+const MyTeam = React.lazy(() => import('@/pages/orbit/my-team'))
 const ManageLanguage = React.lazy(() => import('@/pages/orbit/manage-language'))
 const ManageLanguageLocalizations = React.lazy(() => import('@/pages/orbit/manage-language/Components/ViewLocalizationPage'))
 const ViewSubMenus = React.lazy(() => import('@/pages/orbit/view-sub-menus'))
@@ -111,6 +116,12 @@ const orbitAdministratorRoutes: RoutesProps = {
 			route: PrivateRoute,
 		},
 		{
+			path: MenuLinks.GoogleMapSettings,
+			name: 'google_map_settings',
+			element: <GoogleMapSettings />,
+			route: PrivateRoute,
+		},
+		{
 			path: MenuLinks.ManageLanguage,
 			name: 'manage_countryLocalization',
 			element: <ManageLanguage />,
@@ -178,6 +189,12 @@ const orbitCrmRoutes: RoutesProps = {
 			route: PrivateRoute,
 		},
 		{
+			path: MenuLinks.LeadCalendar,
+			name: 'lead_calendar',
+			element: <LeadCalendar />,
+			route: PrivateRoute,
+		},
+		{
 			path: MenuLinks.AddLead,
 			name: 'add_lead',
 			element: <AddLead />,
@@ -187,6 +204,24 @@ const orbitCrmRoutes: RoutesProps = {
 			path: MenuLinks.EditLead,
 			name: 'edit_lead',
 			element: <EditLeadLandingPage />,
+			route: PrivateRoute,
+		},
+		{
+			path: MenuLinks.ManageTasks,
+			name: 'manage_tasks',
+			element: <ManageTasks />,
+			route: PrivateRoute,
+		},
+		{
+			path: MenuLinks.SalesPipeline,
+			name: 'sales_pipeline',
+			element: <ManageSalesPipeline />,
+			route: PrivateRoute,
+		},
+		{
+			path: MenuLinks.MyTeam,
+			name: 'my_team',
+			element: <MyTeam />,
 			route: PrivateRoute,
 		},
 	],

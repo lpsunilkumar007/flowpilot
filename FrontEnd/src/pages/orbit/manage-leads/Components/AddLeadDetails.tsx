@@ -1,28 +1,69 @@
 import { FormInput, PageBreadcrumbsWithLinks, VerticalForm } from '@/components'
 import { MenuLinks } from '@/constants/menu'
-import { messageHelper } from '@/helpers/message.helper'
+import type { UserDropDownItemResponse } from '@/helpers/api/WebApiClient'
+import { LookUpCodeTypes } from '@/helpers/api/WebApiClient'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { formatHelper } from '@/helpers/format.helper'
+import { messageHelper } from '@/helpers/message.helper'
+import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
-import { userService } from '@/services/UserService'
-import { InterestLevel, LeadPriority, LeadStatus, type CreateLeadRequest } from '@/types/crm/lead.types'
-import type { ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
+import { InterestLevel, LeadPriority, type CreateLeadRequest } from '@/types/crm/lead.types'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { leadCardClass } from '../helpers/leadDisplay.helper'
+import AssignSalesPersonFields from './shared/AssignSalesPersonFields'
 import LeadSectionCard from './shared/LeadSectionCard'
-
-const LEAD_SOURCES = ['Website', 'Referral', 'Cold Call', 'Walk-in', 'Social Media', 'Partner', 'Other']
+// form validation
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 const AddLeadDetails: React.FC = () => {
 	const { t } = useTranslation()
 	const navigate = useNavigate()
-	const [users, setUsers] = useState<ViewUserDetailsResponse[]>([])
+	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
+	const [leadStatuses, setLeadStatuses] = useState<{ value: number; text: string }[]>([])
+	const [leadSources, setLeadSources] = useState<{ value: number; text: string }[]>([])
+	const [defaultLeadStatusId, setDefaultLeadStatusId] = useState<number | undefined>()
 
 	useEffect(() => {
-		userService.getList().then(setUsers).catch(() => setUsers([]))
+		Promise.all([
+			DropDownService.getDirectReportSystemUsers(),
+			DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus),
+			DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadSource),
+		])
+			.then(([userList, statusList, sourceList]) => {
+				setUsers(userList ?? [])
+				const statuses = (statusList ?? []).map((item) => ({ value: item.value, text: item.text }))
+				setLeadStatuses(statuses)
+				const newStatus = statuses.find((s) => s.text === 'New') ?? statuses[0]
+				setDefaultLeadStatusId(newStatus?.value)
+				setLeadSources((sourceList ?? []).map((item) => ({ value: item.value, text: item.text })))
+			})
+			.catch(() => {
+				setUsers([])
+				setLeadStatuses([])
+				setLeadSources([])
+			})
 	}, [])
+
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			businessName: yup.string().required('This field cannot be left empty'),
+			businessType: yup.string().required('This field cannot be left empty'),
+			ownerName: yup.string().required('This field cannot be left empty'),
+			mobile: yup.string().required('Please enter Mobile Number'),
+			leadStatusId: yup.number().required('Please select a value'),
+			assignToYourself: yup.boolean(),
+			assignedToUserId: yup.string().when('assignToYourself', {
+				is: true,
+				then: (schema) => schema.optional().nullable(),
+				otherwise: (schema) => schema.required('Please select a value'),
+			}),
+			email: yup.string().email('Please enter a valid email address').nullable(),
+			website: yup.string().url('Please enter a valid URL').nullable(),
+			GoogleMapsLink: yup.string().url('Please enter a valid URL').nullable(),
+		})
+	)
 
 	const onSubmit = async (formInfo: CreateLeadRequest) => {
 		await runWithToast(() => leadService.create(formInfo), {
@@ -37,7 +78,7 @@ const AddLeadDetails: React.FC = () => {
 		<>
 			<PageBreadcrumbsWithLinks title={t('Manage.Leads.Add_Heading', 'Create Lead')} subNames={[{ label: t('Manage.Leads_Heading', 'Leads'), link: MenuLinks.ManageLeads }, { label: t('Manage.Leads.Add.Breadcrumb', 'Create') }]} />
 
-			<VerticalForm<CreateLeadRequest> onSubmit={onSubmit} defaultValues={{ priority: LeadPriority.Medium, leadStatus: LeadStatus.New, interestLevel: InterestLevel.Medium }}>
+			<VerticalForm<any> onSubmit={onSubmit} resolver={schemaResolver} defaultValues={{ priority: LeadPriority.Medium, leadStatusId: defaultLeadStatusId, interestLevel: InterestLevel.Medium, assignToYourself: false }} key={defaultLeadStatusId ?? 'loading'}>
 				<div className="space-y-6 pb-24">
 					<LeadSectionCard title={t('Manage.Leads.Section_Business', 'Business Information')} subtitle={t('Manage.Leads.Section_Business_Sub', 'Tell us about the business')} icon="ri-building-2-line">
 						<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -58,10 +99,10 @@ const AddLeadDetails: React.FC = () => {
 						<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 							<FormInput label={t('Manage.Leads.OwnerName', 'Owner Name')} required name="ownerName" type="text" className="form-input" />
 							<FormInput label={t('Manage.Leads.Designation', 'Designation')} name="designation" type="text" className="form-input" />
-							<FormInput label={t('Manage.Leads.Mobile', 'Mobile')} required name="mobile" type="text" className="form-input" />
-							<FormInput label={t('Manage.Leads.WhatsApp', 'WhatsApp')} name="whatsApp" type="text" className="form-input" />
-							<FormInput label={t('Manage.Leads.Email', 'Email')} name="email" type="text" className="form-input" />
-							<FormInput label={t('Manage.Leads.AlternatePhone', 'Alternate Phone')} name="alternatePhone" type="text" className="form-input" />
+							<FormInput label={t('Manage.Leads.Mobile', 'Mobile')} required name="mobile" type="number" className="form-input" />
+							<FormInput label={t('Manage.Leads.WhatsApp', 'WhatsApp')} name="whatsApp" type="number" className="form-input" />
+							<FormInput label={t('Manage.Leads.Email', 'Email')} name="email" type="email" className="form-input" />
+							<FormInput label={t('Manage.Leads.AlternatePhone', 'Alternate Phone')} name="alternatePhone" type="number" className="form-input" />
 						</div>
 					</LeadSectionCard>
 
@@ -79,22 +120,15 @@ const AddLeadDetails: React.FC = () => {
 
 					<LeadSectionCard title={t('Manage.Leads.Section_Sales', 'Sales Information')} subtitle={t('Manage.Leads.Section_Sales_Sub', 'Pipeline and ownership')} icon="ri-line-chart-line">
 						<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-							<FormInput label={t('Manage.Leads.LeadSource', 'Lead Source')} required name="leadSource" type="bottom-sheet" className="form-select">
+							<FormInput label={t('Manage.Leads.LeadSource', 'Lead Source')} required name="leadSourceId" type="bottom-sheet" className="form-select">
 								<option value="">{t('Common.Select', 'Select')}</option>
-								{LEAD_SOURCES.map((s) => (
-									<option key={s} value={s}>
-										{s}
+								{leadSources.map((source) => (
+									<option key={source.value} value={source.value}>
+										{source.text}
 									</option>
 								))}
 							</FormInput>
-							<FormInput label={t('Manage.Leads.AssignedTo', 'Assigned Sales Person')} required name="assignedToUserId" type="bottom-sheet" className="form-select">
-								<option value="">{t('Common.Select', 'Select')}</option>
-								{users.map((u) => (
-									<option key={u.id} value={u.id}>
-										{`${u.firstName ?? ''} ${u.lastName ?? ''}`.trim() || u.email}
-									</option>
-								))}
-							</FormInput>
+							<AssignSalesPersonFields users={users} />
 							<FormInput label={t('Manage.Leads.Priority', 'Priority')} name="priority" type="bottom-sheet" className="form-select">
 								{Object.values(LeadPriority)
 									.filter((v) => typeof v === 'number')
@@ -104,14 +138,12 @@ const AddLeadDetails: React.FC = () => {
 										</option>
 									))}
 							</FormInput>
-							<FormInput label={t('Manage.Leads.LeadStatus', 'Lead Status')} name="leadStatus" type="bottom-sheet" className="form-select">
-								{Object.values(LeadStatus)
-									.filter((v) => typeof v === 'number')
-									.map((opt) => (
-										<option key={opt} value={opt}>
-											{formatHelper.punctuateLabel(LeadStatus[opt as number])}
-										</option>
-									))}
+							<FormInput label={t('Manage.Leads.LeadStatus', 'Lead Status')} name="leadStatusId" type="bottom-sheet" className="form-select">
+								{leadStatuses.map((status) => (
+									<option key={status.value} value={status.value}>
+										{formatHelper.punctuateLabel(status.text)}
+									</option>
+								))}
 							</FormInput>
 							<FormInput label={t('Manage.Leads.ExpectedClosingDate', 'Expected Closing Date')} name="expectedClosingDate" type="date" className="form-input" />
 							<FormInput label={t('Manage.Leads.InterestLevel', 'Interest Level')} name="interestLevel" type="bottom-sheet" className="form-select">

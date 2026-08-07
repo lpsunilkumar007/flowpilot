@@ -6,7 +6,7 @@
 .logo-box {
 	height: $topbar-height;
 	color: $menu-item-color;
-	@apply sticky top-0 flex items-center justify-center transition-all duration-300 z-40;
+	@apply sticky top-0 flex items-center justify-center px-3 transition-all duration-300 z-40;
 
 	.logo-sm {
 		display: none;
@@ -16,8 +16,14 @@
 		display: none;
 	}
 
+	// Default: dark-ink logo for light chrome (light menu / light topbar)
 	.logo-dark {
-		display: none;
+		display: block;
+	}
+
+	.logo-lg,
+	.logo-sm {
+		@apply shrink-0;
 	}
 }
 

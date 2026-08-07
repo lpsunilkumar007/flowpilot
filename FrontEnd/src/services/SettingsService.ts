@@ -9,5 +9,6 @@ export const settingsService: ISettingsRepository = {
 	getSettings: () => settingsClient.getSettings(),
 	getAppointmentSettings: () => settingsClient.getAppointmentSettings(),
 	getApprovedAppointmentSettings: () => settingsClient.getApprovedAppointmentSettings(),
+	getGoogleMapSettings: () => settingsClient.getGoogleMapSettings(),
 	updateSettings: (request) => settingsClient.updateSettings(request),
 }

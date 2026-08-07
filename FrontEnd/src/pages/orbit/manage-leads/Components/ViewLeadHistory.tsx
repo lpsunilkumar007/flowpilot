@@ -1,5 +1,7 @@
+import type { UserDropDownItemResponse } from '@/helpers/api/WebApiClient'
 import { formatHelper } from '@/helpers/format.helper'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
+import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
 import type { ViewLeadAssignmentHistoryResponse, ViewLeadStatusHistoryResponse } from '@/types/crm/lead.types'
 import React, { useEffect, useState } from 'react'
@@ -7,8 +9,6 @@ import { useTranslation } from 'react-i18next'
 import { getUserDisplayName, leadCardClass } from '../helpers/leadDisplay.helper'
 import LeadSectionCard from './shared/LeadSectionCard'
 import LeadStatusBadge from './shared/LeadStatusBadge'
-import { userService } from '@/services/UserService'
-import type { ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
 
 interface ViewLeadHistoryProps {
 	id: string
@@ -19,16 +19,16 @@ const ViewLeadHistory: React.FC<ViewLeadHistoryProps> = ({ id }) => {
 	const [loading, setLoading] = useState(true)
 	const [statusHistories, setStatusHistories] = useState<ViewLeadStatusHistoryResponse[]>([])
 	const [assignmentHistories, setAssignmentHistories] = useState<ViewLeadAssignmentHistoryResponse[]>([])
-	const [users, setUsers] = useState<ViewUserDetailsResponse[]>([])
+	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
 
 	useEffect(() => {
 		const load = async () => {
 			setLoading(true)
 			try {
-				const [lead, userList] = await Promise.all([leadService.getById(Number(id)), userService.getList()])
+				const [lead, userList] = await Promise.all([leadService.getById(Number(id)), DropDownService.getSystemUsers(true)])
 				setStatusHistories(lead.statusHistories ?? [])
 				setAssignmentHistories(lead.assignmentHistories ?? [])
-				setUsers(userList)
+				setUsers(userList ?? [])
 			} finally {
 				setLoading(false)
 			}
@@ -48,9 +48,9 @@ const ViewLeadHistory: React.FC<ViewLeadHistoryProps> = ({ id }) => {
 						{statusHistories.map((h) => (
 							<div key={h.id} className={`${leadCardClass} flex flex-wrap items-center justify-between gap-3 p-4`}>
 								<div className="flex flex-wrap items-center gap-2">
-									{h.fromStatus != null ? <LeadStatusBadge status={h.fromStatus} /> : <span className="text-sm text-gray-400">Start</span>}
+									{h.fromStatusName ? <LeadStatusBadge statusName={h.fromStatusName} /> : <span className="text-sm text-gray-400">Start</span>}
 									<i className="ri-arrow-right-line text-gray-400" />
-									<LeadStatusBadge status={h.toStatus} />
+									<LeadStatusBadge statusName={h.toStatusName} />
 								</div>
 								<div className="text-right text-sm text-gray-500">
 									<p>{formatHelper.MomentDateFormat(h.changedOn)}</p>

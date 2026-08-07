@@ -22,18 +22,18 @@ export default {
 
     extend: {
       colors: {
-        'primary': '#3e60d5',
+        'primary': '#0B8A96',
         'secondary': '#6c757d',
-        'success': '#47ad77',
-        'info': '#16a7e9',
-        'warning': '#ffc35a',
-        'danger': '#f15776',
-        'light': '#f2f2f7',
-        'dark': '#212529',
+        'success': '#10B981',
+        'info': '#0EA5E9',
+        'warning': '#F59E0B',
+        'danger': '#EF4444',
+        'light': '#F5F5F5',
+        'dark': '#052049',
 
         'gray': {
           ...colors.gray,
-          '800': '#313a46'
+          '800': '#0F2744'
         }
       },
 

@@ -1,0 +1,14 @@
+.env
+.env.*
+
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/build/
+
+.vs/
+.vscode/
+.idea/
+
+*.log

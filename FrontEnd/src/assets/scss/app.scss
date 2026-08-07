@@ -149,10 +149,55 @@ File: Main Css File
 	color: var(--tw-grid-cell-text-color);
 }
 
-/* Dark Mode Styles for react-select */
-[data-mode='dark'] .select2-multiple>div:first-of-type {
-	background-color: var(--tw-select2-bg); //transparent;
+/* Dark Mode Styles for native select options + react-select */
+[data-mode='dark'] .form-select option {
+	color: #f3f4f6;
+	background-color: #0f2744;
+}
+
+[data-mode='dark'] .select2-multiple>div:first-of-type,
+[data-mode='dark'] .react-select-container .react-select__control {
+	background-color: var(--tw-select2-bg);
 	border: var(--tw-select2-border-width) var(--tw-select2-border-style) var(--tw-select2-border-color);
+	color: #f3f4f6;
+}
+
+[data-mode='dark'] .react-select-container .react-select__single-value,
+[data-mode='dark'] .react-select-container .react-select__input-container,
+[data-mode='dark'] .react-select-container .react-select__placeholder {
+	color: #e2e8f0;
+}
+
+[data-mode='dark'] .react-select-container .react-select__menu {
+	background-color: #0f2744;
+	border: 1px solid rgba(15, 39, 68, 1);
+}
+
+[data-mode='dark'] .react-select-container .react-select__option {
+	background-color: #0f2744;
+	color: #f3f4f6;
+}
+
+[data-mode='dark'] .react-select-container .react-select__option--is-focused,
+[data-mode='dark'] .react-select-container .react-select__option--is-selected {
+	background-color: #0b8a96;
+	color: #ffffff;
+}
+
+.react-select-container .react-select__control {
+	@apply bg-white border-gray-200 text-gray-800 min-h-[38px] shadow-none;
+}
+
+.react-select-container .react-select__menu {
+	@apply bg-white border border-gray-200 text-gray-800;
+}
+
+.react-select-container .react-select__option--is-focused {
+	@apply bg-primary/10 text-gray-900;
+}
+
+.react-select-container .react-select__option--is-selected {
+	@apply bg-primary text-white;
 }
 
 .readonly-feild {

@@ -49,6 +49,13 @@ public class DataControllers : VersionNeutralApiController
         return await _userService.GetUsersForDropDownAsync(ignoreLoggedInUser);
     }
 
+    [HttpGet("system-users-direct-reports")]
+    [OpenApiOperation("Retrieve system users who report directly to the current user", "")]
+    public async Task<List<UserDropDownItemResponse>> GetDirectReportSystemUsers(CancellationToken cancellationToken)
+    {
+        return await _userService.GetDirectReportUsersForDropDownAsync(cancellationToken);
+    }
+
     [HttpGet("get-localization-countries")]
     [OpenApiOperation("Retrieve localization countries", "")]
     public async Task<List<DropDownItemResponse>> GetLocalizationCountries()

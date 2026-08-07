@@ -1,13 +1,13 @@
 {
   "DatabaseSettings": {
-    "Nexus_DBProvider": "mssql",
-    "Nexus_ConnectionString": "Server=localhost;Database=FlowPilot;Integrated Security=True;TrustServerCertificate=True;",
+    "Nexus_DBProvider": "postgresql",
+    "Nexus_ConnectionString": "",
 
-    "AuditTrail_DBProvider": "mssql",
-    "AuditTrail_ConnectionString": "Server=localhost;Database=FlowPilot;Integrated Security=True;TrustServerCertificate=True;",
+    "AuditTrail_DBProvider": "postgresql",
+    "AuditTrail_ConnectionString": "",
 
-    "Application_DBProvider": "mssql",
-    "Application_ConnectionString": "Server=localhost;Database=FlowPilot;Integrated Security=True;TrustServerCertificate=True;"
+    "Application_DBProvider": "postgresql",
+    "Application_ConnectionString": ""
 
   }
 }

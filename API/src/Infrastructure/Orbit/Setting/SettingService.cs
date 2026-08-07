@@ -73,6 +73,9 @@ internal class SettingService : ISettingService
                 case Domain.Enums.SettingTypes.ApprovedAppointment:
                     _ = _serializerService.Deserialize<ApprovedAppointmentSetting>(request.SettingJson);
                     break;
+                case Domain.Enums.SettingTypes.GoogleMapKey:
+                    _ = _serializerService.Deserialize<string>(request.SettingJson);
+                    break;
                 default:
                     throw new CustomNotImplementedException($"{entity.SettingType} not implemented");
             }
@@ -99,6 +102,8 @@ internal class SettingService : ISettingService
             case SettingTypes.Appointment:
                 return _serializerService.Deserialize<T>(entity.SettingValues);
             case SettingTypes.ApprovedAppointment:
+                return _serializerService.Deserialize<T>(entity.SettingValues);
+            case SettingTypes.GoogleMapKey:
                 return _serializerService.Deserialize<T>(entity.SettingValues);
             default:
                 throw new CustomNotImplementedException($"{entity.SettingType} not implemented");
