@@ -51,14 +51,17 @@ const PasswordInputChild = () => {
 const Login = () => {
 	const dispatch = useDispatch<AppDispatch>()
 
-	const { user, userLoggedIn, loading, requiresTwoFactor, twoFactorSessionId } = useSelector((state: RootState) => ({
+	const { user, userLoggedIn, loading, requiresTwoFactor, twoFactorSessionId } = useSelector(
+		(state: RootState) => ({
 			user: state.Auth.user,
 			loading: state.Auth.loading,
 			requiresTwoFactor: state.Auth.requiresTwoFactor,
 			twoFactorSessionId: state.Auth.twoFactorSessionId,
 			error: state.Auth.error,
 			userLoggedIn: state.Auth.userLoggedIn,
-	}), shallowEqual)
+		}),
+		shallowEqual
+	)
 
 	useEffect(() => {
 		dispatch(resetAuth() as any)
@@ -78,7 +81,7 @@ const Login = () => {
   handle form submission
   */
 	const onSubmit = async (formData: UserData) => {
-		dispatch(loginUser(formData['username'], formData['password'])as any)
+		dispatch(loginUser(formData['username'], formData['password']) as any)
 	}
 
 	const location = useLocation()
@@ -136,7 +139,7 @@ const Login = () => {
 
 			<AuthContainer>
 				<AuthLayout authTitle="Sign In" helpText="Enter your email address and password to access admin panel." bottomLinks={<BottomLink />}>
-					<VerticalForm<UserData> onSubmit={onSubmit} resolver={schemaResolver} defaultValues={{ username: 'admin@root.com', password: '123Pa$$word!' }}>
+					<VerticalForm<UserData> onSubmit={onSubmit} resolver={schemaResolver}>
 						<FormInput label="Email Address" type="email" name="username" className="form-input" placeholder="Enter your email" containerClass="form-field-auth" labelClassName="form-label-auth" required />
 
 						<FormInput label="Password" type="password" name="password" placeholder="Enter your password" className="form-input rounded-e-none" containerClass="form-field-auth" labelClassName="form-label-auth" labelContainerClassName="flex justify-between items-center mb-2" required>
