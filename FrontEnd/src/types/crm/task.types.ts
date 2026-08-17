@@ -1,3 +1,5 @@
+import type { EntityCustomFieldItemRequest, ViewEntityCustomFieldResponse } from '@/types/common/customField.types'
+
 export enum TaskBucket {
 	Today = 0,
 	Tomorrow = 1,
@@ -28,6 +30,7 @@ export interface ViewTaskResponse {
 	priority?: TaskPriority | string | null
 	isCompleted: boolean
 	createdOn: string
+	customFields?: ViewEntityCustomFieldResponse[]
 }
 
 export interface CreateTaskRequest {
@@ -36,6 +39,7 @@ export interface CreateTaskRequest {
 	bucket?: TaskBucket | null
 	type?: TaskType | null
 	priority?: TaskPriority | null
+	customFieldRequests?: EntityCustomFieldItemRequest[]
 }
 
 export interface UpdateTaskRequest {
@@ -45,6 +49,7 @@ export interface UpdateTaskRequest {
 	bucket?: TaskBucket | null
 	type?: TaskType | null
 	priority?: TaskPriority | null
+	customFieldRequests?: EntityCustomFieldItemRequest[]
 }
 
 export interface MarkTaskCompletedRequest {

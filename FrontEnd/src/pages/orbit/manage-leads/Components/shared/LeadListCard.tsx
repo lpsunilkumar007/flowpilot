@@ -14,13 +14,7 @@ const LeadListCard: React.FC<LeadListCardProps> = ({ lead, users }) => {
 	const navigate = useNavigate()
 
 	return (
-		<article
-			className={`${leadCardClass} group cursor-pointer p-5 transition-all hover:-translate-y-0.5 hover:shadow-md`}
-			onClick={() => navigate(MenuLinks.EditLead.replace(':id', String(lead.id)))}
-			onKeyDown={(e) => e.key === 'Enter' && navigate(MenuLinks.EditLead.replace(':id', String(lead.id)))}
-			role="button"
-			tabIndex={0}
-		>
+		<article className={`${leadCardClass} group cursor-pointer p-5 transition-all hover:-translate-y-0.5 hover:shadow-md`} onClick={() => navigate(MenuLinks.EditLead.replace(':id', String(lead.id)))} onKeyDown={(e) => e.key === 'Enter' && navigate(MenuLinks.EditLead.replace(':id', String(lead.id)))} role="button" tabIndex={0}>
 			<div className="flex items-start justify-between gap-3">
 				<div className="min-w-0">
 					<p className="text-xs font-medium uppercase tracking-wide text-gray-400">#{lead.id}</p>
@@ -38,7 +32,7 @@ const LeadListCard: React.FC<LeadListCardProps> = ({ lead, users }) => {
 					<p className="font-medium text-gray-800 dark:text-gray-200">{lead.businessType}</p>
 				</div>
 				<div>
-					<p className="text-gray-400">Current POS</p>
+					<p className="text-gray-400">Current Software in use</p>
 					<p className="font-medium text-gray-800 dark:text-gray-200">{lead.currentPOS || '—'}</p>
 				</div>
 				<div>

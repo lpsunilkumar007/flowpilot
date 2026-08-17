@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using FlowPilot.Application.Common.CustomFields.Model.Request;
 using FlowPilot.Domain.Enums.CRM;
 using FlowPilot.Shared.Common.Validation;
 
@@ -90,4 +91,6 @@ public class UpdateLeadRequest
     public bool IsArchived { get; set; }
 
     public string? Metadata { get; set; }
+
+    public List<EntityCustomFieldItemRequest>? CustomFieldRequests { get; set; }
 }

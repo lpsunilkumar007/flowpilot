@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using FlowPilot.Application.Common.CustomFields.Model.Request;
 using FlowPilot.Domain.Enums.CRM;
 using FlowPilot.Shared.Common.Validation;
 
@@ -17,4 +18,6 @@ public class CreateTaskRequest
     public TaskType? Type { get; set; }
 
     public TaskPriority? Priority { get; set; }
+
+    public List<EntityCustomFieldItemRequest>? CustomFieldRequests { get; set; }
 }

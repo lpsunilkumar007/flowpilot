@@ -1,3 +1,6 @@
+using FlowPilot.Application.Common.CustomFields;
+using FlowPilot.Application.Common.CustomFields.Model.Request;
+using FlowPilot.Application.Common.CustomFields.Model.Response;
 using FlowPilot.Application.Common.Exceptions;
 using FlowPilot.Application.Common.Interfaces;
 using FlowPilot.Application.Common.Models;
@@ -6,6 +9,7 @@ using FlowPilot.Application.CRM.Model.Request.Task;
 using FlowPilot.Application.CRM.Model.Response.Task;
 using FlowPilot.Application.Nexus.Identity.Users;
 using FlowPilot.Domain.CRM;
+using FlowPilot.Domain.Enums.Common;
 using FlowPilot.Domain.Enums.CRM;
 using FlowPilot.Infrastructure.Persistence.Context;
 using FlowPilot.Infrastructure.SystemConstants;
@@ -19,17 +23,20 @@ public class TaskService : ITaskService
     private readonly IDateTimeService _dateTimeService;
     private readonly ICurrentUser _currentUser;
     private readonly IReportingHierarchyService _reportingHierarchyService;
+    private readonly IEntityCustomFieldService _entityCustomFieldService;
 
     public TaskService(
         ApplicationDbContext db,
         IDateTimeService dateTimeService,
         ICurrentUser currentUser,
-        IReportingHierarchyService reportingHierarchyService)
+        IReportingHierarchyService reportingHierarchyService,
+        IEntityCustomFieldService entityCustomFieldService)
     {
         _db = db;
         _dateTimeService = dateTimeService;
         _currentUser = currentUser;
         _reportingHierarchyService = reportingHierarchyService;
+        _entityCustomFieldService = entityCustomFieldService;
     }
 
     public async Task<PaginationResponse<ViewTaskResponse>> SearchAsync(SearchTaskRequest request, CancellationToken cancellationToken = default)
@@ -68,7 +75,8 @@ public class TaskService : ITaskService
         _ = tasks ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Task"));
         await EnsureCanReadTaskAsync(tasks.CreatedBy, cancellationToken);
 
-        return MapToResponse(tasks, _dateTimeService.UtcNow.Date);
+        var customFields = await _entityCustomFieldService.GetByEntityAsync(EntityCustomFieldType.Task, id, cancellationToken);
+        return MapToResponse(tasks, _dateTimeService.UtcNow.Date, customFields);
     }
 
     public async Task<CreateTaskResponse> CreateAsync(CreateTaskRequest request, CancellationToken cancellationToken = default)
@@ -85,6 +93,11 @@ public class TaskService : ITaskService
 
         await _db.Tasks.AddAsync(entity, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
+
+        if (request.CustomFieldRequests is { Count: > 0 })
+        {
+            await ReplaceTaskCustomFieldsAsync(entity.Id, request.CustomFieldRequests, cancellationToken);
+        }
 
         return new CreateTaskResponse
         {
@@ -107,6 +120,12 @@ public class TaskService : ITaskService
         task.Priority = request.Priority;
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        if (request.CustomFieldRequests is not null)
+        {
+            await ReplaceTaskCustomFieldsAsync(task.Id, request.CustomFieldRequests, cancellationToken);
+        }
+
         return SuccessMessages.CommonRecordUpdated;
     }
 
@@ -225,7 +244,25 @@ public class TaskService : ITaskService
         return TaskBucket.Future;
     }
 
-    private static ViewTaskResponse MapToResponse(Tasks task, DateTime today) => new()
+    private async Task ReplaceTaskCustomFieldsAsync(
+        DefaultIdType taskId,
+        List<EntityCustomFieldItemRequest> fields,
+        CancellationToken cancellationToken)
+    {
+        await _entityCustomFieldService.ReplaceForEntityAsync(
+            new ReplaceEntityCustomFieldsRequest
+            {
+                EntityType = EntityCustomFieldType.Task,
+                EntityId = taskId,
+                Fields = fields,
+            },
+            cancellationToken);
+    }
+
+    private static ViewTaskResponse MapToResponse(
+        Tasks task,
+        DateTime today,
+        List<ViewEntityCustomFieldResponse>? customFields = null) => new()
     {
         Id = task.Id,
         Uuid = task.Uuid,
@@ -236,5 +273,6 @@ public class TaskService : ITaskService
         Priority = task.Priority,
         IsCompleted = task.IsCompleted,
         CreatedOn = task.CreatedOn,
+        CustomFields = customFields ?? [],
     };
 }

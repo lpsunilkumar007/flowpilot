@@ -65,6 +65,8 @@ public class ApplicationDbContext : BaseDbContext
 
     public DbSet<EntityNotes> EntityNotes => Set<EntityNotes>();
 
+    public DbSet<EntityCustomFields> EntityCustomFields => Set<EntityCustomFields>();
+
     public DbSet<Tasks> Tasks => Set<Tasks>();
 
     public DbSet<LeadVisits> LeadVisits => Set<LeadVisits>();
@@ -122,6 +124,9 @@ public class ApplicationDbContext : BaseDbContext
             .WithOne(x => x.GpsLog)
             .HasForeignKey<GpsVerifications>(x => x.FKGpsLogPKId)
             .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<EntityCustomFields>()
+            .HasIndex(x => new { x.TenantId, x.EntityType, x.FKEntityPKId });
 
         modelBuilder.HasDefaultSchema(SchemaNames.dbo);
 

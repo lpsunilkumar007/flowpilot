@@ -12897,6 +12897,7 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
     activities?: ViewLeadActivityResponse[];
     followUps?: ViewLeadFollowUpResponse[];
     notes?: ViewEntityNoteResponse[];
+    customFields?: ViewEntityCustomFieldResponse[];
     statusHistories?: ViewLeadStatusHistoryResponse[];
     assignmentHistories?: ViewLeadAssignmentHistoryResponse[];
 
@@ -12970,6 +12971,11 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
                 this.notes = [] as any;
                 for (let item of _data["notes"])
                     this.notes!.push(ViewEntityNoteResponse.fromJS(item));
+            }
+            if (Array.isArray(_data["customFields"])) {
+                this.customFields = [] as any;
+                for (let item of _data["customFields"])
+                    this.customFields!.push(ViewEntityCustomFieldResponse.fromJS(item));
             }
             if (Array.isArray(_data["statusHistories"])) {
                 this.statusHistories = [] as any;
@@ -13053,6 +13059,11 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
             for (let item of this.notes)
                 data["notes"].push(item ? item.toJSON() : undefined as any);
         }
+        if (Array.isArray(this.customFields)) {
+            data["customFields"] = [];
+            for (let item of this.customFields)
+                data["customFields"].push(item ? item.toJSON() : undefined as any);
+        }
         if (Array.isArray(this.statusHistories)) {
             data["statusHistories"] = [];
             for (let item of this.statusHistories)
@@ -13116,6 +13127,7 @@ export interface IViewLeadDetailResponse {
     activities?: ViewLeadActivityResponse[];
     followUps?: ViewLeadFollowUpResponse[];
     notes?: ViewEntityNoteResponse[];
+    customFields?: ViewEntityCustomFieldResponse[];
     statusHistories?: ViewLeadStatusHistoryResponse[];
     assignmentHistories?: ViewLeadAssignmentHistoryResponse[];
 }
@@ -13339,6 +13351,67 @@ export enum EntityNoteType {
     Support = "Support",
 }
 
+export class ViewEntityCustomFieldResponse implements IViewEntityCustomFieldResponse {
+    id?: number;
+    entityType?: EntityCustomFieldType;
+    fkEntityPKId?: number;
+    label?: string;
+    value?: string;
+    displayOrder?: number;
+
+    constructor(data?: IViewEntityCustomFieldResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.entityType = _data["entityType"];
+            this.fkEntityPKId = _data["fkEntityPKId"];
+            this.label = _data["label"];
+            this.value = _data["value"];
+            this.displayOrder = _data["displayOrder"];
+        }
+    }
+
+    static fromJS(data: any): ViewEntityCustomFieldResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewEntityCustomFieldResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["entityType"] = this.entityType;
+        data["fkEntityPKId"] = this.fkEntityPKId;
+        data["label"] = this.label;
+        data["value"] = this.value;
+        data["displayOrder"] = this.displayOrder;
+        return data;
+    }
+}
+
+export interface IViewEntityCustomFieldResponse {
+    id?: number;
+    entityType?: EntityCustomFieldType;
+    fkEntityPKId?: number;
+    label?: string;
+    value?: string;
+    displayOrder?: number;
+}
+
+export enum EntityCustomFieldType {
+    Lead = "Lead",
+    Task = "Task",
+}
+
 export class ViewLeadStatusHistoryResponse implements IViewLeadStatusHistoryResponse {
     id?: number;
     fromStatusId?: number | undefined;
@@ -13538,6 +13611,7 @@ export class CreateLeadRequest implements ICreateLeadRequest {
     competitors?: string | undefined;
     requirements?: string | undefined;
     metadata?: string | undefined;
+    customFieldRequests?: EntityCustomFieldItemRequest[] | undefined;
 
     constructor(data?: ICreateLeadRequest) {
         if (data) {
@@ -13588,6 +13662,11 @@ export class CreateLeadRequest implements ICreateLeadRequest {
             this.competitors = _data["competitors"];
             this.requirements = _data["requirements"];
             this.metadata = _data["metadata"];
+            if (Array.isArray(_data["customFieldRequests"])) {
+                this.customFieldRequests = [] as any;
+                for (let item of _data["customFieldRequests"])
+                    this.customFieldRequests!.push(EntityCustomFieldItemRequest.fromJS(item));
+            }
         }
     }
 
@@ -13638,6 +13717,11 @@ export class CreateLeadRequest implements ICreateLeadRequest {
         data["competitors"] = this.competitors;
         data["requirements"] = this.requirements;
         data["metadata"] = this.metadata;
+        if (Array.isArray(this.customFieldRequests)) {
+            data["customFieldRequests"] = [];
+            for (let item of this.customFieldRequests)
+                data["customFieldRequests"].push(item ? item.toJSON() : undefined as any);
+        }
         return data;
     }
 }
@@ -13681,6 +13765,55 @@ export interface ICreateLeadRequest {
     competitors?: string | undefined;
     requirements?: string | undefined;
     metadata?: string | undefined;
+    customFieldRequests?: EntityCustomFieldItemRequest[] | undefined;
+}
+
+export class EntityCustomFieldItemRequest implements IEntityCustomFieldItemRequest {
+    id?: number | undefined;
+    label?: string | undefined;
+    value?: string | undefined;
+    displayOrder?: number;
+
+    constructor(data?: IEntityCustomFieldItemRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.label = _data["label"];
+            this.value = _data["value"];
+            this.displayOrder = _data["displayOrder"];
+        }
+    }
+
+    static fromJS(data: any): EntityCustomFieldItemRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new EntityCustomFieldItemRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["label"] = this.label;
+        data["value"] = this.value;
+        data["displayOrder"] = this.displayOrder;
+        return data;
+    }
+}
+
+export interface IEntityCustomFieldItemRequest {
+    id?: number | undefined;
+    label?: string | undefined;
+    value?: string | undefined;
+    displayOrder?: number;
 }
 
 export class UpdateLeadRequest implements IUpdateLeadRequest {
@@ -13723,6 +13856,7 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
     requirements?: string | undefined;
     isArchived?: boolean;
     metadata?: string | undefined;
+    customFieldRequests?: EntityCustomFieldItemRequest[] | undefined;
 
     constructor(data?: IUpdateLeadRequest) {
         if (data) {
@@ -13774,6 +13908,11 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
             this.requirements = _data["requirements"];
             this.isArchived = _data["isArchived"];
             this.metadata = _data["metadata"];
+            if (Array.isArray(_data["customFieldRequests"])) {
+                this.customFieldRequests = [] as any;
+                for (let item of _data["customFieldRequests"])
+                    this.customFieldRequests!.push(EntityCustomFieldItemRequest.fromJS(item));
+            }
         }
     }
 
@@ -13825,6 +13964,11 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
         data["requirements"] = this.requirements;
         data["isArchived"] = this.isArchived;
         data["metadata"] = this.metadata;
+        if (Array.isArray(this.customFieldRequests)) {
+            data["customFieldRequests"] = [];
+            for (let item of this.customFieldRequests)
+                data["customFieldRequests"].push(item ? item.toJSON() : undefined as any);
+        }
         return data;
     }
 }
@@ -13869,6 +14013,7 @@ export interface IUpdateLeadRequest {
     requirements?: string | undefined;
     isArchived?: boolean;
     metadata?: string | undefined;
+    customFieldRequests?: EntityCustomFieldItemRequest[] | undefined;
 }
 
 export class UpdateLeadStatusRequest implements IUpdateLeadStatusRequest {
@@ -14857,6 +15002,7 @@ export class ViewTaskResponse implements IViewTaskResponse {
     priority?: TaskPriority | undefined;
     isCompleted?: boolean;
     createdOn?: moment.Moment;
+    customFields?: ViewEntityCustomFieldResponse[];
 
     constructor(data?: IViewTaskResponse) {
         if (data) {
@@ -14878,6 +15024,11 @@ export class ViewTaskResponse implements IViewTaskResponse {
             this.priority = _data["priority"];
             this.isCompleted = _data["isCompleted"];
             this.createdOn = _data["createdOn"] ? moment(_data["createdOn"].toString()) : undefined as any;
+            if (Array.isArray(_data["customFields"])) {
+                this.customFields = [] as any;
+                for (let item of _data["customFields"])
+                    this.customFields!.push(ViewEntityCustomFieldResponse.fromJS(item));
+            }
         }
     }
 
@@ -14899,6 +15050,11 @@ export class ViewTaskResponse implements IViewTaskResponse {
         data["priority"] = this.priority;
         data["isCompleted"] = this.isCompleted;
         data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        if (Array.isArray(this.customFields)) {
+            data["customFields"] = [];
+            for (let item of this.customFields)
+                data["customFields"].push(item ? item.toJSON() : undefined as any);
+        }
         return data;
     }
 }
@@ -14913,6 +15069,7 @@ export interface IViewTaskResponse {
     priority?: TaskPriority | undefined;
     isCompleted?: boolean;
     createdOn?: moment.Moment;
+    customFields?: ViewEntityCustomFieldResponse[];
 }
 
 export enum TaskBucket {
@@ -14985,6 +15142,7 @@ export class CreateTaskRequest implements ICreateTaskRequest {
     bucket?: TaskBucket | undefined;
     type?: TaskType | undefined;
     priority?: TaskPriority | undefined;
+    customFieldRequests?: EntityCustomFieldItemRequest[] | undefined;
 
     constructor(data?: ICreateTaskRequest) {
         if (data) {
@@ -15002,6 +15160,11 @@ export class CreateTaskRequest implements ICreateTaskRequest {
             this.bucket = _data["bucket"];
             this.type = _data["type"];
             this.priority = _data["priority"];
+            if (Array.isArray(_data["customFieldRequests"])) {
+                this.customFieldRequests = [] as any;
+                for (let item of _data["customFieldRequests"])
+                    this.customFieldRequests!.push(EntityCustomFieldItemRequest.fromJS(item));
+            }
         }
     }
 
@@ -15019,6 +15182,11 @@ export class CreateTaskRequest implements ICreateTaskRequest {
         data["bucket"] = this.bucket;
         data["type"] = this.type;
         data["priority"] = this.priority;
+        if (Array.isArray(this.customFieldRequests)) {
+            data["customFieldRequests"] = [];
+            for (let item of this.customFieldRequests)
+                data["customFieldRequests"].push(item ? item.toJSON() : undefined as any);
+        }
         return data;
     }
 }
@@ -15029,6 +15197,7 @@ export interface ICreateTaskRequest {
     bucket?: TaskBucket | undefined;
     type?: TaskType | undefined;
     priority?: TaskPriority | undefined;
+    customFieldRequests?: EntityCustomFieldItemRequest[] | undefined;
 }
 
 export class UpdateTaskRequest implements IUpdateTaskRequest {
@@ -15038,6 +15207,7 @@ export class UpdateTaskRequest implements IUpdateTaskRequest {
     bucket?: TaskBucket | undefined;
     type?: TaskType | undefined;
     priority?: TaskPriority | undefined;
+    customFieldRequests?: EntityCustomFieldItemRequest[] | undefined;
 
     constructor(data?: IUpdateTaskRequest) {
         if (data) {
@@ -15056,6 +15226,11 @@ export class UpdateTaskRequest implements IUpdateTaskRequest {
             this.bucket = _data["bucket"];
             this.type = _data["type"];
             this.priority = _data["priority"];
+            if (Array.isArray(_data["customFieldRequests"])) {
+                this.customFieldRequests = [] as any;
+                for (let item of _data["customFieldRequests"])
+                    this.customFieldRequests!.push(EntityCustomFieldItemRequest.fromJS(item));
+            }
         }
     }
 
@@ -15074,6 +15249,11 @@ export class UpdateTaskRequest implements IUpdateTaskRequest {
         data["bucket"] = this.bucket;
         data["type"] = this.type;
         data["priority"] = this.priority;
+        if (Array.isArray(this.customFieldRequests)) {
+            data["customFieldRequests"] = [];
+            for (let item of this.customFieldRequests)
+                data["customFieldRequests"].push(item ? item.toJSON() : undefined as any);
+        }
         return data;
     }
 }
@@ -15085,6 +15265,7 @@ export interface IUpdateTaskRequest {
     bucket?: TaskBucket | undefined;
     type?: TaskType | undefined;
     priority?: TaskPriority | undefined;
+    customFieldRequests?: EntityCustomFieldItemRequest[] | undefined;
 }
 
 export class MarkTaskCompletedRequest implements IMarkTaskCompletedRequest {

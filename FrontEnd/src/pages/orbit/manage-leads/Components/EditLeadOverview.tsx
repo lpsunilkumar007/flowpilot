@@ -1,4 +1,4 @@
-import { FormInput, VerticalForm } from '@/components'
+import { EntityCustomFields, FormInput, VerticalForm, type EntityCustomFieldsHandle } from '@/components'
 import { PermissionTypes } from '@/constants/permissions'
 import type { UserDropDownItemResponse, ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
 import { LookUpCodeTypes } from '@/helpers/api/WebApiClient'
@@ -11,7 +11,7 @@ import { RootState } from '@/redux/store'
 import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
 import { InterestLevel, LeadPriority, type UpdateLeadRequest, type ViewLeadDetailResponse } from '@/types/crm/lead.types'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
 import AssignSalesPersonFields from './shared/AssignSalesPersonFields'
@@ -65,6 +65,7 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 	const [assignUserId, setAssignUserId] = useState('')
 	const [assignToYourself, setAssignToYourself] = useState(false)
 	const [formKey, setFormKey] = useState(0)
+	const customFieldsRef = useRef<EntityCustomFieldsHandle>(null)
 
 	const syncAssigneeState = (assignedToUserId: string) => {
 		const assignedToSelf = isSameUserId(assignedToUserId, currentUserId)
@@ -128,6 +129,10 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 	}
 
 	const onSubmit = async (formInfo: UpdateLeadRequest) => {
+		if (customFieldsRef.current && !customFieldsRef.current.validate()) {
+			return
+		}
+
 		const assignToSelf = !!formInfo.assignToYourself
 		await runWithToast(
 			() =>
@@ -137,6 +142,7 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 					assignToYourself: assignToSelf,
 					assignedToUserId: assignToSelf ? undefined : formInfo.assignedToUserId,
 					...(lead?.metadata != null ? { metadata: lead.metadata } : {}),
+					customFieldRequests: customFieldsRef.current?.getFields(),
 				} as UpdateLeadRequest),
 			{
 				onSuccess: (response) => {
@@ -322,6 +328,14 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 						<FormInput label={t('Manage.Leads.Competitors', 'Competitors')} name="competitors" type="textarea" className="form-input" />
 						<FormInput label={t('Manage.Leads.IsArchived', 'Archived')} name="isArchived" type="checkbox" className="form-checkbox" />
 					</div>
+					<EntityCustomFields
+						key={formKey}
+						ref={customFieldsRef}
+						entityId={Number(id)}
+						initialFields={lead.customFields}
+						readOnly={!canUpdate}
+						embedded
+					/>
 					{canUpdate && (
 						<div className="mt-6 flex justify-end border-t border-gray-100 pt-4 dark:border-gray-700">
 							<button type="submit" className="btn btn-primary">

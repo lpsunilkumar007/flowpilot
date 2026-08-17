@@ -1,4 +1,4 @@
-import { FormInput, PageBreadcrumbsWithLinks, VerticalForm } from '@/components'
+import { EntityCustomFields, FormInput, PageBreadcrumbsWithLinks, VerticalForm, type EntityCustomFieldsHandle } from '@/components'
 import { MenuLinks } from '@/constants/menu'
 import type { UserDropDownItemResponse } from '@/helpers/api/WebApiClient'
 import { LookUpCodeTypes } from '@/helpers/api/WebApiClient'
@@ -8,7 +8,7 @@ import { messageHelper } from '@/helpers/message.helper'
 import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
 import { InterestLevel, LeadPriority, type CreateLeadRequest } from '@/types/crm/lead.types'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import AssignSalesPersonFields from './shared/AssignSalesPersonFields'
@@ -24,6 +24,7 @@ const AddLeadDetails: React.FC = () => {
 	const [leadStatuses, setLeadStatuses] = useState<{ value: number; text: string }[]>([])
 	const [leadSources, setLeadSources] = useState<{ value: number; text: string }[]>([])
 	const [defaultLeadStatusId, setDefaultLeadStatusId] = useState<number | undefined>()
+	const customFieldsRef = useRef<EntityCustomFieldsHandle>(null)
 
 	useEffect(() => {
 		Promise.all([
@@ -66,6 +67,12 @@ const AddLeadDetails: React.FC = () => {
 	)
 
 	const onSubmit = async (formInfo: CreateLeadRequest) => {
+		if (customFieldsRef.current && !customFieldsRef.current.validate()) {
+			return
+		}
+
+		formInfo.customFieldRequests = customFieldsRef.current?.getFields() ?? []
+
 		await runWithToast(() => leadService.create(formInfo), {
 			onSuccess: (response) => {
 				messageHelper.showSuccess(response.message)
@@ -84,7 +91,7 @@ const AddLeadDetails: React.FC = () => {
 						<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
 							<FormInput label={t('Manage.Leads.BusinessName', 'Business Name')} required name="businessName" type="text" className="form-input" />
 							<FormInput label={t('Manage.Leads.BusinessType', 'Business Type')} required name="businessType" type="text" className="form-input" />
-							<FormInput label={t('Manage.Leads.CurrentPOS', 'Current POS')} name="currentPOS" type="text" className="form-input" />
+							<FormInput label={t('Manage.Leads.CurrentPOS', 'Current Software in use')} name="currentPOS" type="text" className="form-input" />
 							<FormInput label={t('Manage.Leads.Website', 'Website')} name="website" type="text" className="form-input" />
 							<FormInput label={t('Manage.Leads.GstNumber', 'GST Number')} name="gstNumber" type="text" className="form-input" />
 							<FormInput label={t('Manage.Leads.Pan', 'PAN')} name="pan" type="text" className="form-input" />
@@ -170,6 +177,8 @@ const AddLeadDetails: React.FC = () => {
 							{t('Manage.Leads.AttachmentsPlaceholder', 'Attachments can be added in a future release.')}
 						</div>
 					</LeadSectionCard>
+
+					<EntityCustomFields ref={customFieldsRef} entityId={0} />
 				</div>
 
 				<div className={`fixed bottom-0 left-0 right-0 z-10 border-t border-gray-200 bg-white/95 px-6 py-4 backdrop-blur dark:border-gray-700 dark:bg-gray-900/95`}>

@@ -1,3 +1,4 @@
+using FlowPilot.Application.Common.CustomFields.Model.Response;
 using FlowPilot.Application.Common.Notes.Model.Response;
 using FlowPilot.Application.CRM.Model.Response.LeadActivity;
 using FlowPilot.Domain.Enums.CRM;
@@ -101,6 +102,8 @@ public class ViewLeadDetailResponse
     public List<ViewLeadFollowUpResponse> FollowUps { get; set; } = [];
 
     public List<ViewEntityNoteResponse> Notes { get; set; } = [];
+
+    public List<ViewEntityCustomFieldResponse> CustomFields { get; set; } = [];
 
     public List<ViewLeadStatusHistoryResponse> StatusHistories { get; set; } = [];
 

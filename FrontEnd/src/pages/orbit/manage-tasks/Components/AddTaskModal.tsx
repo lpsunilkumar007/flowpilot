@@ -1,4 +1,4 @@
-import { FormInput, PopupBody, PopupFooter, PopupHeader, PopupWrapper, VerticalForm } from '@/components'
+import { EntityCustomFields, FormInput, PopupBody, PopupFooter, PopupHeader, PopupWrapper, VerticalForm, type EntityCustomFieldsHandle } from '@/components'
 import { PermissionTypes } from '@/constants/permissions'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { formatHelper } from '@/helpers/format.helper'
@@ -7,7 +7,7 @@ import { usePermission } from '@/hooks/usePermission'
 import { taskService } from '@/services/TaskService'
 import { TaskBucket, TaskPriority, TaskType, type CreateTaskRequest } from '@/types/crm/task.types'
 import moment from 'moment'
-import React from 'react'
+import React, { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { buildWhenFromBucketAndTime } from '../helpers/taskDisplay.helper'
 // form validation
@@ -30,7 +30,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = (props) => {
 	const { userHasPermission } = usePermission()
 	const { t } = useTranslation()
 	const defaultWhen = moment().add(1, 'hour').startOf('hour').format('HH:mm')
-
+	const customFieldsRef = useRef<EntityCustomFieldsHandle>(null)
 	const schemaResolver = yupResolver(
 		yup.object().shape({
 			title: yup.string().trim().required('This field cannot be left empty'),
@@ -39,6 +39,10 @@ const AddTaskModal: React.FC<AddTaskModalProps> = (props) => {
 	)
 
 	const onSubmit = async (formData: AddTaskFormValues) => {
+		if (customFieldsRef.current && !customFieldsRef.current.validate()) {
+			return
+		}
+
 		const bucket = Number(formData.bucket) as TaskBucket
 		const when = buildWhenFromBucketAndTime(bucket, formData.when)
 
@@ -48,6 +52,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = (props) => {
 			bucket,
 			type: formData.type !== '' ? (Number(formData.type) as TaskType) : TaskType.Task,
 			priority: formData.priority !== '' ? (Number(formData.priority) as TaskPriority) : TaskPriority.Medium,
+			customFieldRequests: customFieldsRef.current?.getFields() ?? [],
 		}
 
 		await runWithToast(() => taskService.create(payload), {
@@ -106,6 +111,7 @@ const AddTaskModal: React.FC<AddTaskModalProps> = (props) => {
 										))}
 								</FormInput>
 							</div>
+							<EntityCustomFields ref={customFieldsRef} entityId={0} />
 						</div>
 					</PopupBody>
 					<PopupFooter>

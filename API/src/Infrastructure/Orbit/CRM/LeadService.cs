@@ -1,3 +1,6 @@
+using FlowPilot.Application.Common.CustomFields;
+using FlowPilot.Application.Common.CustomFields.Model.Request;
+using FlowPilot.Application.Common.CustomFields.Model.Response;
 using FlowPilot.Application.Common.Exceptions;
 using FlowPilot.Application.Common.Interfaces;
 using FlowPilot.Application.Common.Models;
@@ -27,17 +30,20 @@ public class LeadService : ILeadService
     private readonly ICurrentUser _currentUser;
     private readonly IDateTimeService _dateTimeService;
     private readonly IReportingHierarchyService _reportingHierarchyService;
+    private readonly IEntityCustomFieldService _entityCustomFieldService;
 
     public LeadService(
         ApplicationDbContext db,
         ICurrentUser currentUser,
         IDateTimeService dateTimeService,
-        IReportingHierarchyService reportingHierarchyService)
+        IReportingHierarchyService reportingHierarchyService,
+        IEntityCustomFieldService entityCustomFieldService)
     {
         _db = db;
         _currentUser = currentUser;
         _dateTimeService = dateTimeService;
         _reportingHierarchyService = reportingHierarchyService;
+        _entityCustomFieldService = entityCustomFieldService;
     }
 
     public async Task<PaginationResponse<ViewLeadListResponse>> SearchAsync(SearchLeadRequest request, CancellationToken cancellationToken = default)
@@ -90,7 +96,9 @@ public class LeadService : ILeadService
             .OrderByDescending(n => n.CreatedOn)
             .ToListAsync(cancellationToken);
 
-        return MapToDetail(lead, contact, notes);
+        var customFields = await _entityCustomFieldService.GetByEntityAsync(EntityCustomFieldType.Lead, id, cancellationToken);
+
+        return MapToDetail(lead, contact, notes, customFields);
     }
 
     public async Task<CreateLeadResponse> CreateAsync(CreateLeadRequest request, CancellationToken cancellationToken = default)
@@ -183,6 +191,11 @@ public class LeadService : ILeadService
                 NoteText = request.Notes,
             }, cancellationToken);
             await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        if (request.CustomFieldRequests is { Count: > 0 })
+        {
+            await ReplaceLeadCustomFieldsAsync(lead.Id, request.CustomFieldRequests, cancellationToken);
         }
 
         return new CreateLeadResponse
@@ -286,6 +299,12 @@ public class LeadService : ILeadService
         }
 
         await _db.SaveChangesAsync(cancellationToken);
+
+        if (request.CustomFieldRequests is not null)
+        {
+            await ReplaceLeadCustomFieldsAsync(lead.Id, request.CustomFieldRequests, cancellationToken);
+        }
+
         return SuccessMessages.CommonRecordUpdated;
     }
 
@@ -709,7 +728,11 @@ public class LeadService : ILeadService
         }
     }
 
-    private static ViewLeadDetailResponse MapToDetail(Leads lead, LeadContacts? contact, List<EntityNotes> notes)
+    private static ViewLeadDetailResponse MapToDetail(
+        Leads lead,
+        LeadContacts? contact,
+        List<EntityNotes> notes,
+        List<ViewEntityCustomFieldResponse>? customFields = null)
     {
         return new ViewLeadDetailResponse
         {
@@ -765,6 +788,7 @@ public class LeadService : ILeadService
                 .OrderByDescending(f => f.NextFollowUpDate)
                 .Adapt<List<ViewLeadFollowUpResponse>>(),
             Notes = notes.Adapt<List<ViewEntityNoteResponse>>(),
+            CustomFields = customFields ?? [],
             StatusHistories = lead.LeadStatusHistories
                 .OrderByDescending(h => h.ChangedOn)
                 .Select(h => new ViewLeadStatusHistoryResponse
@@ -783,6 +807,21 @@ public class LeadService : ILeadService
                 .OrderByDescending(h => h.AssignedOn)
                 .Adapt<List<ViewLeadAssignmentHistoryResponse>>(),
         };
+    }
+
+    private async Task ReplaceLeadCustomFieldsAsync(
+        DefaultIdType leadId,
+        List<EntityCustomFieldItemRequest> fields,
+        CancellationToken cancellationToken)
+    {
+        await _entityCustomFieldService.ReplaceForEntityAsync(
+            new ReplaceEntityCustomFieldsRequest
+            {
+                EntityType = EntityCustomFieldType.Lead,
+                EntityId = leadId,
+                Fields = fields,
+            },
+            cancellationToken);
     }
 
     private async Task ReverifyGpsLogsForLeadAsync(

@@ -1,3 +1,5 @@
+import type { EntityCustomFieldItemRequest, ViewEntityCustomFieldResponse } from '@/types/common/customField.types'
+
 export enum LeadActivityType {
 	Call = 0,
 	Meeting = 1,
@@ -105,6 +107,7 @@ export interface CreateLeadRequest {
 	painPoints?: string
 	competitors?: string
 	requirements?: string
+	customFieldRequests?: EntityCustomFieldItemRequest[]
 }
 
 export interface UpdateLeadRequest extends Omit<CreateLeadRequest, 'notes'> {
@@ -263,6 +266,7 @@ export interface ViewLeadDetailResponse {
 	activities: ViewLeadActivityResponse[]
 	followUps: ViewLeadFollowUpResponse[]
 	notes: ViewEntityNoteResponse[]
+	customFields?: ViewEntityCustomFieldResponse[]
 	statusHistories: ViewLeadStatusHistoryResponse[]
 	assignmentHistories: ViewLeadAssignmentHistoryResponse[]
 }

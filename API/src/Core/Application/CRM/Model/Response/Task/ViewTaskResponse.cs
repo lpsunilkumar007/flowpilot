@@ -1,3 +1,4 @@
+using FlowPilot.Application.Common.CustomFields.Model.Response;
 using FlowPilot.Domain.Enums.CRM;
 
 namespace FlowPilot.Application.CRM.Model.Response.Task;
@@ -21,4 +22,6 @@ public class ViewTaskResponse
     public bool IsCompleted { get; set; }
 
     public DateTimeOffset CreatedOn { get; set; }
+
+    public List<ViewEntityCustomFieldResponse> CustomFields { get; set; } = [];
 }

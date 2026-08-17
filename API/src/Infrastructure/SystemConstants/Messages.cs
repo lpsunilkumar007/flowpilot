@@ -55,6 +55,12 @@ internal class ErrorMessages
     public static readonly string InvalidReportsToUser = "Selected manager is invalid for this user.";
     public static readonly string ReportsToCycle = "Cannot set manager because it would create a reporting cycle.";
     public static readonly string AssignedSalesPersonRequired = "Please select an assigned sales person.";
+    public static readonly string DuplicateCustomFieldLabels = "Each custom field must have a unique name.";
+    public static readonly string CustomFieldLimitExceeded = "Cannot add more than {0} custom fields.";
+    public static readonly string CustomFieldLabelAndValueRequired = "Each custom field must have a name and a value.";
+    public static readonly string CustomFieldLabelTooLong = "Custom field name cannot be longer than {0} characters.";
+    public static readonly string CustomFieldValueTooLong = "Custom field value cannot be longer than {0} characters.";
+    public static readonly string UnsupportedCustomFieldEntityType = "This entity type does not support custom fields.";
 
 }
 

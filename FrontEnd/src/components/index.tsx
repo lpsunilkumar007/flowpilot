@@ -16,3 +16,5 @@ export { VerticalForm, FormInput, CustomDatepicker, PageBreadcrumb, handleDismis
 export { PopupHeader, PopupBody, PopupFooter, PopupWrapper } from './Popup'
 export { default as ChangeUserPassword } from './ChangeUserPassword'
 export { default as TabsWrapper } from './Tabs/TabsWrapper'
+export { default as EntityCustomFields } from './EntityCustomFields'
+export type { EntityCustomFieldsHandle } from './EntityCustomFields'
