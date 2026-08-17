@@ -29,6 +29,29 @@ interface EditLeadOverviewProps {
 
 const isSameUserId = (left?: string | null, right?: string | null) => Boolean(left && right && left.localeCompare(right, undefined, { sensitivity: 'accent' }) === 0)
 
+const parseLeadMetadata = (raw?: string): Record<string, string> => {
+	if (!raw?.trim()) return {}
+	try {
+		const parsed = JSON.parse(raw) as unknown
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {}
+		const result: Record<string, string> = {}
+		for (const [key, value] of Object.entries(parsed as Record<string, unknown>)) {
+			if (value == null) continue
+			const text = String(value).trim()
+			if (text) result[key] = text
+		}
+		return result
+	} catch {
+		return {}
+	}
+}
+
+const metadataHref = (value: string): string | undefined => {
+	if (/^https?:\/\//i.test(value)) return value
+	if (/^(www\.)?linkedin\.com\//i.test(value)) return `https://${value.replace(/^\/+/, '')}`
+	return undefined
+}
+
 const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }) => {
 	const { t } = useTranslation()
 	const { userHasPermission } = usePermission()
@@ -115,7 +138,8 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 					id: Number(id),
 					assignToYourself: assignToSelf,
 					assignedToUserId: assignToSelf ? undefined : formInfo.assignedToUserId,
-				}),
+					...(lead?.metadata != null ? { metadata: lead.metadata } : {}),
+				} as UpdateLeadRequest),
 			{
 				onSuccess: (response) => {
 					showBackendSuccess(response)
@@ -155,6 +179,8 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 	if (loading || !lead) return <AnimationSkeleton />
 
 	const assignedToSelf = isSameUserId(lead.assignedToUserId, currentUserId)
+	const metadataMap = parseLeadMetadata(lead.metadata)
+	const metadataRows = Object.entries(metadataMap).map(([key, value]) => ({ key, value }))
 
 	const defaultValues: UpdateLeadRequest = {
 		id: lead.id,
@@ -319,6 +345,31 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 					)}
 				</VerticalForm>
 			</LeadSectionCard>
+
+			{metadataRows.length > 0 && (
+				<LeadSectionCard
+					title={t('Manage.Leads.ImportedMetadata', 'Additional Information')}
+					subtitle={t('Manage.Leads.ImportedMetadata_Sub', 'Additional details captured when this lead was imported')}
+					icon="ri-database-2-line">
+					<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+						{metadataRows.map((row) => {
+							const href = metadataHref(row.value)
+							return (
+								<div key={row.key}>
+									<div className="form-label">{formatHelper.punctuateLabel(row.key)}</div>
+									{href ? (
+										<a href={href} target="_blank" rel="noopener noreferrer" className="break-all text-primary hover:underline">
+											{row.value}
+										</a>
+									) : (
+										<div className="break-words text-gray-900 dark:text-gray-100">{row.value}</div>
+									)}
+								</div>
+							)
+						})}
+					</div>
+				</LeadSectionCard>
+			)}
 		</div>
 	)
 }

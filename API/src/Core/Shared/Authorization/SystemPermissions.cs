@@ -85,6 +85,7 @@ public class SystemPermissions
         new("View Leads", SystemAction.View, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
         new("Create Lead", SystemAction.Create, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
         new("Update Lead", SystemAction.Update, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+        new("Export Leads", SystemAction.Export, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
 
         // Manage Offerings (CRM)
         new("View Offerings", SystemAction.View, SystemResource.ManageOfferings, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),

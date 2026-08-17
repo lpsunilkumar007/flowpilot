@@ -140,6 +140,7 @@ public class LeadService : ILeadService
             PainPoints = request.PainPoints,
             Competitors = request.Competitors,
             Requirements = request.Requirements,
+            Metadata = request.Metadata,
             LeadContacts =
             [
                 new LeadContacts
@@ -253,6 +254,7 @@ public class LeadService : ILeadService
         lead.PainPoints = request.PainPoints;
         lead.Competitors = request.Competitors;
         lead.Requirements = request.Requirements;
+        lead.Metadata = request.Metadata;
         lead.IsArchived = request.IsArchived;
 
         var contact = lead.LeadContacts.FirstOrDefault(c => c.IsPrimary);
@@ -778,6 +780,7 @@ public class LeadService : ILeadService
             PainPoints = lead.PainPoints,
             Competitors = lead.Competitors,
             Requirements = lead.Requirements,
+            Metadata = lead.Metadata,
             LastActivityDate = lead.LastActivityDate,
             NextFollowUpDate = lead.NextFollowUpDate,
             IsArchived = lead.IsArchived,

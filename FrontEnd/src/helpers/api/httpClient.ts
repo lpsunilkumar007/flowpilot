@@ -63,16 +63,27 @@ export const createAuthenticatedFetch = (): ((
 		init?: RequestInit
 	): Promise<Response> => {
 		const token = getToken()
+		const incomingHeaders = (init?.headers || {}) as Record<string, string>
+		const headers: Record<string, string> = { ...incomingHeaders }
+
+		if (token) {
+			headers.Authorization = `Bearer ${token}`
+		}
+
+		const isFormData = init?.body instanceof FormData
+		if (isFormData) {
+			delete headers['Content-Type']
+			delete headers['content-type']
+		} else {
+			const hasContentType = Object.keys(headers).some((key) => key.toLowerCase() === 'content-type')
+			if (!hasContentType) {
+				headers['Content-Type'] = 'application/json'
+			}
+		}
 
 		const modifiedInit: RequestInit = {
 			...init,
-			headers: {
-				'Content-Type': 'application/json',
-				...(init?.headers || {}),
-				...(token
-					? { Authorization: `Bearer ${token}` }
-					: {}),
-			},
+			headers,
 		}
 
 		const response = await window.fetch(url, modifiedInit)

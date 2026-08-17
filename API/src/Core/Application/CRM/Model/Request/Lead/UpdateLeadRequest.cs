@@ -90,4 +90,6 @@ public class UpdateLeadRequest
     public string? Requirements { get; set; }
 
     public bool IsArchived { get; set; }
+
+    public string? Metadata { get; set; }
 }

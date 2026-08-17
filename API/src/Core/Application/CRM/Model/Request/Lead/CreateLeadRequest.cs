@@ -87,4 +87,6 @@ public class CreateLeadRequest
     public string? Competitors { get; set; }
 
     public string? Requirements { get; set; }
+
+    public string? Metadata { get; set; }
 }

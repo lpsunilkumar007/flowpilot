@@ -17,10 +17,13 @@ const PaymentConfirmation = () => {
 	const stripePaymentUniqueId = location.state?.stripePaymentUniqueId
 	let pollingInterval: any = null
 
-	const [stripePaymentStatus, setStripePaymentStatus] = useState<GetPaymentStatusResponse>()
-	// new GetPaymentStatusResponse({
-	// 	paymentStatus: StripePaymentStatus.Pending,
-	// })
+	const [stripePaymentStatus, setStripePaymentStatus] = useState<GetPaymentStatusResponse>(
+		new GetPaymentStatusResponse({
+			paymentStatus: StripePaymentStatus.Pending,
+			amount: 0,
+			currency: '',
+		})
+	)
 
 	const fetchData = async () => {
 		try {

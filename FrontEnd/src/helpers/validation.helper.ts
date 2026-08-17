@@ -1,7 +1,12 @@
 class ValidationHelper {
 	static isValidEmail = (email: string) => {
 		const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/ // Simple regex for email validation
-		return emailRegex.test(email)
+		return emailRegex.test(email.trim())
+	}
+
+	static isValidMobile = (mobile: string) => {
+		const digits = mobile.replace(/\D/g, '')
+		return digits.length >= 10 && digits.length <= 15
 	}
 
 	static isEditorBodyBlank(content: string) {

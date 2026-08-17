@@ -57,6 +57,7 @@ export enum MenuLinks {
 	ManageLeads = '/manage-leads',
 	LeadCalendar = '/manage-leads/calendar',
 	AddLead = '/manage-leads/create',
+	ImportLeads = '/manage-leads/import',
 	EditLead = '/manage-leads/:id',
 	ManageTasks = '/manage-tasks',
 	SalesPipeline = '/manage-leads/pipeline',
