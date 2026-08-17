@@ -26,10 +26,13 @@ public class Leads : AuditableEntity
 
     public string? CompanySize { get; set; }
 
+    [ForeignKey(nameof(Offering))]
+    public DefaultIdType? FKOfferingId { get; set; }
+
     [ForeignKey(nameof(LeadSource))]
     public required DefaultIdType FKLeadSourceId { get; set; }
 
-    public required string FKAssignedToUserId { get; set; }
+    public string? FKAssignedToUserId { get; set; }
 
     public LeadPriority Priority { get; set; } = LeadPriority.Medium;
 
@@ -79,6 +82,8 @@ public class Leads : AuditableEntity
     public virtual LookUpCodeValues LeadSource { get; set; } = null!;
 
     public virtual LookUpCodeValues LeadStatus { get; set; } = null!;
+
+    public virtual Offerings? Offering { get; set; }
 
     public List<LeadContacts> LeadContacts { get; set; } = [];
 

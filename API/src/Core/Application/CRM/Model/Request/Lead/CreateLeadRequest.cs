@@ -29,6 +29,9 @@ public class CreateLeadRequest
     public string? CompanySize { get; set; }
 
     [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
+    public required DefaultIdType OfferingId { get; set; }
+
+    [Required(ErrorMessage = ValidationMessages.RequiredMessage)]
     public required string OwnerName { get; set; }
 
     public string? Designation { get; set; }
@@ -67,7 +70,6 @@ public class CreateLeadRequest
 
     public bool AssignToYourself { get; set; }
 
-    [RequiredIf(nameof(AssignToYourself), false)]
     public string? AssignedToUserId { get; set; }
 
     public LeadPriority Priority { get; set; } = LeadPriority.Medium;

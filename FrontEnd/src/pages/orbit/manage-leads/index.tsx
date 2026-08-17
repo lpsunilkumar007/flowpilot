@@ -17,6 +17,8 @@ const ManageLeads: React.FC = () => {
 	const [reloadLeads, setReloadLeads] = useState(false)
 	const isIndirectTeam = searchParams.get('teamMode') === 'indirect'
 	const canCreate = userHasPermission(PermissionTypes.Permissions_ManageLeads_Create) && !isIndirectTeam
+	const queryOfferingUid = searchParams.get('offeringUid')
+	const addLeadUrl = queryOfferingUid ? `${MenuLinks.AddLead}?offeringUid=${encodeURIComponent(queryOfferingUid)}` : MenuLinks.AddLead
 
 	return (
 		<>
@@ -26,7 +28,7 @@ const ManageLeads: React.FC = () => {
 				{canCreate && (
 					<PageTitle
 						actions={
-							<button onClick={() => navigate(MenuLinks.AddLead)} className="btn btn-primary inline-flex items-center gap-2 shadow-sm">
+							<button onClick={() => navigate(addLeadUrl)} className="btn btn-primary inline-flex items-center gap-2 shadow-sm">
 								<i className="ri-add-line" />
 								{t('Manage.Leads.Action_Add', 'Create Lead')}
 							</button>

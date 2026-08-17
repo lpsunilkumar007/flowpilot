@@ -6,7 +6,7 @@ public class ViewLeadAssignmentHistoryResponse
 
     public string? FromUserId { get; set; }
 
-    public string ToUserId { get; set; } = string.Empty;
+    public string? ToUserId { get; set; }
 
     public string AssignedByUserId { get; set; } = string.Empty;
 

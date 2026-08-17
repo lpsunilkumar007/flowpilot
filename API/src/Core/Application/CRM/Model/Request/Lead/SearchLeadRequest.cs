@@ -11,6 +11,10 @@ public class SearchLeadRequest : SearchRequestBaseClass
 
     public string? AssignedToUserId { get; set; }
 
+    public DefaultIdType? OfferingId { get; set; }
+
+    public Guid? OfferingUniqueId { get; set; }
+
     public DateTimeOffset? FromDate { get; set; }
 
     public DateTimeOffset? ToDate { get; set; }

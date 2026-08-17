@@ -4561,7 +4561,7 @@ export class LeadClient {
      * @param sortOrder (optional) 
      * @param sortField (optional) 
      */
-    search(filterType: LeadFilterType | undefined, searchText: string | null | undefined, assignedToUserId: string | null | undefined, fromDate: moment.Moment | null | undefined, toDate: moment.Moment | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortOrder: string | null | undefined, sortField: string | null | undefined): Promise<PaginationResponseOfViewLeadListResponse> {
+    search(filterType: LeadFilterType | undefined, searchText: string | null | undefined, assignedToUserId: string | null | undefined, offeringId: number | null | undefined, offeringUniqueId: string | null | undefined, fromDate: moment.Moment | null | undefined, toDate: moment.Moment | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortOrder: string | null | undefined, sortField: string | null | undefined): Promise<PaginationResponseOfViewLeadListResponse> {
         let url_ = this.baseUrl + "/api/v1/lead?";
         if (filterType === null)
             throw new globalThis.Error("The parameter 'filterType' cannot be null.");
@@ -4571,6 +4571,10 @@ export class LeadClient {
             url_ += "SearchText=" + encodeURIComponent("" + searchText) + "&";
         if (assignedToUserId !== undefined && assignedToUserId !== null)
             url_ += "AssignedToUserId=" + encodeURIComponent("" + assignedToUserId) + "&";
+        if (offeringId !== undefined && offeringId !== null)
+            url_ += "OfferingId=" + encodeURIComponent("" + offeringId) + "&";
+        if (offeringUniqueId !== undefined && offeringUniqueId !== null)
+            url_ += "OfferingUniqueId=" + encodeURIComponent("" + offeringUniqueId) + "&";
         if (fromDate !== undefined && fromDate !== null)
             url_ += "FromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
         if (toDate !== undefined && toDate !== null)
@@ -12088,6 +12092,8 @@ export class ViewLeadListResponse implements IViewLeadListResponse {
     mobile?: string;
     businessType?: string;
     currentPOS?: string | undefined;
+    offeringId?: number | undefined;
+    offeringName?: string;
     assignedToUserId?: string;
     leadStatusId?: number;
     leadStatusName?: string;
@@ -12115,6 +12121,8 @@ export class ViewLeadListResponse implements IViewLeadListResponse {
             this.mobile = _data["mobile"];
             this.businessType = _data["businessType"];
             this.currentPOS = _data["currentPOS"];
+            this.offeringId = _data["offeringId"];
+            this.offeringName = _data["offeringName"];
             this.assignedToUserId = _data["assignedToUserId"];
             this.leadStatusId = _data["leadStatusId"];
             this.leadStatusName = _data["leadStatusName"];
@@ -12142,6 +12150,8 @@ export class ViewLeadListResponse implements IViewLeadListResponse {
         data["mobile"] = this.mobile;
         data["businessType"] = this.businessType;
         data["currentPOS"] = this.currentPOS;
+        data["offeringId"] = this.offeringId;
+        data["offeringName"] = this.offeringName;
         data["assignedToUserId"] = this.assignedToUserId;
         data["leadStatusId"] = this.leadStatusId;
         data["leadStatusName"] = this.leadStatusName;
@@ -12162,6 +12172,8 @@ export interface IViewLeadListResponse {
     mobile?: string;
     businessType?: string;
     currentPOS?: string | undefined;
+    offeringId?: number | undefined;
+    offeringName?: string;
     assignedToUserId?: string;
     leadStatusId?: number;
     leadStatusName?: string;
@@ -12202,6 +12214,8 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
     expectedMonthlyBilling?: number | undefined;
     expectedRevenue?: number | undefined;
     companySize?: string | undefined;
+    offeringId?: number | undefined;
+    offeringName?: string;
     ownerName?: string;
     designation?: string | undefined;
     mobile?: string;
@@ -12263,6 +12277,8 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
             this.expectedMonthlyBilling = _data["expectedMonthlyBilling"];
             this.expectedRevenue = _data["expectedRevenue"];
             this.companySize = _data["companySize"];
+            this.offeringId = _data["offeringId"];
+            this.offeringName = _data["offeringName"];
             this.ownerName = _data["ownerName"];
             this.designation = _data["designation"];
             this.mobile = _data["mobile"];
@@ -12344,6 +12360,8 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
         data["expectedMonthlyBilling"] = this.expectedMonthlyBilling;
         data["expectedRevenue"] = this.expectedRevenue;
         data["companySize"] = this.companySize;
+        data["offeringId"] = this.offeringId;
+        data["offeringName"] = this.offeringName;
         data["ownerName"] = this.ownerName;
         data["designation"] = this.designation;
         data["mobile"] = this.mobile;
@@ -12848,6 +12866,7 @@ export class CreateLeadRequest implements ICreateLeadRequest {
     expectedMonthlyBilling?: number | undefined;
     expectedRevenue?: number | undefined;
     companySize?: string | undefined;
+    offeringId!: number;
     ownerName!: string;
     designation?: string | undefined;
     mobile!: string;
@@ -12897,6 +12916,7 @@ export class CreateLeadRequest implements ICreateLeadRequest {
             this.expectedMonthlyBilling = _data["expectedMonthlyBilling"];
             this.expectedRevenue = _data["expectedRevenue"];
             this.companySize = _data["companySize"];
+            this.offeringId = _data["offeringId"];
             this.ownerName = _data["ownerName"];
             this.designation = _data["designation"];
             this.mobile = _data["mobile"];
@@ -12946,6 +12966,7 @@ export class CreateLeadRequest implements ICreateLeadRequest {
         data["expectedMonthlyBilling"] = this.expectedMonthlyBilling;
         data["expectedRevenue"] = this.expectedRevenue;
         data["companySize"] = this.companySize;
+        data["offeringId"] = this.offeringId;
         data["ownerName"] = this.ownerName;
         data["designation"] = this.designation;
         data["mobile"] = this.mobile;
@@ -12988,6 +13009,7 @@ export interface ICreateLeadRequest {
     expectedMonthlyBilling?: number | undefined;
     expectedRevenue?: number | undefined;
     companySize?: string | undefined;
+    offeringId: number;
     ownerName: string;
     designation?: string | undefined;
     mobile: string;
@@ -13029,6 +13051,7 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
     expectedMonthlyBilling?: number | undefined;
     expectedRevenue?: number | undefined;
     companySize?: string | undefined;
+    offeringId!: number;
     ownerName!: string;
     designation?: string | undefined;
     mobile!: string;
@@ -13079,6 +13102,7 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
             this.expectedMonthlyBilling = _data["expectedMonthlyBilling"];
             this.expectedRevenue = _data["expectedRevenue"];
             this.companySize = _data["companySize"];
+            this.offeringId = _data["offeringId"];
             this.ownerName = _data["ownerName"];
             this.designation = _data["designation"];
             this.mobile = _data["mobile"];
@@ -13129,6 +13153,7 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
         data["expectedMonthlyBilling"] = this.expectedMonthlyBilling;
         data["expectedRevenue"] = this.expectedRevenue;
         data["companySize"] = this.companySize;
+        data["offeringId"] = this.offeringId;
         data["ownerName"] = this.ownerName;
         data["designation"] = this.designation;
         data["mobile"] = this.mobile;
@@ -13172,6 +13197,7 @@ export interface IUpdateLeadRequest {
     expectedMonthlyBilling?: number | undefined;
     expectedRevenue?: number | undefined;
     companySize?: string | undefined;
+    offeringId: number;
     ownerName: string;
     designation?: string | undefined;
     mobile: string;

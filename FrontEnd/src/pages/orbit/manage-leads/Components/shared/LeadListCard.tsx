@@ -38,8 +38,8 @@ const LeadListCard: React.FC<LeadListCardProps> = ({ lead, users }) => {
 					<p className="font-medium text-gray-800 dark:text-gray-200">{lead.businessType}</p>
 				</div>
 				<div>
-					<p className="text-gray-400">Current POS</p>
-					<p className="font-medium text-gray-800 dark:text-gray-200">{lead.currentPOS || '—'}</p>
+					<p className="text-gray-400">Offering</p>
+					<p className="font-medium text-gray-800 dark:text-gray-200">{lead.offeringName || 'Unassigned'}</p>
 				</div>
 				<div>
 					<p className="text-gray-400">Assigned to</p>

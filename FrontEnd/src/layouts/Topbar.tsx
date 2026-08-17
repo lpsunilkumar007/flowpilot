@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react'
 // redux
 import { useDispatch, useSelector } from 'react-redux'
 import { AppDispatch, RootState } from '../redux/store'
-import { changeLayoutTheme, changeSideBarType, fetchUserProfileSuccess, showRightSidebar } from '../redux/actions'
+import { changeLayoutTheme, changeSideBarType, fetchUserProfileSuccess } from '../redux/actions'
 
 // hooks
 import { useViewPort } from '../hooks'
@@ -12,14 +12,8 @@ import { useViewPort } from '../hooks'
 import { SideBarType, LayoutTheme } from '../constants'
 
 // assets
-import avatar2 from '@/assets/images/users/avatar-2.jpg'
-import avatar4 from '@/assets/images/users/avatar-4.jpg'
-
 import TopBarSearch from '../components/TopBarSearch'
 import LanguageDropdown from '../components/LanguageDropdown'
-import NotificationDropdown from '../components/NotificationDropDown'
-import AppsDropDown from '../components/AppsDropDown'
-import MaximizeScreen from '../components/MaximizeScreen'
 import ProfileDropDown from '../components/ProfileDropDown'
 import LogoBox from '../components/LogoBox'
 import { TenantCurrentSubscriptionDetailResponse, UpdateUserRequest, ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
@@ -35,60 +29,6 @@ import moment from 'moment'
 import { useNavigate } from 'react-router-dom'
 import { usePermission } from '@/hooks/usePermission'
 import { PermissionTypes } from '@/constants/permissions'
-
-export interface NotificationItem {
-    id: number
-    text: string
-    subText: string
-    icon?: string
-    avatar?: string
-    bgColor?: string
-    createdAt: Date
-}
-
-/**
- * notification items
- */
-const notifications: NotificationItem[] = [
-    {
-        id: 1,
-        text: 'Datacorp',
-        subText: 'Caleb Flakelar commented on Admin',
-        icon: 'ri-message-3-line text-lg',
-        bgColor: 'primary',
-        createdAt: subtractHours(new Date(), 1),
-    },
-    {
-        id: 2,
-        text: 'Admin',
-        subText: 'New user registered',
-        icon: 'ri-user-add-line text-lg',
-        bgColor: 'info',
-        createdAt: subtractHours(new Date(), 60),
-    },
-    {
-        id: 3,
-        text: 'Cristina Pride',
-        subText: 'Hi, How are you? What about our next meeting',
-        avatar: avatar2,
-        createdAt: subtractHours(new Date(), 1440),
-    },
-    {
-        id: 4,
-        text: 'Datacorp',
-        subText: 'Caleb Flakelar commented on Admin',
-        icon: 'ri-discuss-line text-lg',
-        bgColor: 'primary',
-        createdAt: subtractHours(new Date(), 2880),
-    },
-    {
-        id: 5,
-        text: 'Karen Robinson',
-        subText: 'Wow ! this admin looks good and awesome design',
-        avatar: avatar4,
-        createdAt: subtractHours(new Date(), 2880),
-    },
-]
 
 /**
  * profile menu items
@@ -130,14 +70,6 @@ const profileMenus = [
     // 	redirectTo: `${MenuLinks.MySubscriptions}`,
     // },
 ]
-
-/**
- * for subtraction minutes
- */
-function subtractHours(date: Date, minutes: number) {
-    date.setMinutes(date.getMinutes() - minutes)
-    return date
-}
 
 const Topbar = () => {
     const [showTZWarning, setShowTZWarning] = useState(false)
@@ -271,13 +203,6 @@ const Topbar = () => {
             }
         )
     }
-    /**
-     * Toggles the right sidebar
-     */
-    const handleRightSideBar = () => {
-        dispatch(showRightSidebar() as any)
-    }
-
     const mismatch = userData?.timeZone && normalized !== userData.timeZone
 
     useEffect(() => {
@@ -319,23 +244,6 @@ const Topbar = () => {
                     <LanguageDropdown />
                 </div>
 
-                <div className="relative lg:flex hidden">
-                    <NotificationDropdown notifications={notifications} />
-                </div>
-
-                {/* <div className="relative lg:flex hidden">
-					<AppsDropDown />
-				</div> */}
-
-                {/* <div className="flex">
-					<button type="button" className="nav-link p-2" onClick={handleRightSideBar}>
-						<span className="sr-only">Customization</span>
-						<span className="flex items-center justify-center">
-							<i className="ri-settings-3-line text-2xl"></i>
-						</span>
-					</button>
-				</div> */}
-
                 <div className="flex">
                     <button id="light-dark-mode" type="button" className="nav-link p-2" onClick={toggleDarkMode}>
                         <span className="sr-only">Light/Dark Mode</span>
@@ -344,10 +252,6 @@ const Topbar = () => {
                             <i className="ri-sun-line text-2xl hidden dark:block"></i>
                         </span>
                     </button>
-                </div>
-
-                <div className="md:flex hidden">
-                    <MaximizeScreen />
                 </div>
 
                 <div className="relative">

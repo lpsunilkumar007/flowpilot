@@ -1,5 +1,6 @@
 import ConfirmationModal from '@/components/ConfirmationModal'
 import { ModalLayout } from '@/components/HeadlessUI'
+import { FormInput } from '@/components'
 import { MenuLinks } from '@/constants/menu'
 import { PagingVariables } from '@/constants/paging'
 import { PermissionTypes } from '@/constants/permissions'
@@ -12,13 +13,15 @@ import { leadCardClass } from '@/pages/orbit/manage-leads/helpers/leadDisplay.he
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
+import { offeringService } from '@/services/OfferingService'
 import { lookUpService } from '@/services/LookUpService'
 import { InterestLevel, LeadFilterType, type UpdateLeadRequest, type ViewLeadDetailResponse, type ViewLeadListResponse } from '@/types/crm/lead.types'
+import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
 import type { PipelineBoardState, PipelineStage } from '@/types/crm/pipeline.types'
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const STAGE_HEADER_CLASSES = ['bg-slate-50 dark:bg-slate-800/60', 'bg-blue-50 dark:bg-blue-900/20', 'bg-indigo-50 dark:bg-indigo-900/20', 'bg-violet-50 dark:bg-violet-900/20', 'bg-amber-50 dark:bg-amber-900/20', 'bg-orange-50 dark:bg-orange-900/20', 'bg-emerald-50 dark:bg-emerald-900/20', 'bg-rose-50 dark:bg-rose-900/20', 'bg-cyan-50 dark:bg-cyan-900/20', 'bg-teal-50 dark:bg-teal-900/20']
 
@@ -77,6 +80,7 @@ const detailToUpdateRequest = (lead: ViewLeadDetailResponse, overrides: Partial<
 	expectedMonthlyBilling: lead.expectedMonthlyBilling,
 	expectedRevenue: lead.expectedRevenue,
 	companySize: lead.companySize,
+	offeringId: lead.offeringId ?? 0,
 	ownerName: lead.ownerName,
 	designation: lead.designation,
 	mobile: lead.mobile,
@@ -110,12 +114,18 @@ interface ViewSalesPipelineProps {
 const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) => {
 	const { t } = useTranslation()
 	const navigate = useNavigate()
+	const [searchParams] = useSearchParams()
 	const { userHasPermission } = usePermission()
 	const canUpdate = userHasPermission(PermissionTypes.Permissions_ManageSalePipelines_Update)
 	const canCreate = userHasPermission(PermissionTypes.Permissions_ManageSalePipelines_Create)
 	const canReorderColumns = userHasPermission(PermissionTypes.Permissions_ManageLookUps_Update)
 	const canCreateLookup = userHasPermission(PermissionTypes.Permissions_ManageLookUps_Create)
 	const canShowColumnMenu = canCreate || canCreateLookup || canReorderColumns
+	const queryOfferingUid = searchParams.get('offeringUid') || undefined
+	const queryOfferingId = useMemo(() => {
+		const value = Number(searchParams.get('offeringId'))
+		return Number.isFinite(value) && value > 0 ? value : undefined
+	}, [searchParams])
 
 	const [loading, setLoading] = useState(true)
 	const [stages, setStages] = useState<PipelineStage[]>([])
@@ -129,7 +139,15 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 	const [moveListStage, setMoveListStage] = useState<PipelineStage | null>(null)
 	const [moveListPosition, setMoveListPosition] = useState(1)
 	const [listActionBusy, setListActionBusy] = useState(false)
+	const [offerings, setOfferings] = useState<OfferingDropDownItemResponse[]>([])
+	const [offeringId, setOfferingId] = useState<number | undefined>(queryOfferingId)
+	const [offeringUniqueId, setOfferingUniqueId] = useState<string | undefined>(queryOfferingUid)
 	const menuRef = useRef<HTMLDivElement | null>(null)
+
+	const buildAddLeadUrl = useCallback(() => {
+		const selectedOfferingUid = offeringUniqueId ?? offerings.find((offering) => offering.value === offeringId)?.uniqueId
+		return selectedOfferingUid ? `${MenuLinks.AddLead}?offeringUid=${encodeURIComponent(selectedOfferingUid)}` : MenuLinks.AddLead
+	}, [offeringId, offeringUniqueId, offerings])
 
 	const loadBoard = useCallback(async () => {
 		await runWithToast(
@@ -140,6 +158,8 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 						pageNumber: 0,
 						pageSize: PagingVariables.DefaultPageSize,
 						filterType: LeadFilterType.All,
+						...(offeringId ? { offeringId } : {}),
+						...(!offeringId && offeringUniqueId ? { offeringUniqueId } : {}),
 						sortField: 'CreatedOn',
 						sortOrder: 'desc',
 					}),
@@ -162,11 +182,23 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 			},
 			{ setLoading }
 		)
-	}, [])
+	}, [offeringId, offeringUniqueId])
 
 	useEffect(() => {
 		loadBoard()
 	}, [loadBoard, reloadKey])
+
+	useEffect(() => {
+		setOfferingId(queryOfferingId)
+		setOfferingUniqueId(queryOfferingId ? undefined : queryOfferingUid)
+	}, [queryOfferingId, queryOfferingUid])
+
+	useEffect(() => {
+		offeringService
+			.getActiveDropDown()
+			.then((list) => setOfferings(list ?? []))
+			.catch(() => setOfferings([]))
+	}, [])
 
 	useEffect(() => {
 		const onDocClick = (e: MouseEvent) => {
@@ -289,6 +321,8 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 						pageNumber: 0,
 						pageSize: PagingVariables.DefaultPageSize,
 						filterType: LeadFilterType.All,
+						...(offeringId ? { offeringId } : {}),
+						...(!offeringId && offeringUniqueId ? { offeringUniqueId } : {}),
 						sortField: 'CreatedOn',
 						sortOrder: 'desc',
 					}),
@@ -420,6 +454,19 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 
 	return (
 		<div className="w-full min-w-0">
+			<div className="mb-4 flex flex-wrap items-end gap-3">
+				<FormInput label={t('Manage.Leads.Filter_Offering', 'Offering')} name="pipelineOfferingId" type="bottom-sheet" className="form-select min-w-[220px]" value={offeringId ?? ''} onChange={(e) => {
+					setOfferingUniqueId(undefined)
+					setOfferingId(e.target.value ? Number(e.target.value) : undefined)
+				}}>
+					<option value="">{t('Common.All', 'All')}</option>
+					{offerings.map((offering) => (
+						<option key={offering.value} value={offering.value}>
+							{offering.text}
+						</option>
+					))}
+				</FormInput>
+			</div>
 			{/*
 			  Single scroll container only — @hello-pangea/dnd does not support nested
 			  scroll parents (e.g. board overflow-x + Droppable overflow-y).
@@ -475,7 +522,7 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 																						className="flex w-full px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-700"
 																						onClick={() => {
 																							setOpenColumnMenuId(null)
-																							navigate(MenuLinks.AddLead)
+																							navigate(buildAddLeadUrl())
 																						}}
 																					>
 																						{t('Manage.SalesPipeline.AddCard', 'Add card')}
@@ -515,6 +562,7 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 																						<div className="min-w-0 flex-1 cursor-pointer" onClick={() => navigate(MenuLinks.EditLead.replace(':id', String(lead.id)))} onKeyDown={(e) => e.key === 'Enter' && navigate(MenuLinks.EditLead.replace(':id', String(lead.id)))} role="button" tabIndex={0}>
 																							<p className="truncate font-semibold text-gray-900 dark:text-gray-100">{lead.businessName}</p>
 																							<p className="truncate text-sm text-gray-500 dark:text-gray-400">{lead.ownerName}</p>
+																							<p className="truncate text-xs text-gray-400">{lead.offeringName || 'Unassigned'}</p>
 																						</div>
 																						<div className="relative" ref={openMenuLeadId === lead.id ? menuRef : undefined}>
 																							<button

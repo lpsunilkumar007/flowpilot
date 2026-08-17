@@ -9,7 +9,9 @@ import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { RootState } from '@/redux/store'
 import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
+import { offeringService } from '@/services/OfferingService'
 import { LeadFilterType, type PaginationResponseOfViewLeadListResponse } from '@/types/crm/lead.types'
+import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
@@ -38,9 +40,14 @@ const FILTER_OPTIONS: LeadFilterOption[] = [
 const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	const { t } = useTranslation()
 	const { userHasPermission } = usePermission()
-	const [searchParams] = useSearchParams()
+	const [searchParams, setSearchParams] = useSearchParams()
 	const teamMode = searchParams.get('teamMode')
 	const teamAssignedToUserId = searchParams.get('assignedToUserId') || undefined
+	const queryOfferingUid = searchParams.get('offeringUid') || undefined
+	const queryOfferingId = useMemo(() => {
+		const value = Number(searchParams.get('offeringId'))
+		return Number.isFinite(value) && value > 0 ? value : undefined
+	}, [searchParams])
 	const isTeamContext = Boolean(teamMode && teamAssignedToUserId)
 	const isIndirectTeam = teamMode === 'indirect'
 	const canFilterByAssignee = userHasPermission(PermissionTypes.Permissions_Users_View) && !isTeamContext
@@ -50,9 +57,12 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	const [loading, setLoading] = useState(true)
 	const [rowData, setRowData] = useState<PaginationResponseOfViewLeadListResponse>()
 	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
+	const [offerings, setOfferings] = useState<OfferingDropDownItemResponse[]>([])
 	const [filterType, setFilterType] = useState(LeadFilterType.All)
 	const [searchText, setSearchText] = useState('')
 	const [assignedToUserId, setAssignedToUserId] = useState<string | undefined>(teamAssignedToUserId)
+	const [offeringId, setOfferingId] = useState<number | undefined>(queryOfferingId)
+	const [offeringUniqueId, setOfferingUniqueId] = useState<string | undefined>(queryOfferingUid)
 
 	useEffect(() => {
 		if (teamAssignedToUserId) setAssignedToUserId(teamAssignedToUserId)
@@ -66,6 +76,13 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	}, [canFilterByAssignee, isTeamContext, users, currentUserId, userData?.firstName, userData?.lastName, userData?.email])
 
 	useEffect(() => {
+		offeringService
+			.getActiveDropDown()
+			.then((list) => setOfferings(list ?? []))
+			.catch(() => setOfferings([]))
+	}, [])
+
+	useEffect(() => {
 		if (!canFilterByAssignee && !isTeamContext) return
 		DropDownService.getSystemUsers(false)
 			.then((list) => setUsers(list ?? []))
@@ -73,13 +90,17 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	}, [canFilterByAssignee, isTeamContext])
 
 	const fetchLeads = useCallback(
-		async (pageNumber: number, overrides?: { filterType?: LeadFilterType; searchText?: string; assignedToUserId?: string }) => {
+		async (pageNumber: number, overrides?: { filterType?: LeadFilterType; searchText?: string; assignedToUserId?: string; offeringId?: number; offeringUniqueId?: string }) => {
 			const assigneeFilter = canFilterByAssignee || isTeamContext ? (overrides?.assignedToUserId ?? assignedToUserId) : undefined
+			const offeringFilter = Object.prototype.hasOwnProperty.call(overrides ?? {}, 'offeringId') ? overrides?.offeringId : offeringId
+			const offeringUidFilter = Object.prototype.hasOwnProperty.call(overrides ?? {}, 'offeringUniqueId') ? overrides?.offeringUniqueId : offeringUniqueId
 			const searchModel = {
 				pageNumber,
 				pageSize: PagingVariables.DefaultPageSize,
 				filterType: overrides?.filterType ?? filterType,
 				searchText: overrides?.searchText ?? (searchText || undefined),
+				...(offeringFilter ? { offeringId: offeringFilter } : {}),
+				...(!offeringFilter && offeringUidFilter ? { offeringUniqueId: offeringUidFilter } : {}),
 				...(assigneeFilter ? { assignedToUserId: assigneeFilter } : {}),
 			}
 
@@ -92,13 +113,20 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 				{ setLoading }
 			)
 		},
-		[filterType, searchText, assignedToUserId, canFilterByAssignee, isTeamContext]
+		[filterType, searchText, assignedToUserId, offeringId, offeringUniqueId, canFilterByAssignee, isTeamContext]
 	)
 
 	useEffect(() => {
 		fetchLeads(0)
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [reloadLeads, assignedToUserId, isTeamContext])
+
+	useEffect(() => {
+		setOfferingId(queryOfferingId)
+		setOfferingUniqueId(queryOfferingId ? undefined : queryOfferingUid)
+		fetchLeads(0, { offeringId: queryOfferingId, offeringUniqueId: queryOfferingId ? undefined : queryOfferingUid })
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [queryOfferingId, queryOfferingUid])
 
 	const handleFilterChange = (value: LeadFilterType) => {
 		setFilterType(value)
@@ -110,9 +138,15 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	const handleReset = () => {
 		setFilterType(LeadFilterType.All)
 		setSearchText('')
+		setOfferingId(undefined)
+		setOfferingUniqueId(undefined)
+		const nextParams = new URLSearchParams(searchParams)
+		nextParams.delete('offeringId')
+		nextParams.delete('offeringUid')
+		setSearchParams(nextParams, { replace: true })
 		const resetAssignee = isTeamContext ? teamAssignedToUserId : undefined
 		setAssignedToUserId(resetAssignee)
-		fetchLeads(0, { filterType: LeadFilterType.All, searchText: '', assignedToUserId: resetAssignee })
+		fetchLeads(0, { filterType: LeadFilterType.All, searchText: '', assignedToUserId: resetAssignee, offeringId: undefined, offeringUniqueId: undefined })
 	}
 
 	if (loading && !rowData) return <AnimationSkeleton />
@@ -135,8 +169,19 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 					<LeadFilterChips options={FILTER_OPTIONS} active={filterType} onChange={handleFilterChange} />
 				</div>
 
-				<div className={`grid gap-4 lg:items-end ${canFilterByAssignee ? 'lg:grid-cols-[1fr_auto_auto]' : 'lg:grid-cols-[1fr_auto]'}`}>
+				<div className={`grid gap-4 lg:items-end ${canFilterByAssignee ? 'lg:grid-cols-[1fr_auto_auto_auto]' : 'lg:grid-cols-[1fr_auto_auto]'}`}>
 					<FormInput label={t('Manage.Leads.Filter_Search', 'Search leads')} name="searchText" type="text" className="form-input" value={searchText} onChange={(e) => setSearchText(e.target.value)} placeholder={t('Manage.Leads.SearchPlaceholder', 'Business, owner, phone, email, GST, lead ID...')} />
+					<FormInput label={t('Manage.Leads.Filter_Offering', 'Offering')} name="offeringId" type="bottom-sheet" className="form-select" value={offeringId ?? ''} onChange={(e) => {
+						setOfferingUniqueId(undefined)
+						setOfferingId(e.target.value ? Number(e.target.value) : undefined)
+					}}>
+						<option value="">{t('Common.All', 'All')}</option>
+						{offerings.map((offering) => (
+							<option key={offering.value} value={offering.value}>
+								{offering.text}
+							</option>
+						))}
+					</FormInput>
 					{canFilterByAssignee && (
 						<FormInput label={t('Manage.Leads.Filter_AssignedTo', 'Assigned to')} name="assignedToUserId" type="bottom-sheet" className="form-select" value={assignedToUserId ?? ''} onChange={(e) => setAssignedToUserId(e.target.value || undefined)}>
 							<option value="">{t('Common.All', 'All')}</option>

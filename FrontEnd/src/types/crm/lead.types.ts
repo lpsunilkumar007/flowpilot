@@ -66,6 +66,8 @@ export interface SearchLeadRequest {
 	filterType?: LeadFilterType
 	searchText?: string
 	assignedToUserId?: string
+	offeringId?: number
+	offeringUniqueId?: string
 	fromDate?: string
 	toDate?: string
 }
@@ -81,6 +83,7 @@ export interface CreateLeadRequest {
 	expectedMonthlyBilling?: number
 	expectedRevenue?: number
 	companySize?: string
+	offeringId: number
 	ownerName: string
 	designation?: string
 	mobile: string
@@ -157,7 +160,9 @@ export interface ViewLeadListResponse {
 	mobile: string
 	businessType: string
 	currentPOS?: string
-	assignedToUserId: string
+	offeringId?: number
+	offeringName: string
+	assignedToUserId?: string
 	leadStatusId: number
 	leadStatusName: string
 	nextFollowUpDate?: string
@@ -229,6 +234,8 @@ export interface ViewLeadDetailResponse {
 	expectedMonthlyBilling?: number
 	expectedRevenue?: number
 	companySize?: string
+	offeringId?: number
+	offeringName: string
 	ownerName: string
 	designation?: string
 	mobile: string
@@ -244,7 +251,7 @@ export interface ViewLeadDetailResponse {
 	googleMapsLink?: string
 	leadSourceId: number
 	leadSourceName: string
-	assignedToUserId: string
+	assignedToUserId?: string
 	priority: LeadPriority | string
 	leadStatusId: number
 	leadStatusName: string

@@ -7,10 +7,12 @@ import { formatHelper } from '@/helpers/format.helper'
 import { messageHelper } from '@/helpers/message.helper'
 import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
+import { offeringService } from '@/services/OfferingService'
 import { InterestLevel, LeadPriority, type CreateLeadRequest } from '@/types/crm/lead.types'
-import React, { useEffect, useState } from 'react'
+import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
+import React, { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import AssignSalesPersonFields from './shared/AssignSalesPersonFields'
 import LeadSectionCard from './shared/LeadSectionCard'
 // form validation
@@ -20,29 +22,47 @@ import * as yup from 'yup'
 const AddLeadDetails: React.FC = () => {
 	const { t } = useTranslation()
 	const navigate = useNavigate()
+	const [searchParams] = useSearchParams()
 	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
 	const [leadStatuses, setLeadStatuses] = useState<{ value: number; text: string }[]>([])
 	const [leadSources, setLeadSources] = useState<{ value: number; text: string }[]>([])
+	const [offerings, setOfferings] = useState<OfferingDropDownItemResponse[]>([])
 	const [defaultLeadStatusId, setDefaultLeadStatusId] = useState<number | undefined>()
+	const requestedOfferingUid = searchParams.get('offeringUid')?.toLowerCase()
+	const requestedOfferingId = useMemo(() => {
+		const value = Number(searchParams.get('offeringId'))
+		return Number.isFinite(value) && value > 0 ? value : undefined
+	}, [searchParams])
+	const defaultOfferingId = useMemo(() => {
+		if (requestedOfferingUid) {
+			return offerings.find((offering) => offering.uniqueId?.toLowerCase() === requestedOfferingUid)?.value
+		}
+
+		if (!requestedOfferingId) return undefined
+		return offerings.some((offering) => offering.value === requestedOfferingId) ? requestedOfferingId : undefined
+	}, [offerings, requestedOfferingId, requestedOfferingUid])
 
 	useEffect(() => {
 		Promise.all([
 			DropDownService.getDirectReportSystemUsers(),
 			DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus),
 			DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadSource),
+			offeringService.getActiveDropDown(),
 		])
-			.then(([userList, statusList, sourceList]) => {
+			.then(([userList, statusList, sourceList, offeringList]) => {
 				setUsers(userList ?? [])
 				const statuses = (statusList ?? []).map((item) => ({ value: item.value, text: item.text }))
 				setLeadStatuses(statuses)
 				const newStatus = statuses.find((s) => s.text === 'New') ?? statuses[0]
 				setDefaultLeadStatusId(newStatus?.value)
 				setLeadSources((sourceList ?? []).map((item) => ({ value: item.value, text: item.text })))
+				setOfferings(offeringList ?? [])
 			})
 			.catch(() => {
 				setUsers([])
 				setLeadStatuses([])
 				setLeadSources([])
+				setOfferings([])
 			})
 	}, [])
 
@@ -52,13 +72,10 @@ const AddLeadDetails: React.FC = () => {
 			businessType: yup.string().required('This field cannot be left empty'),
 			ownerName: yup.string().required('This field cannot be left empty'),
 			mobile: yup.string().required('Please enter Mobile Number'),
+			offeringId: yup.number().moreThan(0, 'Please select a value').required('Please select a value'),
 			leadStatusId: yup.number().required('Please select a value'),
 			assignToYourself: yup.boolean(),
-			assignedToUserId: yup.string().when('assignToYourself', {
-				is: true,
-				then: (schema) => schema.optional().nullable(),
-				otherwise: (schema) => schema.required('Please select a value'),
-			}),
+			assignedToUserId: yup.string().optional().nullable(),
 			email: yup.string().email('Please enter a valid email address').nullable(),
 			website: yup.string().url('Please enter a valid URL').nullable(),
 			GoogleMapsLink: yup.string().url('Please enter a valid URL').nullable(),
@@ -78,7 +95,7 @@ const AddLeadDetails: React.FC = () => {
 		<>
 			<PageBreadcrumbsWithLinks title={t('Manage.Leads.Add_Heading', 'Create Lead')} subNames={[{ label: t('Manage.Leads_Heading', 'Leads'), link: MenuLinks.ManageLeads }, { label: t('Manage.Leads.Add.Breadcrumb', 'Create') }]} />
 
-			<VerticalForm<any> onSubmit={onSubmit} resolver={schemaResolver} defaultValues={{ priority: LeadPriority.Medium, leadStatusId: defaultLeadStatusId, interestLevel: InterestLevel.Medium, assignToYourself: false }} key={defaultLeadStatusId ?? 'loading'}>
+			<VerticalForm<any> onSubmit={onSubmit} resolver={schemaResolver} defaultValues={{ priority: LeadPriority.Medium, leadStatusId: defaultLeadStatusId, offeringId: defaultOfferingId, interestLevel: InterestLevel.Medium, assignToYourself: false }} key={`${defaultLeadStatusId ?? 'loading'}-${defaultOfferingId ?? 'none'}-${offerings.length}`}>
 				<div className="space-y-6 pb-24">
 					<LeadSectionCard title={t('Manage.Leads.Section_Business', 'Business Information')} subtitle={t('Manage.Leads.Section_Business_Sub', 'Tell us about the business')} icon="ri-building-2-line">
 						<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -120,6 +137,14 @@ const AddLeadDetails: React.FC = () => {
 
 					<LeadSectionCard title={t('Manage.Leads.Section_Sales', 'Sales Information')} subtitle={t('Manage.Leads.Section_Sales_Sub', 'Pipeline and ownership')} icon="ri-line-chart-line">
 						<div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+							<FormInput label={t('Manage.Leads.Offering', 'Offering')} required name="offeringId" type="bottom-sheet" className="form-select">
+								<option value="">{t('Common.Select', 'Select')}</option>
+								{offerings.map((offering) => (
+									<option key={offering.value} value={offering.value}>
+										{offering.text}
+									</option>
+								))}
+							</FormInput>
 							<FormInput label={t('Manage.Leads.LeadSource', 'Lead Source')} required name="leadSourceId" type="bottom-sheet" className="form-select">
 								<option value="">{t('Common.Select', 'Select')}</option>
 								{leadSources.map((source) => (

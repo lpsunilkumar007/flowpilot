@@ -7,6 +7,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Migrations\NexusDb\**" />
+    <EmbeddedResource Remove="Migrations\NexusDb\**" />
+    <None Remove="Migrations\NexusDb\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Npgsql" Version="10.0.3" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
   </ItemGroup>
@@ -21,7 +27,6 @@
 
   <ItemGroup>
     <Folder Include="Migrations\AuditingDb\" />
-    <Folder Include="Migrations\NexusDb\" />
   </ItemGroup>
 
 </Project>

@@ -9,7 +9,7 @@ public class LeadAssignmentHistories : AuditableEntity
 
     public string? FromUserId { get; set; }
 
-    public required string ToUserId { get; set; }
+    public string? ToUserId { get; set; }
 
     public required string AssignedByUserId { get; set; }
 

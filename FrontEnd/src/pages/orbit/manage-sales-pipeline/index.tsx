@@ -6,7 +6,7 @@ import withSuspense from '@/helpers/suspense.helper'
 import { usePermission } from '@/hooks/usePermission'
 import React, { lazy, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 const ViewSalesPipeline = withSuspense(lazy(() => import('./Components/ViewSalesPipeline')))
 
@@ -14,8 +14,11 @@ const ManageSalesPipeline: React.FC = () => {
 	const { userHasPermission } = usePermission()
 	const { t } = useTranslation()
 	const navigate = useNavigate()
+	const [searchParams] = useSearchParams()
 	const canCreate = userHasPermission(PermissionTypes.Permissions_ManageSalePipelines_Create)
 	const [reloadKey, setReloadKey] = useState(0)
+	const queryOfferingUid = searchParams.get('offeringUid')
+	const addLeadUrl = queryOfferingUid ? `${MenuLinks.AddLead}?offeringUid=${encodeURIComponent(queryOfferingUid)}` : MenuLinks.AddLead
 
 	return (
 		<>
@@ -30,7 +33,7 @@ const ManageSalesPipeline: React.FC = () => {
 								{t('Common.Refresh', 'Refresh')}
 							</button>
 							{canCreate && (
-								<button type="button" className="btn btn-primary inline-flex items-center gap-2 shadow-sm" onClick={() => navigate(MenuLinks.AddLead)}>
+								<button type="button" className="btn btn-primary inline-flex items-center gap-2 shadow-sm" onClick={() => navigate(addLeadUrl)}>
 									<i className="ri-add-line" />
 									{t('Manage.SalesPipeline.NewLead', 'New Lead')}
 								</button>

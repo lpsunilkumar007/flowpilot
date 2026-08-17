@@ -39,7 +39,6 @@ const AssignSalesPersonFields: React.FC<AssignSalesPersonFieldsProps> = ({ users
 			{!assignToYourself && (
 				<FormInput
 					label={assignedLabel ?? t('Manage.Leads.AssignedTo', 'Assigned Sales Person')}
-					required
 					name="assignedToUserId"
 					type="bottom-sheet"
 					className="form-select"

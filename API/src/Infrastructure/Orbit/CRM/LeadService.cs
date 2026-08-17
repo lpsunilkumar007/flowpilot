@@ -51,6 +51,8 @@ public class LeadService : ILeadService
             Mobile = x.LeadContacts.Where(c => c.IsPrimary).Select(c => c.Mobile).FirstOrDefault() ?? string.Empty,
             BusinessType = x.BusinessType,
             CurrentPOS = x.CurrentPOS,
+            OfferingId = x.FKOfferingId,
+            OfferingName = x.Offering != null ? x.Offering.Name : "Unassigned",
             AssignedToUserId = x.FKAssignedToUserId,
             LeadStatusId = x.FKLeadStatusId,
             LeadStatusName = x.LeadStatus.LookUpValue,
@@ -72,6 +74,7 @@ public class LeadService : ILeadService
             .Include(x => x.LeadContacts)
             .Include(x => x.LeadActivities)
             .Include(x => x.LeadFollowUps)
+            .Include(x => x.Offering)
             .Include(x => x.LeadStatus)
             .Include(x => x.LeadSource)
             .Include(x => x.LeadStatusHistories).ThenInclude(x => x.FromStatus)
@@ -101,6 +104,7 @@ public class LeadService : ILeadService
         await EnsureCanWriteLeadAsync(assignedToUserId, cancellationToken);
 
         var leadStatusId = request.LeadStatusId ?? await GetDefaultLeadStatusIdAsync(cancellationToken);
+        await EnsureActiveOfferingIdAsync(request.OfferingId, cancellationToken);
         await EnsureValidLeadStatusIdAsync(leadStatusId, cancellationToken);
         await EnsureValidLeadSourceIdAsync(request.LeadSourceId, cancellationToken);
 
@@ -116,6 +120,7 @@ public class LeadService : ILeadService
             ExpectedMonthlyBilling = request.ExpectedMonthlyBilling,
             ExpectedRevenue = request.ExpectedRevenue,
             CompanySize = request.CompanySize,
+            FKOfferingId = request.OfferingId,
             FKLeadSourceId = request.LeadSourceId,
             FKAssignedToUserId = assignedToUserId,
             Priority = request.Priority,
@@ -158,7 +163,11 @@ public class LeadService : ILeadService
                     ChangedOn = _dateTimeService.UtcNow,
                 }
             ],
-            LeadAssignmentHistories =
+        };
+
+        if (!string.IsNullOrWhiteSpace(assignedToUserId))
+        {
+            lead.LeadAssignmentHistories =
             [
                 new LeadAssignmentHistories
                 {
@@ -167,8 +176,8 @@ public class LeadService : ILeadService
                     AssignedByUserId = _currentUser.GetUserId().ToString(),
                     AssignedOn = _dateTimeService.UtcNow,
                 }
-            ],
-        };
+            ];
+        }
 
         await _db.Leads.AddAsync(lead, cancellationToken);
         await _db.SaveChangesAsync(cancellationToken);
@@ -205,6 +214,7 @@ public class LeadService : ILeadService
 
         await ValidateDuplicatesAsync(request.Mobile, request.Email, request.GstNumber, id, cancellationToken);
 
+        await EnsureActiveOfferingIdAsync(request.OfferingId, cancellationToken);
         await EnsureValidLeadStatusIdAsync(request.LeadStatusId, cancellationToken);
         await EnsureValidLeadSourceIdAsync(request.LeadSourceId, cancellationToken);
         await EnsureCanWriteLeadAsync(assignedToUserId, cancellationToken);
@@ -223,6 +233,7 @@ public class LeadService : ILeadService
         lead.ExpectedMonthlyBilling = request.ExpectedMonthlyBilling;
         lead.ExpectedRevenue = request.ExpectedRevenue;
         lead.CompanySize = request.CompanySize;
+        lead.FKOfferingId = request.OfferingId;
         lead.FKLeadSourceId = request.LeadSourceId;
         lead.FKAssignedToUserId = assignedToUserId;
         lead.Priority = request.Priority;
@@ -395,6 +406,8 @@ public class LeadService : ILeadService
                 Mobile = x.LeadContacts.Where(c => c.IsPrimary).Select(c => c.Mobile).FirstOrDefault() ?? string.Empty,
                 BusinessType = x.BusinessType,
                 CurrentPOS = x.CurrentPOS,
+                OfferingId = x.FKOfferingId,
+                OfferingName = x.Offering != null ? x.Offering.Name : "Unassigned",
                 AssignedToUserId = x.FKAssignedToUserId,
                 LeadStatusId = x.FKLeadStatusId,
                 LeadStatusName = x.LeadStatus.LookUpValue,
@@ -426,6 +439,8 @@ public class LeadService : ILeadService
                 Mobile = x.LeadContacts.Where(c => c.IsPrimary).Select(c => c.Mobile).FirstOrDefault() ?? string.Empty,
                 BusinessType = x.BusinessType,
                 CurrentPOS = x.CurrentPOS,
+                OfferingId = x.FKOfferingId,
+                OfferingName = x.Offering != null ? x.Offering.Name : "Unassigned",
                 AssignedToUserId = x.FKAssignedToUserId,
                 LeadStatusId = x.FKLeadStatusId,
                 LeadStatusName = x.LeadStatus.LookUpValue,
@@ -576,6 +591,15 @@ public class LeadService : ILeadService
             query = await ApplyLeadScopeForCurrentUserAsync(query, cancellationToken);
         }
 
+        if (request.OfferingUniqueId.HasValue)
+        {
+            query = query.Where(x => x.Offering != null && x.Offering.UniqueId == request.OfferingUniqueId.Value);
+        }
+        else if (request.OfferingId.HasValue)
+        {
+            query = query.Where(x => x.FKOfferingId == request.OfferingId.Value);
+        }
+
         if (request.FromDate.HasValue)
         {
             query = query.Where(x => x.CreatedOn >= request.FromDate.Value);
@@ -609,33 +633,36 @@ public class LeadService : ILeadService
         }
 
         var accessibleUserIds = await _reportingHierarchyService.GetAccessibleUserIdsAsync(cancellationToken);
-        return query.Where(x => accessibleUserIds.Contains(x.FKAssignedToUserId));
+        return query.Where(x => x.FKAssignedToUserId == null || accessibleUserIds.Contains(x.FKAssignedToUserId));
     }
 
     private async Task EnsureCanReadLeadAsync(string? assignedToUserId, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(assignedToUserId))
+        {
+            return;
+        }
+
         if (!await _reportingHierarchyService.CanReadAsync(assignedToUserId, cancellationToken))
         {
             throw new ForbiddenException(ErrorMessages.NotAuthorized);
         }
     }
 
-    private string ResolveAssignedToUserId(bool assignToYourself, string? assignedToUserId)
+    private string? ResolveAssignedToUserId(bool assignToYourself, string? assignedToUserId)
     {
-        var resolved = assignToYourself
+        return assignToYourself
             ? _currentUser.GetUserId().ToString()
-            : assignedToUserId;
-
-        if (string.IsNullOrWhiteSpace(resolved))
-        {
-            throw new BadRequestException(ErrorMessages.AssignedSalesPersonRequired);
-        }
-
-        return resolved;
+            : string.IsNullOrWhiteSpace(assignedToUserId) ? null : assignedToUserId.Trim();
     }
 
     private async Task EnsureCanWriteLeadAsync(string? assignedToUserId, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrWhiteSpace(assignedToUserId))
+        {
+            return;
+        }
+
         if (!await _reportingHierarchyService.CanWriteAsync(assignedToUserId, cancellationToken))
         {
             throw new ForbiddenException(ErrorMessages.NotAuthorized);
@@ -722,6 +749,8 @@ public class LeadService : ILeadService
             ExpectedMonthlyBilling = lead.ExpectedMonthlyBilling,
             ExpectedRevenue = lead.ExpectedRevenue,
             CompanySize = lead.CompanySize,
+            OfferingId = lead.FKOfferingId,
+            OfferingName = lead.Offering?.Name ?? "Unassigned",
             OwnerName = contact?.OwnerName ?? string.Empty,
             Designation = contact?.Designation,
             Mobile = contact?.Mobile ?? string.Empty,
@@ -834,6 +863,18 @@ public class LeadService : ILeadService
         if (!isValid)
         {
             throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead Source"));
+        }
+    }
+
+    private async Task EnsureActiveOfferingIdAsync(DefaultIdType offeringId, CancellationToken cancellationToken)
+    {
+        var isValid = await _db.Offerings
+            .AsNoTracking()
+            .AnyAsync(x => x.Id == offeringId && x.Status == OfferingStatus.Active, cancellationToken);
+
+        if (!isValid)
+        {
+            throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Offering"));
         }
     }
 
