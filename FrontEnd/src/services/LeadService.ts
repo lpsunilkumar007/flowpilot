@@ -25,6 +25,8 @@ export const leadService: ILeadRepository = {
 				request.filterType as unknown as ApiLeadFilterType | undefined,
 				request.searchText,
 				request.assignedToUserId,
+				request.offeringId,
+				request.offeringUniqueId,
 				toMoment(request.fromDate),
 				toMoment(request.toDate),
 				request.pageNumber,

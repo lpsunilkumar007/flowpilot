@@ -16,7 +16,11 @@ public class ViewLeadListResponse
 
     public string? CurrentPOS { get; set; }
 
-    public string AssignedToUserId { get; set; } = string.Empty;
+    public DefaultIdType? OfferingId { get; set; }
+
+    public string OfferingName { get; set; } = "Unassigned";
+
+    public string? AssignedToUserId { get; set; }
 
     public DefaultIdType LeadStatusId { get; set; }
 

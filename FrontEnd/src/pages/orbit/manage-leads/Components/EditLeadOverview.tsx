@@ -10,7 +10,9 @@ import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { RootState } from '@/redux/store'
 import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
+import { offeringService } from '@/services/OfferingService'
 import { InterestLevel, LeadPriority, type UpdateLeadRequest, type ViewLeadDetailResponse } from '@/types/crm/lead.types'
+import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
 import React, { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useSelector } from 'react-redux'
@@ -61,16 +63,17 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
 	const [leadStatuses, setLeadStatuses] = useState<{ value: number; text: string }[]>([])
 	const [leadSources, setLeadSources] = useState<{ value: number; text: string }[]>([])
+	const [offerings, setOfferings] = useState<OfferingDropDownItemResponse[]>([])
 	const [statusUpdate, setStatusUpdate] = useState<number | ''>('')
 	const [assignUserId, setAssignUserId] = useState('')
 	const [assignToYourself, setAssignToYourself] = useState(false)
 	const [formKey, setFormKey] = useState(0)
 	const customFieldsRef = useRef<EntityCustomFieldsHandle>(null)
 
-	const syncAssigneeState = (assignedToUserId: string) => {
+	const syncAssigneeState = (assignedToUserId?: string) => {
 		const assignedToSelf = isSameUserId(assignedToUserId, currentUserId)
 		setAssignToYourself(assignedToSelf)
-		setAssignUserId(assignedToSelf ? '' : assignedToUserId)
+		setAssignUserId(assignedToSelf ? '' : assignedToUserId ?? '')
 	}
 
 	const reload = async () => {
@@ -86,20 +89,22 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 		const load = async () => {
 			setLoading(true)
 			try {
-				const [leadRes, userList, statusList, sourceList] = await Promise.all([
+				const [leadRes, userList, statusList, sourceList, offeringList] = await Promise.all([
 					leadService.getById(Number(id)),
 					DropDownService.getDirectReportSystemUsers(),
 					DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus),
 					DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadSource),
+					offeringService.getActiveDropDown(),
 				])
 				setLead(leadRes)
 				setStatusUpdate(leadRes.leadStatusId)
 				const assignedToSelf = isSameUserId(leadRes.assignedToUserId, currentUserId)
 				setAssignToYourself(assignedToSelf)
-				setAssignUserId(assignedToSelf ? '' : leadRes.assignedToUserId)
+				setAssignUserId(assignedToSelf ? '' : leadRes.assignedToUserId ?? '')
 				setUsers(userList ?? [])
 				setLeadStatuses((statusList ?? []).map((item) => ({ value: item.value, text: item.text })))
 				setLeadSources((sourceList ?? []).map((item) => ({ value: item.value, text: item.text })))
+				setOfferings(offeringList ?? [])
 			} finally {
 				setLoading(false)
 			}
@@ -114,13 +119,10 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 			businessType: yup.string().required('This field cannot be left empty'),
 			ownerName: yup.string().required('This field cannot be left empty'),
 			mobile: yup.string().required('Please enter Mobile Number'),
+			offeringId: yup.number().moreThan(0, 'Please select a value').required('Please select a value'),
 			leadSourceId: yup.number().required('Please select a value'),
 			assignToYourself: yup.boolean(),
-			assignedToUserId: yup.string().when('assignToYourself', {
-				is: true,
-				then: (schema) => schema.optional().nullable(),
-				otherwise: (schema) => schema.required('Please select a value'),
-			}),
+			assignedToUserId: yup.string().optional().nullable(),
 			email: yup.string().email('Please enter a valid email address').nullable(),
 		})
 	)
@@ -198,6 +200,7 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 		expectedMonthlyBilling: lead.expectedMonthlyBilling,
 		expectedRevenue: lead.expectedRevenue,
 		companySize: lead.companySize,
+		offeringId: lead.offeringId ?? 0,
 		ownerName: lead.ownerName,
 		designation: lead.designation,
 		mobile: lead.mobile,
@@ -295,6 +298,17 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 						<FormInput label={t('Manage.Leads.OwnerName', 'Owner Name')} required name="ownerName" type="text" className="form-input" />
 						<FormInput label={t('Manage.Leads.Mobile', 'Mobile')} required name="mobile" type="number" className="form-input" />
 						<FormInput label={t('Manage.Leads.Email', 'Email')} name="email" type="email" className="form-input" />
+						<FormInput label={t('Manage.Leads.Offering', 'Offering')} required name="offeringId" type="bottom-sheet" className="form-select">
+							{!lead.offeringId && <option value="0">{t('Manage.Leads.Offering_Unassigned', 'Unassigned')}</option>}
+							{lead.offeringId && !offerings.some((offering) => offering.value === lead.offeringId) && (
+								<option value={lead.offeringId}>{lead.offeringName || t('Manage.Leads.Offering_Inactive', 'Inactive offering')}</option>
+							)}
+							{offerings.map((offering) => (
+								<option key={offering.value} value={offering.value}>
+									{offering.text}
+								</option>
+							))}
+						</FormInput>
 						<FormInput label={t('Manage.Leads.LeadSource', 'Lead Source')} required name="leadSourceId" type="bottom-sheet" className="form-select">
 							<option value="">{t('Common.Select', 'Select')}</option>
 							{leadSources.map((source) => (

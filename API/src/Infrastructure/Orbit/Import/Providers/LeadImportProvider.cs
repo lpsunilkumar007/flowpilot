@@ -448,7 +448,8 @@ public sealed class LeadImportProvider : ImportProviderBase
             PainPoints = ImportValueParser.NullIfEmpty(GetValue(row, ImportColumnKeys.PainPoints)),
             Competitors = ImportValueParser.NullIfEmpty(GetValue(row, ImportColumnKeys.Competitors)),
             Requirements = ImportValueParser.NullIfEmpty(GetValue(row, ImportColumnKeys.Requirements)),
-            Metadata = BuildMetadataJson(row, revenueText, revenueParsed)
+            Metadata = BuildMetadataJson(row, revenueText, revenueParsed),
+            OfferingId = 1,
         };
     }
 

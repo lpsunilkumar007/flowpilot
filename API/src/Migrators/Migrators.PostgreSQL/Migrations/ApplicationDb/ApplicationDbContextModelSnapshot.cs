@@ -505,7 +505,6 @@ namespace Migrators.PostgreSQL.Migrations.ApplicationDb
                         .HasColumnType("integer");
 
                     b.Property<string>("ToUserId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -846,7 +845,6 @@ namespace Migrators.PostgreSQL.Migrations.ApplicationDb
                         .HasColumnType("numeric");
 
                     b.Property<string>("FKAssignedToUserId")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int?>("FKConvertedCustomerId")
@@ -862,6 +860,9 @@ namespace Migrators.PostgreSQL.Migrations.ApplicationDb
                         .HasColumnType("integer");
 
                     b.Property<int>("FKLeadStatusId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("FKOfferingId")
                         .HasColumnType("integer");
 
                     b.Property<string>("FullAddress")
@@ -936,7 +937,75 @@ namespace Migrators.PostgreSQL.Migrations.ApplicationDb
 
                     b.HasIndex("FKLeadStatusId");
 
+                    b.HasIndex("FKOfferingId");
+
                     b.ToTable("Leads", "dbo");
+                });
+
+            modelBuilder.Entity("FlowPilot.Domain.CRM.Offerings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeletedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text");
+
+                    b.Property<decimal?>("ExpectedValueFrom")
+                        .HasColumnType("numeric");
+
+                    b.Property<decimal?>("ExpectedValueTo")
+                        .HasColumnType("numeric");
+
+                    b.Property<Guid?>("FKDeletedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("FKLastModifiedBy")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("FKOwnerUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("LastModifiedOn")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TenantId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("UniqueId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UniqueId")
+                        .IsUnique();
+
+                    b.ToTable("Offerings", "dbo");
                 });
 
             modelBuilder.Entity("FlowPilot.Domain.CRM.Tasks", b =>
@@ -1863,9 +1932,16 @@ namespace Migrators.PostgreSQL.Migrations.ApplicationDb
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
+                    b.HasOne("FlowPilot.Domain.CRM.Offerings", "Offering")
+                        .WithMany("Leads")
+                        .HasForeignKey("FKOfferingId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.Navigation("LeadSource");
 
                     b.Navigation("LeadStatus");
+
+                    b.Navigation("Offering");
                 });
 
             modelBuilder.Entity("FlowPilot.Domain.FormDesigner.FormPageFieldOptions", b =>
@@ -1969,6 +2045,11 @@ namespace Migrators.PostgreSQL.Migrations.ApplicationDb
                     b.Navigation("LeadStatusHistories");
 
                     b.Navigation("LeadVisits");
+                });
+
+            modelBuilder.Entity("FlowPilot.Domain.CRM.Offerings", b =>
+                {
+                    b.Navigation("Leads");
                 });
 
             modelBuilder.Entity("FlowPilot.Domain.FormDesigner.FormPageFields", b =>

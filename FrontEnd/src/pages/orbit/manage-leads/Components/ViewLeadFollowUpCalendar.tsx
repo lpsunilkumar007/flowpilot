@@ -48,6 +48,7 @@ type CalendarEvent = {
     kind: 'lead' | 'task'
     leadId?: number
     ownerName?: string
+    offeringName?: string
     leadStatus?: string
     taskId?: number
     taskTitle?: string
@@ -126,6 +127,7 @@ const mapLeadsToEvents = (leads: ViewLeadListResponse[], range: { start: string;
                 kind: 'lead' as const,
                 leadId: lead.id,
                 ownerName: lead.ownerName,
+                offeringName: lead.offeringName || 'Unassigned',
                 leadStatus: formatLeadStatus(lead.leadStatusName),
             }
         })
@@ -468,13 +470,15 @@ const ViewLeadFollowUpCalendar = () => {
 
                             const leadId = eventInfo.event.extendedProps.leadId as number
                             const ownerName = eventInfo.event.extendedProps.ownerName as string
+                            const offeringName = (eventInfo.event.extendedProps.offeringName as string | undefined) || 'Unassigned'
                             const leadStatus = eventInfo.event.extendedProps.leadStatus as string
 
                             return (
                                 <div className={`group p-1 ${isList ? 'w-full' : ''}`}>
                                     <div className={`truncate text-sm font-semibold ${isList ? 'text-gray-900 dark:text-gray-100' : ''}`}>{eventInfo.event.title}</div>
                                     <div className={`truncate text-xs ${isList ? 'text-gray-600 dark:text-gray-400' : 'opacity-90'}`}>
-                                        {ownerName}
+                                        {offeringName}
+                                        {ownerName ? ` Â· ${ownerName}` : ''}
                                         {leadStatus ? ` · ${leadStatus}` : ''}
                                     </div>
                                     <div className="mt-1 hidden items-center justify-center gap-1 group-hover:flex">

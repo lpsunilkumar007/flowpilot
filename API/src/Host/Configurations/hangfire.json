@@ -21,7 +21,7 @@
     },
     "Storage": {
       "StorageProvider": "postgresql",
-      "ConnectionString": "",
+      "ConnectionString": "User Id=postgres;Password=admin;Server=localhost;Port=5432;Database=FlowPilot",
       "Options": {
         "CommandBatchMaxTimeout": "00:05:00",
         "QueuePollInterval": "00:00:01",

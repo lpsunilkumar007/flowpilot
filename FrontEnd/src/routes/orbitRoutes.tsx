@@ -26,6 +26,7 @@ const MySubscriptions = React.lazy(() => import('@/pages/orbit/my-subscriptions'
 const ManageForms = React.lazy(() => import('@/pages/orbit/manage-forms'))
 const AddManageForm = React.lazy(() => import('@/pages/orbit/manage-forms/Components/AddFormDetails'))
 const EditFormLandingPage = React.lazy(() => import('@/pages/orbit/manage-forms/Components/EditFormLandingPage'))
+const ManageOfferings = React.lazy(() => import('@/pages/orbit/manage-offerings'))
 const ManageLeads = React.lazy(() => import('@/pages/orbit/manage-leads'))
 const LeadCalendar = React.lazy(() => import('@/pages/orbit/manage-leads/LeadCalendar'))
 const AddLead = React.lazy(() => import('@/pages/orbit/manage-leads/Components/AddLeadDetails'))
@@ -183,6 +184,12 @@ const orbitCrmRoutes: RoutesProps = {
 	path: '/',
 	name: 'CRM',
 	children: [
+		{
+			path: MenuLinks.ManageOfferings,
+			name: 'manage_offerings',
+			element: <ManageOfferings />,
+			route: PrivateRoute,
+		},
 		{
 			path: MenuLinks.ManageLeads,
 			name: 'manage_leads',

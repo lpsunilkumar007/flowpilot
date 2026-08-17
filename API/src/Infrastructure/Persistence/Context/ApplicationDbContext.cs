@@ -37,6 +37,8 @@ public class ApplicationDbContext : BaseDbContext
 
     public DbSet<EmailTemplates> EmailTemplates => Set<EmailTemplates>();
 
+    public DbSet<Offerings> Offerings => Set<Offerings>();
+
     #region FormDesigner
     public DbSet<FormStructures> FormStructures => Set<FormStructures>();
 
@@ -94,6 +96,16 @@ public class ApplicationDbContext : BaseDbContext
             .ToTable("Tasks")
             .HasIndex(x => x.Uuid)
             .IsUnique();
+
+        modelBuilder.Entity<Offerings>()
+            .HasIndex(x => x.UniqueId)
+            .IsUnique();
+
+        modelBuilder.Entity<Leads>()
+            .HasOne(x => x.Offering)
+            .WithMany(x => x.Leads)
+            .HasForeignKey(x => x.FKOfferingId)
+            .OnDelete(DeleteBehavior.NoAction);
 
         modelBuilder.Entity<Leads>()
             .HasOne(x => x.LeadSource)

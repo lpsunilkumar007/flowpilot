@@ -1,13 +1,13 @@
 {
   "DatabaseSettings": {
     "Nexus_DBProvider": "postgresql",
-    "Nexus_ConnectionString": "",
+    "Nexus_ConnectionString": "User Id=postgres;Password=admin;Server=localhost;Port=5432;Database=FlowPilot",
 
     "AuditTrail_DBProvider": "postgresql",
-    "AuditTrail_ConnectionString": "",
+    "AuditTrail_ConnectionString": "User Id=postgres;Password=admin;Server=localhost;Port=5432;Database=FlowPilot",
 
     "Application_DBProvider": "postgresql",
-    "Application_ConnectionString": ""
+    "Application_ConnectionString": "User Id=postgres;Password=admin;Server=localhost;Port=5432;Database=FlowPilot"
 
   }
 }

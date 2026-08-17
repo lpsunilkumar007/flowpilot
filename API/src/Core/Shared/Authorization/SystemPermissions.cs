@@ -30,6 +30,8 @@ public static class SystemResource
 
     public const string ManageLeads = nameof(ManageLeads);
 
+    public const string ManageOfferings = nameof(ManageOfferings);
+
     public const string ManageLeadCalendar = nameof(ManageLeadCalendar);
 
     public const string ManageTasks = nameof(ManageTasks);
@@ -84,6 +86,12 @@ public class SystemPermissions
         new("Create Lead", SystemAction.Create, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
         new("Update Lead", SystemAction.Update, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
         new("Export Leads", SystemAction.Export, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+
+        // Manage Offerings (CRM)
+        new("View Offerings", SystemAction.View, SystemResource.ManageOfferings, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+        new("Create Offering", SystemAction.Create, SystemResource.ManageOfferings, IsSalesRepresentative: false, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+        new("Update Offering", SystemAction.Update, SystemResource.ManageOfferings, IsSalesRepresentative: false, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+        new("Delete Offering", SystemAction.Delete, SystemResource.ManageOfferings, IsSalesRepresentative: false, IsSalesManager: true, IsRoot: true, IsAdmin: true),
 
         // Lead Calendar (CRM)
         new("View Lead Calendar", SystemAction.View, SystemResource.ManageLeadCalendar, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),

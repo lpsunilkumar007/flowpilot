@@ -1,11 +1,18 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import { Link } from 'react-router-dom'
 import SimpleBar from 'simplebar-react'
 
-// types
-import { NotificationItem } from '../layouts/Topbar'
 import PopoverLayout from './HeadlessUI/PopoverLayout'
-import { useSignalR } from '@/hooks/useSignalR'
+
+interface NotificationItem {
+	id: number
+	text: string
+	subText: string
+	icon?: string
+	avatar?: string
+	bgColor?: string
+	createdAt: Date
+}
 
 interface NotificationDropDownProps {
 	notifications: Array<NotificationItem>
@@ -70,20 +77,6 @@ const NotificationDropdown = ({ notifications }: NotificationDropDownProps) => {
 			</>
 		)
 	}
-
-	const { connection, isConnected } = useSignalR()
-
-	useEffect(() => {
-		if (!connection || !isConnected) return
-
-		connection.on('NotificationFromServer', (typeName, msg) => {
-			console.log(`Got notification of type ${typeName}: ${JSON.stringify(msg)}`)
-		})
-
-		return () => {
-			connection.off('ReceiveMessage')
-		}
-	}, [connection, isConnected])
 
 	return (
 		<>

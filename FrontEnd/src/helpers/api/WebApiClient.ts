@@ -4787,6 +4787,8 @@ export class LeadClient {
      * @param filterType (optional) 
      * @param searchText (optional) 
      * @param assignedToUserId (optional) 
+     * @param offeringId (optional) 
+     * @param offeringUniqueId (optional) 
      * @param fromDate (optional) 
      * @param toDate (optional) 
      * @param pageNumber (optional) 
@@ -4794,7 +4796,7 @@ export class LeadClient {
      * @param sortOrder (optional) 
      * @param sortField (optional) 
      */
-    search(filterType: LeadFilterType | undefined, searchText: string | null | undefined, assignedToUserId: string | null | undefined, fromDate: moment.Moment | null | undefined, toDate: moment.Moment | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortOrder: string | null | undefined, sortField: string | null | undefined): Promise<PaginationResponseOfViewLeadListResponse> {
+    search(filterType: LeadFilterType | undefined, searchText: string | null | undefined, assignedToUserId: string | null | undefined, offeringId: number | null | undefined, offeringUniqueId: string | null | undefined, fromDate: moment.Moment | null | undefined, toDate: moment.Moment | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortOrder: string | null | undefined, sortField: string | null | undefined): Promise<PaginationResponseOfViewLeadListResponse> {
         let url_ = this.baseUrl + "/api/v1/lead?";
         if (filterType === null)
             throw new globalThis.Error("The parameter 'filterType' cannot be null.");
@@ -4804,6 +4806,10 @@ export class LeadClient {
             url_ += "SearchText=" + encodeURIComponent("" + searchText) + "&";
         if (assignedToUserId !== undefined && assignedToUserId !== null)
             url_ += "AssignedToUserId=" + encodeURIComponent("" + assignedToUserId) + "&";
+        if (offeringId !== undefined && offeringId !== null)
+            url_ += "OfferingId=" + encodeURIComponent("" + offeringId) + "&";
+        if (offeringUniqueId !== undefined && offeringUniqueId !== null)
+            url_ += "OfferingUniqueId=" + encodeURIComponent("" + offeringUniqueId) + "&";
         if (fromDate !== undefined && fromDate !== null)
             url_ += "FromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
         if (toDate !== undefined && toDate !== null)
@@ -5712,6 +5718,338 @@ export class LeadVisitClient {
     }
 
     protected processDelete(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+}
+
+export class OfferingClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:7027";
+    }
+
+    /**
+     * Search offerings
+     * @param searchText (optional) 
+     * @param type (optional) 
+     * @param status (optional) 
+     * @param ownerUserId (optional) 
+     * @param pageNumber (optional) 
+     * @param pageSize (optional) 
+     * @param sortOrder (optional) 
+     * @param sortField (optional) 
+     */
+    search(searchText: string | null | undefined, type: OfferingType | null | undefined, status: OfferingStatus | null | undefined, ownerUserId: string | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortOrder: string | null | undefined, sortField: string | null | undefined): Promise<PaginationResponseOfViewOfferingResponse> {
+        let url_ = this.baseUrl + "/api/v1/offering?";
+        if (searchText !== undefined && searchText !== null)
+            url_ += "SearchText=" + encodeURIComponent("" + searchText) + "&";
+        if (type !== undefined && type !== null)
+            url_ += "Type=" + encodeURIComponent("" + type) + "&";
+        if (status !== undefined && status !== null)
+            url_ += "Status=" + encodeURIComponent("" + status) + "&";
+        if (ownerUserId !== undefined && ownerUserId !== null)
+            url_ += "OwnerUserId=" + encodeURIComponent("" + ownerUserId) + "&";
+        if (pageNumber === null)
+            throw new globalThis.Error("The parameter 'pageNumber' cannot be null.");
+        else if (pageNumber !== undefined)
+            url_ += "PageNumber=" + encodeURIComponent("" + pageNumber) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (sortOrder !== undefined && sortOrder !== null)
+            url_ += "sortOrder=" + encodeURIComponent("" + sortOrder) + "&";
+        if (sortField !== undefined && sortField !== null)
+            url_ += "sortField=" + encodeURIComponent("" + sortField) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSearch(_response);
+        });
+    }
+
+    protected processSearch(response: Response): Promise<PaginationResponseOfViewOfferingResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PaginationResponseOfViewOfferingResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<PaginationResponseOfViewOfferingResponse>(null as any);
+    }
+
+    /**
+     * Create a new offering
+     */
+    create(request: CreateOfferingRequest): Promise<CreateOfferingResponse> {
+        let url_ = this.baseUrl + "/api/v1/offering";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreate(_response);
+        });
+    }
+
+    protected processCreate(response: Response): Promise<CreateOfferingResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateOfferingResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CreateOfferingResponse>(null as any);
+    }
+
+    /**
+     * Get active offering dropdown
+     */
+    getActiveDropDown(): Promise<OfferingDropDownItemResponse[]> {
+        let url_ = this.baseUrl + "/api/v1/offering/active-dropdown";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetActiveDropDown(_response);
+        });
+    }
+
+    protected processGetActiveDropDown(response: Response): Promise<OfferingDropDownItemResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(OfferingDropDownItemResponse.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<OfferingDropDownItemResponse[]>(null as any);
+    }
+
+    /**
+     * Get offering by id
+     */
+    getById(id: number): Promise<ViewOfferingResponse> {
+        let url_ = this.baseUrl + "/api/v1/offering/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetById(_response);
+        });
+    }
+
+    protected processGetById(response: Response): Promise<ViewOfferingResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ViewOfferingResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewOfferingResponse>(null as any);
+    }
+
+    /**
+     * Update offering
+     */
+    update(id: number, request: UpdateOfferingRequest): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/offering/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdate(_response);
+        });
+    }
+
+    protected processUpdate(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Delete offering
+     */
+    delete(id: number): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/offering/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDelete(_response);
+        });
+    }
+
+    protected processDelete(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Update offering status
+     */
+    updateStatus(id: number, request: UpdateOfferingStatusRequest): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/offering/{id}/status";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdateStatus(_response);
+        });
+    }
+
+    protected processUpdateStatus(response: Response): Promise<string> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
@@ -12746,7 +13084,9 @@ export class ViewLeadListResponse implements IViewLeadListResponse {
     mobile?: string;
     businessType?: string;
     currentPOS?: string | undefined;
-    assignedToUserId?: string;
+    offeringId?: number | undefined;
+    offeringName?: string;
+    assignedToUserId?: string | undefined;
     leadStatusId?: number;
     leadStatusName?: string;
     nextFollowUpDate?: moment.Moment | undefined;
@@ -12773,6 +13113,8 @@ export class ViewLeadListResponse implements IViewLeadListResponse {
             this.mobile = _data["mobile"];
             this.businessType = _data["businessType"];
             this.currentPOS = _data["currentPOS"];
+            this.offeringId = _data["offeringId"];
+            this.offeringName = _data["offeringName"];
             this.assignedToUserId = _data["assignedToUserId"];
             this.leadStatusId = _data["leadStatusId"];
             this.leadStatusName = _data["leadStatusName"];
@@ -12800,6 +13142,8 @@ export class ViewLeadListResponse implements IViewLeadListResponse {
         data["mobile"] = this.mobile;
         data["businessType"] = this.businessType;
         data["currentPOS"] = this.currentPOS;
+        data["offeringId"] = this.offeringId;
+        data["offeringName"] = this.offeringName;
         data["assignedToUserId"] = this.assignedToUserId;
         data["leadStatusId"] = this.leadStatusId;
         data["leadStatusName"] = this.leadStatusName;
@@ -12820,7 +13164,9 @@ export interface IViewLeadListResponse {
     mobile?: string;
     businessType?: string;
     currentPOS?: string | undefined;
-    assignedToUserId?: string;
+    offeringId?: number | undefined;
+    offeringName?: string;
+    assignedToUserId?: string | undefined;
     leadStatusId?: number;
     leadStatusName?: string;
     nextFollowUpDate?: moment.Moment | undefined;
@@ -12860,6 +13206,8 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
     expectedMonthlyBilling?: number | undefined;
     expectedRevenue?: number | undefined;
     companySize?: string | undefined;
+    offeringId?: number | undefined;
+    offeringName?: string;
     ownerName?: string;
     designation?: string | undefined;
     mobile?: string;
@@ -12878,7 +13226,7 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
     longitude?: number | undefined;
     leadSourceId?: number;
     leadSourceName?: string;
-    assignedToUserId?: string;
+    assignedToUserId?: string | undefined;
     priority?: LeadPriority;
     leadStatusId?: number;
     leadStatusName?: string;
@@ -12923,6 +13271,8 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
             this.expectedMonthlyBilling = _data["expectedMonthlyBilling"];
             this.expectedRevenue = _data["expectedRevenue"];
             this.companySize = _data["companySize"];
+            this.offeringId = _data["offeringId"];
+            this.offeringName = _data["offeringName"];
             this.ownerName = _data["ownerName"];
             this.designation = _data["designation"];
             this.mobile = _data["mobile"];
@@ -13010,6 +13360,8 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
         data["expectedMonthlyBilling"] = this.expectedMonthlyBilling;
         data["expectedRevenue"] = this.expectedRevenue;
         data["companySize"] = this.companySize;
+        data["offeringId"] = this.offeringId;
+        data["offeringName"] = this.offeringName;
         data["ownerName"] = this.ownerName;
         data["designation"] = this.designation;
         data["mobile"] = this.mobile;
@@ -13090,6 +13442,8 @@ export interface IViewLeadDetailResponse {
     expectedMonthlyBilling?: number | undefined;
     expectedRevenue?: number | undefined;
     companySize?: string | undefined;
+    offeringId?: number | undefined;
+    offeringName?: string;
     ownerName?: string;
     designation?: string | undefined;
     mobile?: string;
@@ -13108,7 +13462,7 @@ export interface IViewLeadDetailResponse {
     longitude?: number | undefined;
     leadSourceId?: number;
     leadSourceName?: string;
-    assignedToUserId?: string;
+    assignedToUserId?: string | undefined;
     priority?: LeadPriority;
     leadStatusId?: number;
     leadStatusName?: string;
@@ -13479,7 +13833,7 @@ export interface IViewLeadStatusHistoryResponse {
 export class ViewLeadAssignmentHistoryResponse implements IViewLeadAssignmentHistoryResponse {
     id?: number;
     fromUserId?: string | undefined;
-    toUserId?: string;
+    toUserId?: string | undefined;
     assignedByUserId?: string;
     assignedOn?: moment.Moment;
     remarks?: string | undefined;
@@ -13526,7 +13880,7 @@ export class ViewLeadAssignmentHistoryResponse implements IViewLeadAssignmentHis
 export interface IViewLeadAssignmentHistoryResponse {
     id?: number;
     fromUserId?: string | undefined;
-    toUserId?: string;
+    toUserId?: string | undefined;
     assignedByUserId?: string;
     assignedOn?: moment.Moment;
     remarks?: string | undefined;
@@ -13583,6 +13937,7 @@ export class CreateLeadRequest implements ICreateLeadRequest {
     expectedMonthlyBilling?: number | undefined;
     expectedRevenue?: number | undefined;
     companySize?: string | undefined;
+    offeringId!: number;
     ownerName!: string;
     designation?: string | undefined;
     mobile!: string;
@@ -13634,6 +13989,7 @@ export class CreateLeadRequest implements ICreateLeadRequest {
             this.expectedMonthlyBilling = _data["expectedMonthlyBilling"];
             this.expectedRevenue = _data["expectedRevenue"];
             this.companySize = _data["companySize"];
+            this.offeringId = _data["offeringId"];
             this.ownerName = _data["ownerName"];
             this.designation = _data["designation"];
             this.mobile = _data["mobile"];
@@ -13689,6 +14045,7 @@ export class CreateLeadRequest implements ICreateLeadRequest {
         data["expectedMonthlyBilling"] = this.expectedMonthlyBilling;
         data["expectedRevenue"] = this.expectedRevenue;
         data["companySize"] = this.companySize;
+        data["offeringId"] = this.offeringId;
         data["ownerName"] = this.ownerName;
         data["designation"] = this.designation;
         data["mobile"] = this.mobile;
@@ -13737,6 +14094,7 @@ export interface ICreateLeadRequest {
     expectedMonthlyBilling?: number | undefined;
     expectedRevenue?: number | undefined;
     companySize?: string | undefined;
+    offeringId: number;
     ownerName: string;
     designation?: string | undefined;
     mobile: string;
@@ -13828,6 +14186,7 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
     expectedMonthlyBilling?: number | undefined;
     expectedRevenue?: number | undefined;
     companySize?: string | undefined;
+    offeringId!: number;
     ownerName!: string;
     designation?: string | undefined;
     mobile!: string;
@@ -13880,6 +14239,7 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
             this.expectedMonthlyBilling = _data["expectedMonthlyBilling"];
             this.expectedRevenue = _data["expectedRevenue"];
             this.companySize = _data["companySize"];
+            this.offeringId = _data["offeringId"];
             this.ownerName = _data["ownerName"];
             this.designation = _data["designation"];
             this.mobile = _data["mobile"];
@@ -13936,6 +14296,7 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
         data["expectedMonthlyBilling"] = this.expectedMonthlyBilling;
         data["expectedRevenue"] = this.expectedRevenue;
         data["companySize"] = this.companySize;
+        data["offeringId"] = this.offeringId;
         data["ownerName"] = this.ownerName;
         data["designation"] = this.designation;
         data["mobile"] = this.mobile;
@@ -13985,6 +14346,7 @@ export interface IUpdateLeadRequest {
     expectedMonthlyBilling?: number | undefined;
     expectedRevenue?: number | undefined;
     companySize?: string | undefined;
+    offeringId: number;
     ownerName: string;
     designation?: string | undefined;
     mobile: string;
@@ -14922,6 +15284,404 @@ export interface IUpdateLeadWithVisitRequest {
     lead: UpdateLeadRequest;
     visitTime: moment.Moment;
     gpsLogs?: LogGpsRequest[];
+}
+
+export class PaginationResponseOfViewOfferingResponse implements IPaginationResponseOfViewOfferingResponse {
+    data?: ViewOfferingResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+
+    constructor(data?: IPaginationResponseOfViewOfferingResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["data"])) {
+                this.data = [] as any;
+                for (let item of _data["data"])
+                    this.data!.push(ViewOfferingResponse.fromJS(item));
+            }
+            this.currentPage = _data["currentPage"];
+            this.totalPages = _data["totalPages"];
+            this.totalCount = _data["totalCount"];
+            this.pageSize = _data["pageSize"];
+            this.hasPreviousPage = _data["hasPreviousPage"];
+            this.hasNextPage = _data["hasNextPage"];
+        }
+    }
+
+    static fromJS(data: any): PaginationResponseOfViewOfferingResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginationResponseOfViewOfferingResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.data)) {
+            data["data"] = [];
+            for (let item of this.data)
+                data["data"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["currentPage"] = this.currentPage;
+        data["totalPages"] = this.totalPages;
+        data["totalCount"] = this.totalCount;
+        data["pageSize"] = this.pageSize;
+        data["hasPreviousPage"] = this.hasPreviousPage;
+        data["hasNextPage"] = this.hasNextPage;
+        return data;
+    }
+}
+
+export interface IPaginationResponseOfViewOfferingResponse {
+    data?: ViewOfferingResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+}
+
+export class ViewOfferingResponse implements IViewOfferingResponse {
+    id?: number;
+    uniqueId?: string;
+    name?: string;
+    type?: OfferingType;
+    status?: OfferingStatus;
+    description?: string | undefined;
+    ownerUserId?: string;
+    expectedValueFrom?: number | undefined;
+    expectedValueTo?: number | undefined;
+    leadCount?: number;
+    createdOn?: moment.Moment;
+
+    constructor(data?: IViewOfferingResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.uniqueId = _data["uniqueId"];
+            this.name = _data["name"];
+            this.type = _data["type"];
+            this.status = _data["status"];
+            this.description = _data["description"];
+            this.ownerUserId = _data["ownerUserId"];
+            this.expectedValueFrom = _data["expectedValueFrom"];
+            this.expectedValueTo = _data["expectedValueTo"];
+            this.leadCount = _data["leadCount"];
+            this.createdOn = _data["createdOn"] ? moment(_data["createdOn"].toString()) : undefined as any;
+        }
+    }
+
+    static fromJS(data: any): ViewOfferingResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewOfferingResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["uniqueId"] = this.uniqueId;
+        data["name"] = this.name;
+        data["type"] = this.type;
+        data["status"] = this.status;
+        data["description"] = this.description;
+        data["ownerUserId"] = this.ownerUserId;
+        data["expectedValueFrom"] = this.expectedValueFrom;
+        data["expectedValueTo"] = this.expectedValueTo;
+        data["leadCount"] = this.leadCount;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        return data;
+    }
+}
+
+export interface IViewOfferingResponse {
+    id?: number;
+    uniqueId?: string;
+    name?: string;
+    type?: OfferingType;
+    status?: OfferingStatus;
+    description?: string | undefined;
+    ownerUserId?: string;
+    expectedValueFrom?: number | undefined;
+    expectedValueTo?: number | undefined;
+    leadCount?: number;
+    createdOn?: moment.Moment;
+}
+
+export enum OfferingType {
+    Product = "Product",
+    Project = "Project",
+}
+
+export enum OfferingStatus {
+    Active = "Active",
+    Inactive = "Inactive",
+}
+
+export class OfferingDropDownItemResponse implements IOfferingDropDownItemResponse {
+    value?: number;
+    uniqueId?: string;
+    text?: string;
+
+    constructor(data?: IOfferingDropDownItemResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.value = _data["value"];
+            this.uniqueId = _data["uniqueId"];
+            this.text = _data["text"];
+        }
+    }
+
+    static fromJS(data: any): OfferingDropDownItemResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new OfferingDropDownItemResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["value"] = this.value;
+        data["uniqueId"] = this.uniqueId;
+        data["text"] = this.text;
+        return data;
+    }
+}
+
+export interface IOfferingDropDownItemResponse {
+    value?: number;
+    uniqueId?: string;
+    text?: string;
+}
+
+export class CreateOfferingResponse implements ICreateOfferingResponse {
+    id?: number;
+    message?: string;
+
+    constructor(data?: ICreateOfferingResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): CreateOfferingResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateOfferingResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface ICreateOfferingResponse {
+    id?: number;
+    message?: string;
+}
+
+export class CreateOfferingRequest implements ICreateOfferingRequest {
+    name!: string;
+    type?: OfferingType;
+    status?: OfferingStatus;
+    description?: string | undefined;
+    ownerUserId!: string;
+    expectedValueFrom?: number | undefined;
+    expectedValueTo?: number | undefined;
+
+    constructor(data?: ICreateOfferingRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.type = _data["type"];
+            this.status = _data["status"];
+            this.description = _data["description"];
+            this.ownerUserId = _data["ownerUserId"];
+            this.expectedValueFrom = _data["expectedValueFrom"];
+            this.expectedValueTo = _data["expectedValueTo"];
+        }
+    }
+
+    static fromJS(data: any): CreateOfferingRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateOfferingRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["type"] = this.type;
+        data["status"] = this.status;
+        data["description"] = this.description;
+        data["ownerUserId"] = this.ownerUserId;
+        data["expectedValueFrom"] = this.expectedValueFrom;
+        data["expectedValueTo"] = this.expectedValueTo;
+        return data;
+    }
+}
+
+export interface ICreateOfferingRequest {
+    name: string;
+    type?: OfferingType;
+    status?: OfferingStatus;
+    description?: string | undefined;
+    ownerUserId: string;
+    expectedValueFrom?: number | undefined;
+    expectedValueTo?: number | undefined;
+}
+
+export class UpdateOfferingRequest implements IUpdateOfferingRequest {
+    id!: number;
+    name!: string;
+    type?: OfferingType;
+    status?: OfferingStatus;
+    description?: string | undefined;
+    ownerUserId!: string;
+    expectedValueFrom?: number | undefined;
+    expectedValueTo?: number | undefined;
+
+    constructor(data?: IUpdateOfferingRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.name = _data["name"];
+            this.type = _data["type"];
+            this.status = _data["status"];
+            this.description = _data["description"];
+            this.ownerUserId = _data["ownerUserId"];
+            this.expectedValueFrom = _data["expectedValueFrom"];
+            this.expectedValueTo = _data["expectedValueTo"];
+        }
+    }
+
+    static fromJS(data: any): UpdateOfferingRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateOfferingRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["name"] = this.name;
+        data["type"] = this.type;
+        data["status"] = this.status;
+        data["description"] = this.description;
+        data["ownerUserId"] = this.ownerUserId;
+        data["expectedValueFrom"] = this.expectedValueFrom;
+        data["expectedValueTo"] = this.expectedValueTo;
+        return data;
+    }
+}
+
+export interface IUpdateOfferingRequest {
+    id: number;
+    name: string;
+    type?: OfferingType;
+    status?: OfferingStatus;
+    description?: string | undefined;
+    ownerUserId: string;
+    expectedValueFrom?: number | undefined;
+    expectedValueTo?: number | undefined;
+}
+
+export class UpdateOfferingStatusRequest implements IUpdateOfferingStatusRequest {
+    status?: OfferingStatus;
+
+    constructor(data?: IUpdateOfferingStatusRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.status = _data["status"];
+        }
+    }
+
+    static fromJS(data: any): UpdateOfferingStatusRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateOfferingStatusRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["status"] = this.status;
+        return data;
+    }
+}
+
+export interface IUpdateOfferingStatusRequest {
+    status?: OfferingStatus;
 }
 
 export class PaginationResponseOfViewTaskResponse implements IPaginationResponseOfViewTaskResponse {

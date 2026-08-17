@@ -53,6 +53,7 @@ export enum MenuLinks {
 	EditFormLandingPage = '/manage-form/edit/:id',
 	TwoFactorVerification = '/auth/two-factor-verification/:sessionId',
 	Dashboard = '/dashboard',
+	ManageOfferings = '/manage-offerings',
 	ManageLeads = '/manage-leads',
 	LeadCalendar = '/manage-leads/calendar',
 	AddLead = '/manage-leads/create',
@@ -82,6 +83,13 @@ const MENU_ITEMS: MenuItemTypes[] = [
 		key: 'sales_crm',
 		label: 'Manage.SalesCrm_Nav_Heading',
 		isTitle: true,
+	},
+	{
+		key: 'manage_offerings',
+		label: 'Manage.Offerings_Heading',
+		isTitle: false,
+		icon: 'ri-shopping-bag-3-line',
+		url: MenuLinks.ManageOfferings,
 	},
 	{
 		key: 'lead_calendar',
@@ -161,11 +169,13 @@ const getMenuItems = () => {
 	// Define a mapping of item keys to the required permissions
 	const permissionMapping: Record<string, PermissionTypes[]> = {
 		sales_crm: [
+			PermissionTypes.Permissions_ManageOfferings_View,
 			PermissionTypes.Permissions_ManageLeads_View,
 			PermissionTypes.Permissions_ManageLeadCalendar_View,
 			PermissionTypes.Permissions_ManageTasks_View,
 			PermissionTypes.Permissions_ManageSalePipelines_View,
 		],
+		manage_offerings: [PermissionTypes.Permissions_ManageOfferings_View],
 		lead_calendar: [PermissionTypes.Permissions_ManageLeadCalendar_View],
 		manage_leads: [PermissionTypes.Permissions_ManageLeads_View],
 		manage_tasks: [PermissionTypes.Permissions_ManageTasks_View],

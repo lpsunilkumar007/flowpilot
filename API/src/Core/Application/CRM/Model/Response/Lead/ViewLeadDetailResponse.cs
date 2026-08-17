@@ -29,6 +29,10 @@ public class ViewLeadDetailResponse
 
     public string? CompanySize { get; set; }
 
+    public DefaultIdType? OfferingId { get; set; }
+
+    public string OfferingName { get; set; } = "Unassigned";
+
     public string OwnerName { get; set; } = string.Empty;
 
     public string? Designation { get; set; }
@@ -65,7 +69,7 @@ public class ViewLeadDetailResponse
 
     public string LeadSourceName { get; set; } = string.Empty;
 
-    public string AssignedToUserId { get; set; } = string.Empty;
+    public string? AssignedToUserId { get; set; }
 
     public LeadPriority Priority { get; set; }
 
