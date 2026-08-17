@@ -83,6 +83,7 @@ public class SystemPermissions
         new("View Leads", SystemAction.View, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
         new("Create Lead", SystemAction.Create, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
         new("Update Lead", SystemAction.Update, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+        new("Export Leads", SystemAction.Export, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
 
         // Lead Calendar (CRM)
         new("View Lead Calendar", SystemAction.View, SystemResource.ManageLeadCalendar, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),

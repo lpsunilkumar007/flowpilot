@@ -66,6 +66,8 @@ public class Leads : AuditableEntity
 
     public string? Requirements { get; set; }
 
+    public string? Metadata { get; set; }
+
     public DateTimeOffset? LastActivityDate { get; set; }
 
     public DateTimeOffset? NextFollowUpDate { get; set; }

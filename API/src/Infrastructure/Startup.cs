@@ -13,6 +13,7 @@ using FlowPilot.Infrastructure.Middleware;
 using FlowPilot.Infrastructure.Nexus;
 using FlowPilot.Infrastructure.Notifications;
 using FlowPilot.Infrastructure.OpenApi;
+using FlowPilot.Infrastructure.Orbit.Import;
 using FlowPilot.Infrastructure.Persistence;
 using FlowPilot.Infrastructure.Persistence.Initialization;
 using FlowPilot.Infrastructure.SecurityHeaders;
@@ -53,6 +54,7 @@ public static class Startup
             .AddJitsi(config)
             .AddStripePayment(config)
             .AddFileStorage(config)
+            .AddImports()
             //.AddScoped(typeof(IRepository<>), typeof(ApplicationDbRepository<>))
             ; 
         ;

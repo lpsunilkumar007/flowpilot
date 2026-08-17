@@ -1848,6 +1848,239 @@ export class LocalizationClient {
     }
 }
 
+export class ImportClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:7027";
+    }
+
+    /**
+     * Get import entity definitions
+     */
+    getDefinitions(): Promise<ImportDefinition[]> {
+        let url_ = this.baseUrl + "/api/v1/import/definitions";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetDefinitions(_response);
+        });
+    }
+
+    protected processGetDefinitions(response: Response): Promise<ImportDefinition[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ImportDefinition.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ImportDefinition[]>(null as any);
+    }
+
+    /**
+     * Download CSV template
+     */
+    downloadTemplate(entityKey: string): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/v1/import/{entityKey}/template";
+        if (entityKey === undefined || entityKey === null)
+            throw new globalThis.Error("The parameter 'entityKey' must be defined.");
+        url_ = url_.replace("{entityKey}", encodeURIComponent("" + entityKey));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDownloadTemplate(_response);
+        });
+    }
+
+    protected processDownloadTemplate(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+
+    /**
+     * Export entity CSV
+     */
+    export(entityKey: string): Promise<FileResponse> {
+        let url_ = this.baseUrl + "/api/v1/import/{entityKey}/export";
+        if (entityKey === undefined || entityKey === null)
+            throw new globalThis.Error("The parameter 'entityKey' must be defined.");
+        url_ = url_.replace("{entityKey}", encodeURIComponent("" + entityKey));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/octet-stream"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processExport(_response);
+        });
+    }
+
+    protected processExport(response: Response): Promise<FileResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200 || status === 206) {
+            const contentDisposition = response.headers ? response.headers.get("content-disposition") : undefined;
+            let fileNameMatch = contentDisposition ? /filename\*=(?:(\\?['"])(.*?)\1|(?:[^\s]+'.*?')?([^;\n]*))/g.exec(contentDisposition) : undefined;
+            let fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[3] || fileNameMatch[2] : undefined;
+            if (fileName) {
+                fileName = decodeURIComponent(fileName);
+            } else {
+                fileNameMatch = contentDisposition ? /filename="?([^"]*?)"?(;|$)/g.exec(contentDisposition) : undefined;
+                fileName = fileNameMatch && fileNameMatch.length > 1 ? fileNameMatch[1] : undefined;
+            }
+            return response.blob().then(blob => { return { fileName: fileName, data: blob, status: status, headers: _headers }; });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<FileResponse>(null as any);
+    }
+
+    /**
+     * Parse import CSV
+     * @param file (optional) 
+     */
+    parse(entityKey: string, file: FileParameter | null | undefined): Promise<ParseImportResponse> {
+        let url_ = this.baseUrl + "/api/v1/import/{entityKey}/parse";
+        if (entityKey === undefined || entityKey === null)
+            throw new globalThis.Error("The parameter 'entityKey' must be defined.");
+        url_ = url_.replace("{entityKey}", encodeURIComponent("" + entityKey));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = new FormData();
+        if (file !== null && file !== undefined)
+            content_.append("File", file.data, file.fileName ? file.fileName : "File");
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processParse(_response);
+        });
+    }
+
+    protected processParse(response: Response): Promise<ParseImportResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ParseImportResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ParseImportResponse>(null as any);
+    }
+
+    /**
+     * Submit parsed import rows
+     */
+    submit(entityKey: string, request: SubmitImportRequest): Promise<SubmitImportResponse> {
+        let url_ = this.baseUrl + "/api/v1/import/{entityKey}/submit";
+        if (entityKey === undefined || entityKey === null)
+            throw new globalThis.Error("The parameter 'entityKey' must be defined.");
+        url_ = url_.replace("{entityKey}", encodeURIComponent("" + entityKey));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSubmit(_response);
+        });
+    }
+
+    protected processSubmit(response: Response): Promise<SubmitImportResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = SubmitImportResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<SubmitImportResponse>(null as any);
+    }
+}
+
 export class MyTeamClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -8771,6 +9004,431 @@ export interface IUpdateCountryLocalizationRequest {
     value: string;
 }
 
+export class ImportDefinition implements IImportDefinition {
+    key?: string;
+    name?: string;
+    category?: string;
+    description?: string;
+    recommendedOrder?: number;
+    entityResource?: string;
+    columns?: ImportColumnDefinition[];
+
+    constructor(data?: IImportDefinition) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.key = _data["key"];
+            this.name = _data["name"];
+            this.category = _data["category"];
+            this.description = _data["description"];
+            this.recommendedOrder = _data["recommendedOrder"];
+            this.entityResource = _data["entityResource"];
+            if (Array.isArray(_data["columns"])) {
+                this.columns = [] as any;
+                for (let item of _data["columns"])
+                    this.columns!.push(ImportColumnDefinition.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ImportDefinition {
+        data = typeof data === 'object' ? data : {};
+        let result = new ImportDefinition();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["key"] = this.key;
+        data["name"] = this.name;
+        data["category"] = this.category;
+        data["description"] = this.description;
+        data["recommendedOrder"] = this.recommendedOrder;
+        data["entityResource"] = this.entityResource;
+        if (Array.isArray(this.columns)) {
+            data["columns"] = [];
+            for (let item of this.columns)
+                data["columns"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IImportDefinition {
+    key?: string;
+    name?: string;
+    category?: string;
+    description?: string;
+    recommendedOrder?: number;
+    entityResource?: string;
+    columns?: ImportColumnDefinition[];
+}
+
+export class ImportColumnDefinition implements IImportColumnDefinition {
+    key?: string;
+    header?: string;
+    required?: boolean;
+    dataType?: ImportColumnDataType;
+    lookupHint?: string | undefined;
+    sample?: string | undefined;
+    aliases?: string[];
+
+    constructor(data?: IImportColumnDefinition) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.key = _data["key"];
+            this.header = _data["header"];
+            this.required = _data["required"];
+            this.dataType = _data["dataType"];
+            this.lookupHint = _data["lookupHint"];
+            this.sample = _data["sample"];
+            if (Array.isArray(_data["aliases"])) {
+                this.aliases = [] as any;
+                for (let item of _data["aliases"])
+                    this.aliases!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): ImportColumnDefinition {
+        data = typeof data === 'object' ? data : {};
+        let result = new ImportColumnDefinition();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["key"] = this.key;
+        data["header"] = this.header;
+        data["required"] = this.required;
+        data["dataType"] = this.dataType;
+        data["lookupHint"] = this.lookupHint;
+        data["sample"] = this.sample;
+        if (Array.isArray(this.aliases)) {
+            data["aliases"] = [];
+            for (let item of this.aliases)
+                data["aliases"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IImportColumnDefinition {
+    key?: string;
+    header?: string;
+    required?: boolean;
+    dataType?: ImportColumnDataType;
+    lookupHint?: string | undefined;
+    sample?: string | undefined;
+    aliases?: string[];
+}
+
+export enum ImportColumnDataType {
+    Text = "Text",
+    Number = "Number",
+    Boolean = "Boolean",
+    Enum = "Enum",
+}
+
+export class ParseImportResponse implements IParseImportResponse {
+    totalRows?: number;
+    validRows?: number;
+    invalidRows?: number;
+    rows?: ImportParsedRow[];
+
+    constructor(data?: IParseImportResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.totalRows = _data["totalRows"];
+            this.validRows = _data["validRows"];
+            this.invalidRows = _data["invalidRows"];
+            if (Array.isArray(_data["rows"])) {
+                this.rows = [] as any;
+                for (let item of _data["rows"])
+                    this.rows!.push(ImportParsedRow.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ParseImportResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ParseImportResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["totalRows"] = this.totalRows;
+        data["validRows"] = this.validRows;
+        data["invalidRows"] = this.invalidRows;
+        if (Array.isArray(this.rows)) {
+            data["rows"] = [];
+            for (let item of this.rows)
+                data["rows"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IParseImportResponse {
+    totalRows?: number;
+    validRows?: number;
+    invalidRows?: number;
+    rows?: ImportParsedRow[];
+}
+
+export class ImportParsedRow implements IImportParsedRow {
+    rowNumber?: number;
+    values?: { [key: string]: string; };
+    action?: ImportRowAction;
+    isValid?: boolean;
+    errors?: string[];
+
+    constructor(data?: IImportParsedRow) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rowNumber = _data["rowNumber"];
+            if (_data["values"]) {
+                this.values = {} as any;
+                for (let key in _data["values"]) {
+                    if (_data["values"].hasOwnProperty(key))
+                        (this.values as any)![key] = _data["values"][key];
+                }
+            }
+            this.action = _data["action"];
+            this.isValid = _data["isValid"];
+            if (Array.isArray(_data["errors"])) {
+                this.errors = [] as any;
+                for (let item of _data["errors"])
+                    this.errors!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): ImportParsedRow {
+        data = typeof data === 'object' ? data : {};
+        let result = new ImportParsedRow();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rowNumber"] = this.rowNumber;
+        if (this.values) {
+            data["values"] = {};
+            for (let key in this.values) {
+                if (this.values.hasOwnProperty(key))
+                    (data["values"] as any)[key] = (this.values as any)[key];
+            }
+        }
+        data["action"] = this.action;
+        data["isValid"] = this.isValid;
+        if (Array.isArray(this.errors)) {
+            data["errors"] = [];
+            for (let item of this.errors)
+                data["errors"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface IImportParsedRow {
+    rowNumber?: number;
+    values?: { [key: string]: string; };
+    action?: ImportRowAction;
+    isValid?: boolean;
+    errors?: string[];
+}
+
+export enum ImportRowAction {
+    Insert = "Insert",
+    Update = "Update",
+    Skip = "Skip",
+}
+
+export class SubmitImportResponse implements ISubmitImportResponse {
+    inserted?: number;
+    updated?: number;
+    failed?: number;
+    results?: ImportSubmitRowResult[];
+
+    constructor(data?: ISubmitImportResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.inserted = _data["inserted"];
+            this.updated = _data["updated"];
+            this.failed = _data["failed"];
+            if (Array.isArray(_data["results"])) {
+                this.results = [] as any;
+                for (let item of _data["results"])
+                    this.results!.push(ImportSubmitRowResult.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SubmitImportResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new SubmitImportResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["inserted"] = this.inserted;
+        data["updated"] = this.updated;
+        data["failed"] = this.failed;
+        if (Array.isArray(this.results)) {
+            data["results"] = [];
+            for (let item of this.results)
+                data["results"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface ISubmitImportResponse {
+    inserted?: number;
+    updated?: number;
+    failed?: number;
+    results?: ImportSubmitRowResult[];
+}
+
+export class ImportSubmitRowResult implements IImportSubmitRowResult {
+    rowNumber?: number;
+    action?: ImportRowAction;
+    success?: boolean;
+    error?: string | undefined;
+
+    constructor(data?: IImportSubmitRowResult) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.rowNumber = _data["rowNumber"];
+            this.action = _data["action"];
+            this.success = _data["success"];
+            this.error = _data["error"];
+        }
+    }
+
+    static fromJS(data: any): ImportSubmitRowResult {
+        data = typeof data === 'object' ? data : {};
+        let result = new ImportSubmitRowResult();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["rowNumber"] = this.rowNumber;
+        data["action"] = this.action;
+        data["success"] = this.success;
+        data["error"] = this.error;
+        return data;
+    }
+}
+
+export interface IImportSubmitRowResult {
+    rowNumber?: number;
+    action?: ImportRowAction;
+    success?: boolean;
+    error?: string | undefined;
+}
+
+export class SubmitImportRequest implements ISubmitImportRequest {
+    rows?: ImportParsedRow[];
+
+    constructor(data?: ISubmitImportRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["rows"])) {
+                this.rows = [] as any;
+                for (let item of _data["rows"])
+                    this.rows!.push(ImportParsedRow.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): SubmitImportRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new SubmitImportRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.rows)) {
+            data["rows"] = [];
+            for (let item of this.rows)
+                data["rows"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface ISubmitImportRequest {
+    rows?: ImportParsedRow[];
+}
+
 export class MyTeamSummaryResponse implements IMyTeamSummaryResponse {
     hasReports?: boolean;
     directCount?: number;
@@ -12229,6 +12887,7 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
     painPoints?: string | undefined;
     competitors?: string | undefined;
     requirements?: string | undefined;
+    metadata?: string | undefined;
     lastActivityDate?: moment.Moment | undefined;
     nextFollowUpDate?: moment.Moment | undefined;
     isArchived?: boolean;
@@ -12290,6 +12949,7 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
             this.painPoints = _data["painPoints"];
             this.competitors = _data["competitors"];
             this.requirements = _data["requirements"];
+            this.metadata = _data["metadata"];
             this.lastActivityDate = _data["lastActivityDate"] ? moment(_data["lastActivityDate"].toString()) : undefined as any;
             this.nextFollowUpDate = _data["nextFollowUpDate"] ? moment(_data["nextFollowUpDate"].toString()) : undefined as any;
             this.isArchived = _data["isArchived"];
@@ -12371,6 +13031,7 @@ export class ViewLeadDetailResponse implements IViewLeadDetailResponse {
         data["painPoints"] = this.painPoints;
         data["competitors"] = this.competitors;
         data["requirements"] = this.requirements;
+        data["metadata"] = this.metadata;
         data["lastActivityDate"] = this.lastActivityDate ? this.lastActivityDate.toISOString() : undefined as any;
         data["nextFollowUpDate"] = this.nextFollowUpDate ? this.nextFollowUpDate.toISOString() : undefined as any;
         data["isArchived"] = this.isArchived;
@@ -12445,6 +13106,7 @@ export interface IViewLeadDetailResponse {
     painPoints?: string | undefined;
     competitors?: string | undefined;
     requirements?: string | undefined;
+    metadata?: string | undefined;
     lastActivityDate?: moment.Moment | undefined;
     nextFollowUpDate?: moment.Moment | undefined;
     isArchived?: boolean;
@@ -12875,6 +13537,7 @@ export class CreateLeadRequest implements ICreateLeadRequest {
     painPoints?: string | undefined;
     competitors?: string | undefined;
     requirements?: string | undefined;
+    metadata?: string | undefined;
 
     constructor(data?: ICreateLeadRequest) {
         if (data) {
@@ -12924,6 +13587,7 @@ export class CreateLeadRequest implements ICreateLeadRequest {
             this.painPoints = _data["painPoints"];
             this.competitors = _data["competitors"];
             this.requirements = _data["requirements"];
+            this.metadata = _data["metadata"];
         }
     }
 
@@ -12973,6 +13637,7 @@ export class CreateLeadRequest implements ICreateLeadRequest {
         data["painPoints"] = this.painPoints;
         data["competitors"] = this.competitors;
         data["requirements"] = this.requirements;
+        data["metadata"] = this.metadata;
         return data;
     }
 }
@@ -13015,6 +13680,7 @@ export interface ICreateLeadRequest {
     painPoints?: string | undefined;
     competitors?: string | undefined;
     requirements?: string | undefined;
+    metadata?: string | undefined;
 }
 
 export class UpdateLeadRequest implements IUpdateLeadRequest {
@@ -13056,6 +13722,7 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
     competitors?: string | undefined;
     requirements?: string | undefined;
     isArchived?: boolean;
+    metadata?: string | undefined;
 
     constructor(data?: IUpdateLeadRequest) {
         if (data) {
@@ -13106,6 +13773,7 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
             this.competitors = _data["competitors"];
             this.requirements = _data["requirements"];
             this.isArchived = _data["isArchived"];
+            this.metadata = _data["metadata"];
         }
     }
 
@@ -13156,6 +13824,7 @@ export class UpdateLeadRequest implements IUpdateLeadRequest {
         data["competitors"] = this.competitors;
         data["requirements"] = this.requirements;
         data["isArchived"] = this.isArchived;
+        data["metadata"] = this.metadata;
         return data;
     }
 }
@@ -13199,6 +13868,7 @@ export interface IUpdateLeadRequest {
     competitors?: string | undefined;
     requirements?: string | undefined;
     isArchived?: boolean;
+    metadata?: string | undefined;
 }
 
 export class UpdateLeadStatusRequest implements IUpdateLeadStatusRequest {

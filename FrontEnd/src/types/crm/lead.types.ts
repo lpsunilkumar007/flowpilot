@@ -253,6 +253,7 @@ export interface ViewLeadDetailResponse {
 	painPoints?: string
 	competitors?: string
 	requirements?: string
+	metadata?: string
 	lastActivityDate?: string
 	nextFollowUpDate?: string
 	isArchived: boolean

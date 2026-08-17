@@ -52,6 +52,7 @@ export enum PermissionTypes {
 	Permissions_ManageLeads_View = 'Permissions.ManageLeads.View',
 	Permissions_ManageLeads_Create = 'Permissions.ManageLeads.Create',
 	Permissions_ManageLeads_Update = 'Permissions.ManageLeads.Update',
+	Permissions_ManageLeads_Export = 'Permissions.ManageLeads.Export',
 
 	Permissions_ManageLeadCalendar_View = 'Permissions.ManageLeadCalendar.View',
 	Permissions_ManageLeadCalendar_ViewDetail = 'Permissions.ManageLeadCalendar.ViewDetail',

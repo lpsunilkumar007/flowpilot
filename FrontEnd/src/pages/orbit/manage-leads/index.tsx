@@ -26,10 +26,20 @@ const ManageLeads: React.FC = () => {
 				{canCreate && (
 					<PageTitle
 						actions={
-							<button onClick={() => navigate(MenuLinks.AddLead)} className="btn btn-primary inline-flex items-center gap-2 shadow-sm">
-								<i className="ri-add-line" />
-								{t('Manage.Leads.Action_Add', 'Create Lead')}
-							</button>
+							<div className="flex flex-wrap items-center gap-2">
+								<button
+									type="button"
+									onClick={() => navigate(MenuLinks.ImportLeads)}
+									className="btn btn-secondary inline-flex items-center gap-2 shadow-sm"
+								>
+									<i className="ri-upload-cloud-2-line" />
+									{t('Manage.Leads.Action_Import', 'Import')}
+								</button>
+								<button onClick={() => navigate(MenuLinks.AddLead)} className="btn btn-primary inline-flex items-center gap-2 shadow-sm">
+									<i className="ri-add-line" />
+									{t('Manage.Leads.Action_Add', 'Create Lead')}
+								</button>
+							</div>
 						}
 					/>
 				)}

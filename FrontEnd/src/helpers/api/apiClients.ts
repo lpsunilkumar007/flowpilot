@@ -11,6 +11,7 @@ import {
 	EmailLogClient,
 	EmailTemplateClient,
 	FormDesignerClient,
+	ImportClient,
 	LeadClient,
 	LocalizationClient,
 	LookUpClient,
@@ -36,6 +37,7 @@ export const dataControllersClient = new DataControllersClient(baseUrl, http)
 export const emailLogClient = new EmailLogClient(baseUrl, http)
 export const emailTemplateClient = new EmailTemplateClient(baseUrl, http)
 export const formDesignerClient = new FormDesignerClient(baseUrl, http)
+export const importClient = new ImportClient(baseUrl, http)
 export const leadClient = new LeadClient(baseUrl, http)
 export const localizationClient = new LocalizationClient(baseUrl, http)
 export const lookUpClient = new LookUpClient(baseUrl, http)
