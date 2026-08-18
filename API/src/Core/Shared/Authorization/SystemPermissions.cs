@@ -44,6 +44,8 @@ public static class SystemResource
 
     public const string ManageSalePipelines = nameof(ManageSalePipelines);
 
+    public const string ManageCampaigns = nameof(ManageCampaigns);
+
     #region Nexus
     public const string ManageNexusLookUps = nameof(ManageNexusLookUps);
     public const string ManageNexusSettings = nameof(ManageNexusSettings);
@@ -124,6 +126,11 @@ public class SystemPermissions
         new("View Sales Pipeline", SystemAction.View, SystemResource.ManageSalePipelines, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
         new("Create Sales Pipeline Lead", SystemAction.Create, SystemResource.ManageSalePipelines, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
         new("Update Sales Pipeline", SystemAction.Update, SystemResource.ManageSalePipelines, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+
+        // Manage Campaigns (CRM)
+        new("View Campaigns", SystemAction.View, SystemResource.ManageCampaigns, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+        new("Create Campaign", SystemAction.Create, SystemResource.ManageCampaigns, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+        new("Update Campaign", SystemAction.Update, SystemResource.ManageCampaigns, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
 
         #region Nexus
         new("View Nexus LookUps", SystemAction.View, SystemResource.ManageNexusLookUps, IsSalesRepresentative: false, IsSalesManager: false, IsRoot: true, IsAdmin: false),

@@ -13,13 +13,13 @@ using FlowPilot.Infrastructure.FrontUserPortal;
 using FlowPilot.Infrastructure.Mailing.Aws;
 using FlowPilot.Infrastructure.Mailing.Resend;
 using FlowPilot.Infrastructure.Mailing.SendGrid;
+using FlowPilot.Infrastructure.Mailing.Smtp;
 using FlowPilot.Infrastructure.Persistence.Context;
 using FlowPilot.Infrastructure.Persistence.Context.Nexus;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MimeKit;
 using Resend;
@@ -46,9 +46,10 @@ public partial class MailService : IMailService
     private readonly AwsMailSettings _awsMailSettings;
     private readonly SendGridMailSettings _sendGridMailSettings;
     private readonly ResendMailSettings _resendMailSettings;
+    private readonly SmtpMailSetting _smtpMailSetting;
     private readonly MailSettings _settings;
 
-    public MailService(IOptions<SecuritySettings> securitySettings, IOptions<MailSettings> settings, IOptions<SendGridMailSettings> sendGridMailSettings, IOptions<AwsMailSettings> awsMailSettings, ISendGridClient sendGridClient, INexusSettingService nexusSettingService, IOptions<FrontUserPortalSettings> frontUserPortalSettings, IEmailLogService emailLogService, ISerializerService serializerService, ITenantService tenantService, ICurrentUserInitializer currentUserInitializer, NexusDbContext nexusDbContext, ApplicationDbContext applicationDbContext, ISettingService settingService, IOptions<ResendMailSettings> resendMailSettings, IResend resendClient)
+    public MailService(IOptions<SecuritySettings> securitySettings, IOptions<MailSettings> settings, IOptions<SendGridMailSettings> sendGridMailSettings, IOptions<AwsMailSettings> awsMailSettings, ISendGridClient sendGridClient, INexusSettingService nexusSettingService, IOptions<FrontUserPortalSettings> frontUserPortalSettings, IEmailLogService emailLogService, ISerializerService serializerService, ITenantService tenantService, ICurrentUserInitializer currentUserInitializer, NexusDbContext nexusDbContext, ApplicationDbContext applicationDbContext, ISettingService settingService, IOptions<ResendMailSettings> resendMailSettings, IResend resendClient, IOptions<SmtpMailSetting> smtpMailSetting)
     {
         _settings = settings.Value;
 
@@ -67,6 +68,7 @@ public partial class MailService : IMailService
         _securitySettings = securitySettings.Value;
         _resendMailSettings = resendMailSettings.Value;
         _resendClient = resendClient;
+        _smtpMailSetting = smtpMailSetting.Value;
     }
 
     private async Task SetCurrentUserAndTenantAsync(string userId, CancellationToken cancellationToken)
@@ -219,6 +221,29 @@ public partial class MailService : IMailService
             log.From = string.IsNullOrEmpty(request.From) ? resend.FromEmail : request.From;
             isSent = resendSuccess;
         }
+        else if (_settings.Provider.Equals("Smtp", StringComparison.OrdinalIgnoreCase))
+        {
+            var smtp = _smtpMailSetting;
+            if (smtp.IsTestModeEnabled)
+            {
+                ApplyTestModeOverride(request, smtp.TestModeEmailTo, smtp.TestModeEmailCc, smtp.TestModeEmailBCc);
+                log.To = smtp.TestModeEmailTo;
+                log.Subject = request.Subject;
+                log.From = string.IsNullOrEmpty(request.From) ? smtp.From : request.From;
+                log.DisplayName = string.IsNullOrEmpty(request.DisplayName) ? smtp.DisplayName : request.DisplayName;
+                log.Bcc = smtp.TestModeEmailBCc == null ? null : smtp.TestModeEmailBCc;
+                log.Cc = smtp.TestModeEmailCc == null ? null : smtp.TestModeEmailCc;
+            }
+
+            log.EmailSmtpUsed = _serializerService.Serialize(smtp);
+            log.IsTestModeEnabled = smtp.IsTestModeEnabled;
+
+            var (smtpSuccess, message) = await SendViaSmtpAsync(request, smtp, cancellationToken);
+
+            log.IsEmailSent = smtpSuccess;
+            log.EmailSentMessage = message;
+            isSent = smtpSuccess;
+        }
         else
         {
             throw new NotSupportedException($"Email provider '{_settings.Provider}' is not supported.");
@@ -350,7 +375,70 @@ public partial class MailService : IMailService
             return (false, emailSentMessage);
         }
 
+    }
 
+    private async Task<(bool IsSent, string? ErrorMessage)> SendViaSmtpAsync(MailDto request, SmtpMailSetting smtpSettings, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var email = new MimeMessage();
+            var from = request.From ?? smtpSettings.From;
+            var displayName = request.DisplayName ?? smtpSettings.DisplayName;
+            email.From.Add(new MailboxAddress(displayName, from));
+            email.Sender = new MailboxAddress(displayName, from);
+            email.Subject = request.Subject;
+
+            foreach (var to in request.To)
+                email.To.Add(MailboxAddress.Parse(to));
+
+            if (!string.IsNullOrEmpty(request.ReplyTo))
+                email.ReplyTo.Add(new MailboxAddress(request.ReplyToName, request.ReplyTo));
+
+            if (request.Cc != null)
+            {
+                foreach (var cc in request.Cc.Where(cc => !string.IsNullOrWhiteSpace(cc)))
+                    email.Cc.Add(MailboxAddress.Parse(cc.Trim()));
+            }
+
+            if (request.Bcc != null)
+            {
+                foreach (var bcc in request.Bcc.Where(bcc => !string.IsNullOrWhiteSpace(bcc)))
+                    email.Bcc.Add(MailboxAddress.Parse(bcc.Trim()));
+            }
+
+            if (request.Headers != null)
+            {
+                foreach (var header in request.Headers)
+                    email.Headers.Add(header.Key, header.Value);
+            }
+
+            var builder = new BodyBuilder
+            {
+                HtmlBody = request.Body
+            };
+
+            if (request.AttachmentData != null)
+            {
+                foreach (var att in request.AttachmentData)
+                    builder.Attachments.Add(att.Key, att.Value);
+            }
+
+            email.Body = builder.ToMessageBody();
+
+            using var smtp = new SmtpClient();
+            var socketOptions = smtpSettings.Port == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.StartTls;
+            await smtp.ConnectAsync(smtpSettings.Host, smtpSettings.Port, socketOptions, cancellationToken);
+            await smtp.AuthenticateAsync(smtpSettings.UserName, smtpSettings.Password, cancellationToken);
+            await smtp.SendAsync(email, cancellationToken);
+            await smtp.DisconnectAsync(true, cancellationToken);
+
+            return (true, "Email sent successfully via SMTP");
+        }
+        catch (Exception exception)
+        {
+            string emailSentMessage = exception.Message.Trim() + "\n" + (exception.InnerException != null ? exception.InnerException.Message.Trim() : string.Empty);
+            return (false, emailSentMessage);
+        }
     }
 
 

@@ -1,6 +1,7 @@
 using FlowPilot.Infrastructure.Mailing.Aws;
 using FlowPilot.Infrastructure.Mailing.Resend;
 using FlowPilot.Infrastructure.Mailing.SendGrid;
+using FlowPilot.Infrastructure.Mailing.Smtp;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,6 +15,7 @@ internal static class Startup
         return services
             .AddAwsMailing(config)
             .AddSendGridMailing(config)
-            .AddResendMailing(config);
+            .AddResendMailing(config)
+            .AddSmtpMailing(config);
     }
 }

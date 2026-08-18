@@ -84,4 +84,8 @@ export enum PermissionTypes {
 	Permissions_ManageSalePipelines_View = 'Permissions.ManageSalePipelines.View',
 	Permissions_ManageSalePipelines_Create = 'Permissions.ManageSalePipelines.Create',
 	Permissions_ManageSalePipelines_Update = 'Permissions.ManageSalePipelines.Update',
+
+	Permissions_ManageCampaigns_View = 'Permissions.ManageCampaigns.View',
+	Permissions_ManageCampaigns_Create = 'Permissions.ManageCampaigns.Create',
+	Permissions_ManageCampaigns_Update = 'Permissions.ManageCampaigns.Update',
 }

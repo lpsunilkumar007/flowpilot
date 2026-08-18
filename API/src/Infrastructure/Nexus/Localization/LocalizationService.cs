@@ -733,6 +733,7 @@ public class LocalizationService : ILocalizationService
         new() { Key = "Manage.Tasks.Calendar_Rescheduled", Value = "Task rescheduled" },
         new() { Key = "Manage.Leads.Calendar_Legend_Task", Value = "Task" },
         new() { Key = "Manage.Offerings_Heading", Value = "Offerings" },
+        new() { Key = "Manage.Campaigns_Heading", Value = "Campaigns" },
 
         };
     }

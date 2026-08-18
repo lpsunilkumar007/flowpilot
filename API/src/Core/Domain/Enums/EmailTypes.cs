@@ -14,5 +14,6 @@ public enum EmailTypes
     AppointmentDeclinedEmailForParticipant = 11,
     ConfirmReminderEmailForHost = 12,
     ConfirmReminderEmailForParticipant = 13,
-    TwoFactorVerificationEmail = 14
+    TwoFactorVerificationEmail = 14,
+    CampaignEmail = 15
 }

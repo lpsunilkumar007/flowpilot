@@ -78,6 +78,10 @@ public class ApplicationDbContext : BaseDbContext
     public DbSet<GpsVerifications> GpsVerifications => Set<GpsVerifications>();
 
     public DbSet<LeadImages> LeadImages => Set<LeadImages>();
+
+    public DbSet<Campaigns> Campaigns => Set<Campaigns>();
+
+    public DbSet<CampaignUsers> CampaignUsers => Set<CampaignUsers>();
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -139,6 +143,22 @@ public class ApplicationDbContext : BaseDbContext
 
         modelBuilder.Entity<EntityCustomFields>()
             .HasIndex(x => new { x.TenantId, x.EntityType, x.FKEntityPKId });
+
+        modelBuilder.Entity<Campaigns>()
+            .HasOne(x => x.EmailTemplate)
+            .WithMany()
+            .HasForeignKey(x => x.TemplateId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<CampaignUsers>()
+            .HasOne(x => x.Campaign)
+            .WithMany(x => x.CampaignUsers)
+            .HasForeignKey(x => x.CampaignId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        modelBuilder.Entity<CampaignUsers>()
+            .HasIndex(x => new { x.CampaignId, x.UserId })
+            .IsUnique();
 
         modelBuilder.HasDefaultSchema(SchemaNames.dbo);
 

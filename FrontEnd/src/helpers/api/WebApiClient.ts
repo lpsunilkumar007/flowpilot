@@ -4772,6 +4772,249 @@ export class EmailTemplateClient {
     }
 }
 
+export class CampaignClient {
+    private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(baseUrl?: string, http?: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> }) {
+        this.http = http ? http : window as any;
+        this.baseUrl = baseUrl ?? "https://localhost:7027";
+    }
+
+    /**
+     * Search campaigns
+     * @param searchText (optional) 
+     * @param campaignType (optional) 
+     * @param pageNumber (optional) 
+     * @param pageSize (optional) 
+     * @param sortOrder (optional) 
+     * @param sortField (optional) 
+     */
+    search(searchText: string | null | undefined, campaignType: CampaignType | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortOrder: string | null | undefined, sortField: string | null | undefined): Promise<PaginationResponseOfViewCampaignResponse> {
+        let url_ = this.baseUrl + "/api/v1/campaign?";
+        if (searchText !== undefined && searchText !== null)
+            url_ += "SearchText=" + encodeURIComponent("" + searchText) + "&";
+        if (campaignType !== undefined && campaignType !== null)
+            url_ += "CampaignType=" + encodeURIComponent("" + campaignType) + "&";
+        if (pageNumber === null)
+            throw new globalThis.Error("The parameter 'pageNumber' cannot be null.");
+        else if (pageNumber !== undefined)
+            url_ += "PageNumber=" + encodeURIComponent("" + pageNumber) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (sortOrder !== undefined && sortOrder !== null)
+            url_ += "sortOrder=" + encodeURIComponent("" + sortOrder) + "&";
+        if (sortField !== undefined && sortField !== null)
+            url_ += "sortField=" + encodeURIComponent("" + sortField) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processSearch(_response);
+        });
+    }
+
+    protected processSearch(response: Response): Promise<PaginationResponseOfViewCampaignResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = PaginationResponseOfViewCampaignResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<PaginationResponseOfViewCampaignResponse>(null as any);
+    }
+
+    /**
+     * Create a new campaign
+     */
+    create(request: CreateCampaignRequest): Promise<CreateCampaignResponse> {
+        let url_ = this.baseUrl + "/api/v1/campaign";
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCreate(_response);
+        });
+    }
+
+    protected processCreate(response: Response): Promise<CreateCampaignResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = CreateCampaignResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<CreateCampaignResponse>(null as any);
+    }
+
+    /**
+     * Get leads for campaign picker by offering
+     */
+    getLeadsByOffering(offeringId: number): Promise<ViewCampaignLeadPickerResponse[]> {
+        let url_ = this.baseUrl + "/api/v1/campaign/leads-by-offering/{offeringId}";
+        if (offeringId === undefined || offeringId === null)
+            throw new globalThis.Error("The parameter 'offeringId' must be defined.");
+        url_ = url_.replace("{offeringId}", encodeURIComponent("" + offeringId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetLeadsByOffering(_response);
+        });
+    }
+
+    protected processGetLeadsByOffering(response: Response): Promise<ViewCampaignLeadPickerResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(ViewCampaignLeadPickerResponse.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewCampaignLeadPickerResponse[]>(null as any);
+    }
+
+    /**
+     * Get campaign by id
+     */
+    getById(id: number): Promise<ViewCampaignDetailResponse> {
+        let url_ = this.baseUrl + "/api/v1/campaign/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetById(_response);
+        });
+    }
+
+    protected processGetById(response: Response): Promise<ViewCampaignDetailResponse> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ViewCampaignDetailResponse.fromJS(resultData200);
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<ViewCampaignDetailResponse>(null as any);
+    }
+
+    /**
+     * Update campaign details
+     */
+    update(id: number, request: UpdateCampaignRequest): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/campaign/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdate(_response);
+        });
+    }
+
+    protected processUpdate(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+}
+
 export class LeadClient {
     private http: { fetch(url: RequestInfo, init?: RequestInit): Promise<Response> };
     private baseUrl: string;
@@ -7608,6 +7851,7 @@ export enum EmailTypes {
     ConfirmReminderEmailForHost = "ConfirmReminderEmailForHost",
     ConfirmReminderEmailForParticipant = "ConfirmReminderEmailForParticipant",
     TwoFactorVerificationEmail = "TwoFactorVerificationEmail",
+    CampaignEmail = "CampaignEmail",
 }
 
 export class AppointmentColorSetting implements IAppointmentColorSetting {
@@ -13007,6 +13251,485 @@ export interface ISearchEmailTemplateRequest extends ISearchRequestBaseClass {
     nameDescription?: string | undefined;
     templateUsedFor?: EmailTemplateUsedFor;
     isShared?: boolean | undefined;
+}
+
+export class PaginationResponseOfViewCampaignResponse implements IPaginationResponseOfViewCampaignResponse {
+    data?: ViewCampaignResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+
+    constructor(data?: IPaginationResponseOfViewCampaignResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["data"])) {
+                this.data = [] as any;
+                for (let item of _data["data"])
+                    this.data!.push(ViewCampaignResponse.fromJS(item));
+            }
+            this.currentPage = _data["currentPage"];
+            this.totalPages = _data["totalPages"];
+            this.totalCount = _data["totalCount"];
+            this.pageSize = _data["pageSize"];
+            this.hasPreviousPage = _data["hasPreviousPage"];
+            this.hasNextPage = _data["hasNextPage"];
+        }
+    }
+
+    static fromJS(data: any): PaginationResponseOfViewCampaignResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginationResponseOfViewCampaignResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.data)) {
+            data["data"] = [];
+            for (let item of this.data)
+                data["data"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["currentPage"] = this.currentPage;
+        data["totalPages"] = this.totalPages;
+        data["totalCount"] = this.totalCount;
+        data["pageSize"] = this.pageSize;
+        data["hasPreviousPage"] = this.hasPreviousPage;
+        data["hasNextPage"] = this.hasNextPage;
+        return data;
+    }
+}
+
+export interface IPaginationResponseOfViewCampaignResponse {
+    data?: ViewCampaignResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+}
+
+export class ViewCampaignResponse implements IViewCampaignResponse {
+    id?: number;
+    title?: string;
+    campaignType?: CampaignType;
+    templateId?: number;
+    templateName?: string;
+    scheduleDate?: moment.Moment;
+    message?: string | undefined;
+    recipientCount?: number;
+    createdOn?: moment.Moment;
+
+    constructor(data?: IViewCampaignResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.title = _data["title"];
+            this.campaignType = _data["campaignType"];
+            this.templateId = _data["templateId"];
+            this.templateName = _data["templateName"];
+            this.scheduleDate = _data["scheduleDate"] ? moment(_data["scheduleDate"].toString()) : undefined as any;
+            this.message = _data["message"];
+            this.recipientCount = _data["recipientCount"];
+            this.createdOn = _data["createdOn"] ? moment(_data["createdOn"].toString()) : undefined as any;
+        }
+    }
+
+    static fromJS(data: any): ViewCampaignResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewCampaignResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["title"] = this.title;
+        data["campaignType"] = this.campaignType;
+        data["templateId"] = this.templateId;
+        data["templateName"] = this.templateName;
+        data["scheduleDate"] = this.scheduleDate ? this.scheduleDate.toISOString() : undefined as any;
+        data["message"] = this.message;
+        data["recipientCount"] = this.recipientCount;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        return data;
+    }
+}
+
+export interface IViewCampaignResponse {
+    id?: number;
+    title?: string;
+    campaignType?: CampaignType;
+    templateId?: number;
+    templateName?: string;
+    scheduleDate?: moment.Moment;
+    message?: string | undefined;
+    recipientCount?: number;
+    createdOn?: moment.Moment;
+}
+
+export enum CampaignType {
+    Email = "Email",
+}
+
+export class ViewCampaignLeadPickerResponse implements IViewCampaignLeadPickerResponse {
+    id?: number;
+    businessName?: string;
+    ownerName?: string;
+    email?: string | undefined;
+    mobile?: string;
+
+    constructor(data?: IViewCampaignLeadPickerResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.businessName = _data["businessName"];
+            this.ownerName = _data["ownerName"];
+            this.email = _data["email"];
+            this.mobile = _data["mobile"];
+        }
+    }
+
+    static fromJS(data: any): ViewCampaignLeadPickerResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewCampaignLeadPickerResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["businessName"] = this.businessName;
+        data["ownerName"] = this.ownerName;
+        data["email"] = this.email;
+        data["mobile"] = this.mobile;
+        return data;
+    }
+}
+
+export interface IViewCampaignLeadPickerResponse {
+    id?: number;
+    businessName?: string;
+    ownerName?: string;
+    email?: string | undefined;
+    mobile?: string;
+}
+
+export class ViewCampaignDetailResponse implements IViewCampaignDetailResponse {
+    id?: number;
+    title?: string;
+    campaignType?: CampaignType;
+    templateId?: number;
+    templateName?: string;
+    scheduleDate?: moment.Moment;
+    message?: string | undefined;
+    createdOn?: moment.Moment;
+    campaignUsers?: ViewCampaignUserResponse[];
+
+    constructor(data?: IViewCampaignDetailResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.title = _data["title"];
+            this.campaignType = _data["campaignType"];
+            this.templateId = _data["templateId"];
+            this.templateName = _data["templateName"];
+            this.scheduleDate = _data["scheduleDate"] ? moment(_data["scheduleDate"].toString()) : undefined as any;
+            this.message = _data["message"];
+            this.createdOn = _data["createdOn"] ? moment(_data["createdOn"].toString()) : undefined as any;
+            if (Array.isArray(_data["campaignUsers"])) {
+                this.campaignUsers = [] as any;
+                for (let item of _data["campaignUsers"])
+                    this.campaignUsers!.push(ViewCampaignUserResponse.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ViewCampaignDetailResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewCampaignDetailResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["title"] = this.title;
+        data["campaignType"] = this.campaignType;
+        data["templateId"] = this.templateId;
+        data["templateName"] = this.templateName;
+        data["scheduleDate"] = this.scheduleDate ? this.scheduleDate.toISOString() : undefined as any;
+        data["message"] = this.message;
+        data["createdOn"] = this.createdOn ? this.createdOn.toISOString() : undefined as any;
+        if (Array.isArray(this.campaignUsers)) {
+            data["campaignUsers"] = [];
+            for (let item of this.campaignUsers)
+                data["campaignUsers"].push(item ? item.toJSON() : undefined as any);
+        }
+        return data;
+    }
+}
+
+export interface IViewCampaignDetailResponse {
+    id?: number;
+    title?: string;
+    campaignType?: CampaignType;
+    templateId?: number;
+    templateName?: string;
+    scheduleDate?: moment.Moment;
+    message?: string | undefined;
+    createdOn?: moment.Moment;
+    campaignUsers?: ViewCampaignUserResponse[];
+}
+
+export class ViewCampaignUserResponse implements IViewCampaignUserResponse {
+    id?: number;
+    userId?: number;
+    contact?: string;
+
+    constructor(data?: IViewCampaignUserResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.userId = _data["userId"];
+            this.contact = _data["contact"];
+        }
+    }
+
+    static fromJS(data: any): ViewCampaignUserResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new ViewCampaignUserResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["userId"] = this.userId;
+        data["contact"] = this.contact;
+        return data;
+    }
+}
+
+export interface IViewCampaignUserResponse {
+    id?: number;
+    userId?: number;
+    contact?: string;
+}
+
+export class CreateCampaignResponse implements ICreateCampaignResponse {
+    id?: number;
+    message?: string;
+
+    constructor(data?: ICreateCampaignResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): CreateCampaignResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateCampaignResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface ICreateCampaignResponse {
+    id?: number;
+    message?: string;
+}
+
+export class CreateCampaignRequest implements ICreateCampaignRequest {
+    title!: string;
+    campaignType?: CampaignType;
+    offeringId!: number;
+    templateId!: number;
+    scheduleDate!: moment.Moment;
+    message?: string | undefined;
+    leadIds!: number[];
+
+    constructor(data?: ICreateCampaignRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+        if (!data) {
+            this.leadIds = [];
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.title = _data["title"];
+            this.campaignType = _data["campaignType"];
+            this.offeringId = _data["offeringId"];
+            this.templateId = _data["templateId"];
+            this.scheduleDate = _data["scheduleDate"] ? moment(_data["scheduleDate"].toString()) : undefined as any;
+            this.message = _data["message"];
+            if (Array.isArray(_data["leadIds"])) {
+                this.leadIds = [] as any;
+                for (let item of _data["leadIds"])
+                    this.leadIds!.push(item);
+            }
+        }
+    }
+
+    static fromJS(data: any): CreateCampaignRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new CreateCampaignRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["title"] = this.title;
+        data["campaignType"] = this.campaignType;
+        data["offeringId"] = this.offeringId;
+        data["templateId"] = this.templateId;
+        data["scheduleDate"] = this.scheduleDate ? this.scheduleDate.toISOString() : undefined as any;
+        data["message"] = this.message;
+        if (Array.isArray(this.leadIds)) {
+            data["leadIds"] = [];
+            for (let item of this.leadIds)
+                data["leadIds"].push(item);
+        }
+        return data;
+    }
+}
+
+export interface ICreateCampaignRequest {
+    title: string;
+    campaignType?: CampaignType;
+    offeringId: number;
+    templateId: number;
+    scheduleDate: moment.Moment;
+    message?: string | undefined;
+    leadIds: number[];
+}
+
+export class UpdateCampaignRequest implements IUpdateCampaignRequest {
+    id!: number;
+    title!: string;
+    campaignType?: CampaignType;
+    templateId!: number;
+    scheduleDate!: moment.Moment;
+    message?: string | undefined;
+
+    constructor(data?: IUpdateCampaignRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.id = _data["id"];
+            this.title = _data["title"];
+            this.campaignType = _data["campaignType"];
+            this.templateId = _data["templateId"];
+            this.scheduleDate = _data["scheduleDate"] ? moment(_data["scheduleDate"].toString()) : undefined as any;
+            this.message = _data["message"];
+        }
+    }
+
+    static fromJS(data: any): UpdateCampaignRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateCampaignRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["id"] = this.id;
+        data["title"] = this.title;
+        data["campaignType"] = this.campaignType;
+        data["templateId"] = this.templateId;
+        data["scheduleDate"] = this.scheduleDate ? this.scheduleDate.toISOString() : undefined as any;
+        data["message"] = this.message;
+        return data;
+    }
+}
+
+export interface IUpdateCampaignRequest {
+    id: number;
+    title: string;
+    campaignType?: CampaignType;
+    templateId: number;
+    scheduleDate: moment.Moment;
+    message?: string | undefined;
 }
 
 export class PaginationResponseOfViewLeadListResponse implements IPaginationResponseOfViewLeadListResponse {

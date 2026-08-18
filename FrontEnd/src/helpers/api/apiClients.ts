@@ -7,6 +7,7 @@ import config from '../../config'
 import { authenticatedFetch } from './httpClient'
 import {
 	AppointmentRequestClient,
+	CampaignClient,
 	DataControllersClient,
 	EmailLogClient,
 	EmailTemplateClient,
@@ -33,6 +34,7 @@ const http = { fetch: authenticatedFetch }
 
 // Singleton instances - clients are stateless, safe to reuse
 export const appointmentRequestClient = new AppointmentRequestClient(baseUrl, http)
+export const campaignClient = new CampaignClient(baseUrl, http)
 export const dataControllersClient = new DataControllersClient(baseUrl, http)
 export const emailLogClient = new EmailLogClient(baseUrl, http)
 export const emailTemplateClient = new EmailTemplateClient(baseUrl, http)

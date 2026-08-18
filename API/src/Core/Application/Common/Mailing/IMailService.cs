@@ -29,5 +29,7 @@ public interface IMailService : ITransientService
 
     Task SendApprovedAppointmentReminder(DefaultIdType tempAppointmentPKId, DefaultIdType tempAppointmentParticipantPKId);
 
+    Task SendCampaignEmail(DefaultIdType campaignId);
+
     Task TwoFactorVerificationEmailAsync(string userId, string code, CancellationToken cancellationToken);
 }

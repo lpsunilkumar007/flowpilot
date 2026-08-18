@@ -33,6 +33,9 @@ const AddLead = React.lazy(() => import('@/pages/orbit/manage-leads/Components/A
 const ImportLeads = React.lazy(() => import('@/pages/orbit/manage-leads/ImportLeads'))
 const EditLeadLandingPage = React.lazy(() => import('@/pages/orbit/manage-leads/Components/EditLeadLandingPage'))
 const ManageTasks = React.lazy(() => import('@/pages/orbit/manage-tasks'))
+const ManageCampaigns = React.lazy(() => import('@/pages/orbit/manage-campaigns'))
+const CreateCampaign = React.lazy(() => import('@/pages/orbit/manage-campaigns/CreateCampaign'))
+const ViewCampaignDetail = React.lazy(() => import('@/pages/orbit/manage-campaigns/ViewCampaignDetail'))
 const ManageSalesPipeline = React.lazy(() => import('@/pages/orbit/manage-sales-pipeline'))
 const MyTeam = React.lazy(() => import('@/pages/orbit/my-team'))
 const ManageLanguage = React.lazy(() => import('@/pages/orbit/manage-language'))
@@ -224,6 +227,24 @@ const orbitCrmRoutes: RoutesProps = {
 			path: MenuLinks.ManageTasks,
 			name: 'manage_tasks',
 			element: <ManageTasks />,
+			route: PrivateRoute,
+		},
+		{
+			path: MenuLinks.CreateCampaign,
+			name: 'create_campaign',
+			element: <CreateCampaign />,
+			route: PrivateRoute,
+		},
+		{
+			path: MenuLinks.ViewCampaign,
+			name: 'view_campaign',
+			element: <ViewCampaignDetail />,
+			route: PrivateRoute,
+		},
+		{
+			path: MenuLinks.ManageCampaigns,
+			name: 'manage_campaigns',
+			element: <ManageCampaigns />,
 			route: PrivateRoute,
 		},
 		{

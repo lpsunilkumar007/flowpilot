@@ -61,6 +61,10 @@ internal class ErrorMessages
     public static readonly string CustomFieldLabelTooLong = "Custom field name cannot be longer than {0} characters.";
     public static readonly string CustomFieldValueTooLong = "Custom field value cannot be longer than {0} characters.";
     public static readonly string UnsupportedCustomFieldEntityType = "This entity type does not support custom fields.";
+    public static readonly string CampaignTypeNotSupported = "Only Email campaigns are supported.";
+    public static readonly string CampaignLeadRequired = "Please select at least one lead.";
+    public static readonly string CampaignLeadsInvalid = "One or more selected leads were not found, are archived, or do not belong to the offering.";
+    public static readonly string CampaignLeadEmailRequired = "The following leads have no assigned user email: {0}";
 
 }
 

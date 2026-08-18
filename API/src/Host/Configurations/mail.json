@@ -1,6 +1,6 @@
 {
   "MailSettings": {
-    "Provider": "Aws", // Aws || SendGrid || Resend
+    "Provider": "Smtp", // Aws || SendGrid || Resend || Smtp
     "AwsMailSettings": {
       "EmailHost": "",
       "SendEmailPort": "",
@@ -24,6 +24,18 @@
     "ResendMailSettings": {
       "APIKey": "",
       "FromEmail": "",
+      "IsTestModeEnabled": true,
+      "TestModeEmailTo": [ "cc1@example.com", "cc2@example.com" ],
+      "TestModeEmailCc": [ "cc1@example.com", "cc2@example.com" ],
+      "TestModeEmailBCc": [ "cc1@example.com", "cc2@example.com" ]
+    },
+    "SmtpMailSetting": {
+      "DisplayName": "",
+      "From": "",
+      "Host": "",
+      "Password": "",
+      "Port": 587,
+      "UserName": "",
       "IsTestModeEnabled": true,
       "TestModeEmailTo": [ "cc1@example.com", "cc2@example.com" ],
       "TestModeEmailCc": [ "cc1@example.com", "cc2@example.com" ],
