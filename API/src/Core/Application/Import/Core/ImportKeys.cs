@@ -20,6 +20,7 @@ public static class ImportColumnKeys
     public const string ExternalId = "externalId";
     public const string Domain = "domain";
     public const string Company = "company";
+    public const string Offering = "offering";
     public const string Sic4 = "sic4";
     public const string Naics6 = "naics6";
     public const string Employee = "employee";

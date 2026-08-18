@@ -16,6 +16,7 @@ import { messageHelper } from '@/helpers/message.helper'
 import ValidationHelper from '@/helpers/validation.helper'
 import { usePermission } from '@/hooks/usePermission'
 import type { IErrorResult } from '@/interfaces/IErrorResult'
+import { offeringService } from '@/services/OfferingService'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -23,13 +24,15 @@ const ENTITY_KEY = 'leads'
 const PREVIEW_PAGE_SIZE = 50
 const EMAIL_COLUMN_KEY = 'email'
 const PHONE_COLUMN_KEY = 'companyPhone'
+const OFFERING_COLUMN_KEY = 'offering'
 
 const EMAIL_FORMAT_ERROR = 'Email is not a valid email address.'
 const PHONE_REQUIRED_ERROR = 'Company Phone is required.'
 const PHONE_FORMAT_ERROR = 'Company Phone is not a valid mobile number.'
+const OFFERING_REQUIRED_ERROR = 'Offering is required.'
 
 const COLUMN_SECTIONS: { title: string; keys: string[] }[] = [
-	{ title: 'Business Information', keys: ['company', 'publicPrivate', 'domain', 'employee', 'revenue'] },
+	{ title: 'Business Information', keys: ['company', 'offering', 'publicPrivate', 'domain', 'employee', 'revenue'] },
 	{ title: 'Contact Person', keys: ['name', 'title', 'email', 'companyPhone', 'firstname', 'lastname'] },
 	{ title: 'Address', keys: ['address', 'city', 'state', 'zip', 'zip4', 'country'] },
 	{ title: 'Additional Information', keys: ['sic4', 'naics6', 'department', 'level', 'founded', 'linkedIn', 'externalId'] },
@@ -99,7 +102,11 @@ const isContactFieldError = (error: string, field: 'email' | 'phone') => {
 	return lower.includes('company phone') || lower.includes('company_phone') || lower.includes('mobile')
 }
 
-const applyEmailMobileValidation = (row: ImportParsedRow, editedKey?: string) => {
+const isOfferingFieldError = (error: string) => error.toLowerCase().includes('offering')
+
+const matchesOfferingName = (value: string, offeringNames: Set<string>) => offeringNames.has(value.toLowerCase())
+
+const applyClientRowValidation = (row: ImportParsedRow, offeringNames: Set<string>, editedKey?: string) => {
 	let errors = [...(row.errors ?? [])]
 
 	if (editedKey === EMAIL_COLUMN_KEY) {
@@ -110,8 +117,13 @@ const applyEmailMobileValidation = (row: ImportParsedRow, editedKey?: string) =>
 		errors = errors.filter((error) => error !== EMAIL_FORMAT_ERROR && error !== PHONE_FORMAT_ERROR)
 	}
 
+	if (editedKey === OFFERING_COLUMN_KEY) {
+		errors = errors.filter((error) => !isOfferingFieldError(error))
+	}
+
 	const email = getRowValue(row, EMAIL_COLUMN_KEY)
 	const phone = getRowValue(row, PHONE_COLUMN_KEY)
+	const offering = getRowValue(row, OFFERING_COLUMN_KEY)
 
 	if (email && !ValidationHelper.isValidEmail(email) && !errors.includes(EMAIL_FORMAT_ERROR)) {
 		errors.push(EMAIL_FORMAT_ERROR)
@@ -123,6 +135,14 @@ const applyEmailMobileValidation = (row: ImportParsedRow, editedKey?: string) =>
 		}
 	} else if (!ValidationHelper.isValidMobile(phone) && !errors.includes(PHONE_FORMAT_ERROR)) {
 		errors.push(PHONE_FORMAT_ERROR)
+	}
+
+	if (editedKey === OFFERING_COLUMN_KEY) {
+		if (!offering) {
+			errors.push(OFFERING_REQUIRED_ERROR)
+		} else if (offeringNames.size > 0 && !matchesOfferingName(offering, offeringNames)) {
+			errors.push(`Row ${row.rowNumber}: Offering '${offering}' was not found.`)
+		}
 	}
 
 	return new ImportParsedRow({
@@ -163,6 +183,7 @@ const ImportLeads = () => {
 	const [isExporting, setIsExporting] = useState(false)
 	const [showInvalidFirst, setShowInvalidFirst] = useState(true)
 	const [previewPage, setPreviewPage] = useState(1)
+	const [offeringNames, setOfferingNames] = useState<Set<string>>(new Set())
 
 	const columns = definition?.columns ?? []
 	const columnGroups = useMemo(() => groupColumns(columns), [columns])
@@ -200,6 +221,14 @@ const ImportLeads = () => {
 
 		if (canView || canCreate) {
 			void loadDefinitions()
+			void offeringService
+				.getActiveDropDown()
+				.then((items) => {
+					setOfferingNames(new Set((items ?? []).map((item) => (item.text ?? '').trim().toLowerCase()).filter(Boolean)))
+				})
+				.catch(() => {
+					setOfferingNames(new Set())
+				})
 		} else {
 			setIsLoadingDefinitions(false)
 		}
@@ -271,7 +300,7 @@ const ImportLeads = () => {
 			const apiMs = Math.round(performance.now() - parseStartedAt)
 			const rowCount = response.rows?.length ?? 0
 			const setRowsStartedAt = performance.now()
-			setRows((response.rows ?? []).map((row) => applyEmailMobileValidation(row)))
+			setRows((response.rows ?? []).map((row) => applyClientRowValidation(row, offeringNames)))
 			setPreviewPage(1)
 			requestAnimationFrame(() => {
 				requestAnimationFrame(() => {
@@ -297,11 +326,12 @@ const ImportLeads = () => {
 			if (index < 0) return current
 			const next = current.slice()
 			const row = current[index]
-			next[index] = applyEmailMobileValidation(
+			next[index] = applyClientRowValidation(
 				new ImportParsedRow({
 					...row,
 					values: { ...row.values, [key]: value },
 				}),
+				offeringNames,
 				key
 			)
 			return next

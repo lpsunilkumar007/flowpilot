@@ -74,6 +74,7 @@ public sealed class LeadImportProvider : ImportProviderBase
             Column(ImportColumnKeys.ExternalId, "ID", sample: "12345", aliases: ["externalId", "externalid"]),
             Column(ImportColumnKeys.Domain, "Domain", sample: "acme.com", aliases: ["website", "domain"]),
             Column(ImportColumnKeys.Company, "Company", required: true, sample: "Acme Inc", aliases: ["businessName", "businessname", "company"]),
+            Column(ImportColumnKeys.Offering, "Offering", required: true, sample: "Core Product", lookupHint: "Exact name of an existing active Offering", aliases: ["offeringName", "offering"]),
             Column(ImportColumnKeys.Sic4, "SIC4", sample: "5812", aliases: ["sic4"]),
             Column(ImportColumnKeys.Naics6, "NAICS6", sample: "722511", aliases: ["naics6"]),
             Column(ImportColumnKeys.Employee, "Employee", sample: "50", aliases: ["companySize", "companysize", "employee"]),
@@ -149,6 +150,7 @@ public sealed class LeadImportProvider : ImportProviderBase
         var query = _dbContext.Leads
             .AsNoTracking()
             .Include(x => x.LeadContacts)
+            .Include(x => x.Offering)
             .Where(x => !x.IsArchived);
 
         if (!await _reportingHierarchyService.IsTenantAdminAsync(cancellationToken))
@@ -223,6 +225,12 @@ public sealed class LeadImportProvider : ImportProviderBase
             }
         }
 
+        var offerings = await _dbContext.Offerings
+            .AsNoTracking()
+            .Where(x => x.Status == OfferingStatus.Active)
+            .Select(x => new { x.Id, x.Name })
+            .ToListAsync(cancellationToken);
+
         return new LeadImportLookups
         {
             LeadSourcesByName = sources
@@ -230,6 +238,9 @@ public sealed class LeadImportProvider : ImportProviderBase
                 .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase),
             LeadStatusesByName = statuses
                 .GroupBy(x => x.LookUpValue, StringComparer.OrdinalIgnoreCase)
+                .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase),
+            OfferingsByName = offerings
+                .GroupBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
                 .ToDictionary(g => g.Key, g => g.First().Id, StringComparer.OrdinalIgnoreCase),
             DefaultLeadSourceId = defaultSource.Id,
             DefaultLeadStatusId = defaultStatus.Id,
@@ -270,6 +281,7 @@ public sealed class LeadImportProvider : ImportProviderBase
             var priority = GetValue(row, ImportColumnKeys.Priority);
             var interestLevel = GetValue(row, ImportColumnKeys.InterestLevel);
             var closingDate = GetValue(row, ImportColumnKeys.ExpectedClosingDate);
+            var offering = GetValue(row, ImportColumnKeys.Offering);
 
             if (string.IsNullOrWhiteSpace(company))
             {
@@ -329,6 +341,15 @@ public sealed class LeadImportProvider : ImportProviderBase
             if (!string.IsNullOrWhiteSpace(revenue) && !ImportValueParser.TryParseDecimal(revenue, out _))
             {
                 // Invalid revenue is stored in Metadata as rawRevenue; do not fail the row.
+            }
+
+            if (string.IsNullOrWhiteSpace(offering))
+            {
+                AddError(row, "Offering is required.");
+            }
+            else if (!lookups.OfferingsByName.ContainsKey(offering))
+            {
+                AddError(row, $"Row {row.RowNumber}: Offering '{offering}' was not found.");
             }
 
             if (!string.IsNullOrWhiteSpace(leadSource) && !lookups.LeadSourcesByName.ContainsKey(leadSource))
@@ -449,7 +470,7 @@ public sealed class LeadImportProvider : ImportProviderBase
             Competitors = ImportValueParser.NullIfEmpty(GetValue(row, ImportColumnKeys.Competitors)),
             Requirements = ImportValueParser.NullIfEmpty(GetValue(row, ImportColumnKeys.Requirements)),
             Metadata = BuildMetadataJson(row, revenueText, revenueParsed),
-            OfferingId = 1,
+            OfferingId = lookups.OfferingsByName[GetValue(row, ImportColumnKeys.Offering)],
         };
     }
 
@@ -477,6 +498,7 @@ public sealed class LeadImportProvider : ImportProviderBase
             [ImportColumnKeys.ExternalId] = Meta("externalId"),
             [ImportColumnKeys.Domain] = lead.Website ?? string.Empty,
             [ImportColumnKeys.Company] = lead.BusinessName,
+            [ImportColumnKeys.Offering] = lead.Offering?.Name ?? string.Empty,
             [ImportColumnKeys.Sic4] = Meta("sic4"),
             [ImportColumnKeys.Naics6] = Meta("naics6"),
             [ImportColumnKeys.Employee] = lead.CompanySize ?? string.Empty,
@@ -588,6 +610,8 @@ public sealed class LeadImportProvider : ImportProviderBase
         public Dictionary<string, DefaultIdType> LeadSourcesByName { get; init; } = new(StringComparer.OrdinalIgnoreCase);
 
         public Dictionary<string, DefaultIdType> LeadStatusesByName { get; init; } = new(StringComparer.OrdinalIgnoreCase);
+
+        public Dictionary<string, DefaultIdType> OfferingsByName { get; init; } = new(StringComparer.OrdinalIgnoreCase);
 
         public DefaultIdType DefaultLeadSourceId { get; init; }
 
