@@ -8,8 +8,8 @@ import { runWithToast } from '@/helpers/asyncToast.helper'
 import { messageHelper } from '@/helpers/message.helper'
 import { usePermission } from '@/hooks/usePermission'
 import { campaignService } from '@/services/CampaignService'
+import { DropDownService } from '@/services/DropDownService'
 import { emailTemplateService } from '@/services/EmailTemplateService'
-import { offeringService } from '@/services/OfferingService'
 import { CampaignType, type CreateCampaignRequest } from '@/types/crm/campaign.types'
 import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -42,7 +42,7 @@ const CreateCampaign: React.FC = () => {
 		const searchModel = new SearchEmailTemplateRequest()
 		searchModel.pageNumber = 1
 		searchModel.pageSize = PagingVariables.DefaultPageSize
-		Promise.all([offeringService.getActiveDropDown(), emailTemplateService.getEmailTemplates(searchModel)])
+		Promise.all([DropDownService.getActiveOfferings(), emailTemplateService.getEmailTemplates(searchModel)])
 			.then(([offeringList, templatePage]) => {
 				setOfferings(offeringList ?? [])
 				setTemplates(

@@ -23,14 +23,6 @@ public class OfferingController : VersionedApiController
         return await _offeringService.SearchAsync(request, cancellationToken);
     }
 
-    [HttpGet("active-dropdown")]
-    [RequireAnyResource(SystemAction.View, [SystemResource.ManageOfferings, SystemResource.ManageLeads, SystemResource.ManageSalePipelines])]
-    [OpenApiOperation("Get active offering dropdown", "")]
-    public async Task<List<OfferingDropDownItemResponse>> GetActiveDropDown(CancellationToken cancellationToken)
-    {
-        return await _offeringService.GetActiveDropDownAsync(cancellationToken);
-    }
-
     [HttpGet("{id}")]
     [MustHavePermission(SystemAction.View, SystemResource.ManageOfferings)]
     [OpenApiOperation("Get offering by id", "")]

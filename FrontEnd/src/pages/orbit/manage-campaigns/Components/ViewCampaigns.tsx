@@ -7,7 +7,7 @@ import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { campaignService } from '@/services/CampaignService'
 import { CampaignType, type ViewCampaignResponse } from '@/types/crm/campaign.types'
 import moment from 'moment'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 
@@ -19,38 +19,39 @@ const ViewCampaigns: React.FC = () => {
 	const [loading, setLoading] = useState(true)
 	const [campaigns, setCampaigns] = useState<ViewCampaignResponse[]>([])
 	const [searchText, setSearchText] = useState('')
+	const searchTextRef = useRef(searchText)
+	searchTextRef.current = searchText
 	const [currentPage, setCurrentPage] = useState(1)
 	const [totalPages, setTotalPages] = useState(1)
 	const [hasPreviousPage, setHasPreviousPage] = useState(false)
 	const [hasNextPage, setHasNextPage] = useState(false)
 	const [totalCount, setTotalCount] = useState(0)
 
-	const fetchCampaigns = useCallback(
-		async (pageNumber: number, overrides?: { searchText?: string }) => {
-			await runWithToast(
-				async () => {
-					const res = await campaignService.search({
-						pageNumber,
-						pageSize: PagingVariables.DefaultPageSize,
-						searchText: overrides?.searchText ?? (searchText || undefined),
-					})
-					setCampaigns(res.data ?? [])
-					setCurrentPage(res.currentPage)
-					setTotalPages(res.totalPages)
-					setHasPreviousPage(res.hasPreviousPage)
-					setHasNextPage(res.hasNextPage)
-					setTotalCount(res.totalCount)
-					return res
-				},
-				{ setLoading }
-			)
-		},
-		[searchText]
-	)
+	const fetchCampaigns = useCallback(async (pageNumber: number, overrides?: { searchText?: string }) => {
+		const nextSearchText = overrides && Object.prototype.hasOwnProperty.call(overrides, 'searchText') ? overrides.searchText || undefined : searchTextRef.current || undefined
+		await runWithToast(
+			async () => {
+				const res = await campaignService.search({
+					pageNumber,
+					pageSize: PagingVariables.DefaultPageSize,
+					searchText: nextSearchText,
+				})
+				setCampaigns(res.data ?? [])
+				setCurrentPage(res.currentPage)
+				setTotalPages(res.totalPages)
+				setHasPreviousPage(res.hasPreviousPage)
+				setHasNextPage(res.hasNextPage)
+				setTotalCount(res.totalCount)
+				return res
+			},
+			{ setLoading }
+		)
+	}, [])
 
 	useEffect(() => {
 		fetchCampaigns(1)
-	}, [fetchCampaigns])
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [])
 
 	const campaignTypeLabel = (type: CampaignType | string) => (type === CampaignType.Email || type === 'Email' ? t('Manage.Campaigns.Type_Email', 'Email') : String(type))
 

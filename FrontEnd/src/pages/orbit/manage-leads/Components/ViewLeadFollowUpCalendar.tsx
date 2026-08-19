@@ -186,8 +186,8 @@ const ViewLeadFollowUpCalendar = () => {
     const [isLoading, setIsLoading] = useState(false)
     const [basicInfoLeadId, setBasicInfoLeadId] = useState<number | undefined>()
     const [visibleDateRange, setVisibleDateRange] = useState({
-        start: moment().startOf('month').format('YYYY-MM-DD'),
-        end: moment().endOf('month').format('YYYY-MM-DD'),
+        start: '',
+        end: '',
     })
 
     const usersForDisplay = useMemo(() => {
@@ -229,17 +229,15 @@ const ViewLeadFollowUpCalendar = () => {
     )
 
     useEffect(() => {
+        if (!visibleDateRange.start || !visibleDateRange.end) return
         loadCalendarEvents()
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [assignedToUserId, canFilterByAssignee, canViewTasks])
+    }, [assignedToUserId, canFilterByAssignee, canViewTasks, visibleDateRange.start, visibleDateRange.end])
 
     const handleDatesSet = (dateInfo: DatesSetArg) => {
         const start = moment(dateInfo.start).format('YYYY-MM-DD')
         const end = moment(dateInfo.end).subtract(1, 'day').format('YYYY-MM-DD')
-        const newDateRange = { start, end }
-
-        setVisibleDateRange(newDateRange)
-        loadCalendarEvents(newDateRange)
+        setVisibleDateRange((prev) => (prev.start === start && prev.end === end ? prev : { start, end }))
     }
 
     const handleViewLead = (leadId: number, event: MouseEvent) => {

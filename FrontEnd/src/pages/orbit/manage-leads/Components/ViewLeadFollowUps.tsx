@@ -1,14 +1,12 @@
 import { formatHelper } from '@/helpers/format.helper'
-import { AnimationSkeleton } from '@/pages/ui/Skeleton'
-import { leadService } from '@/services/LeadService'
-import { FollowUpStatus, FollowUpType, type ViewLeadFollowUpResponse } from '@/types/crm/lead.types'
-import React, { useEffect, useState } from 'react'
+import { FollowUpStatus, FollowUpType, type ViewLeadDetailResponse } from '@/types/crm/lead.types'
+import React from 'react'
 import { useTranslation } from 'react-i18next'
 import { leadCardClass } from '../helpers/leadDisplay.helper'
 import LeadSectionCard from './shared/LeadSectionCard'
 
 interface ViewLeadFollowUpsProps {
-	id: string
+	lead: ViewLeadDetailResponse
 }
 
 const statusTone: Record<string, string> = {
@@ -18,25 +16,9 @@ const statusTone: Record<string, string> = {
 	Cancelled: 'bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:text-slate-300',
 }
 
-const ViewLeadFollowUps: React.FC<ViewLeadFollowUpsProps> = ({ id }) => {
+const ViewLeadFollowUps: React.FC<ViewLeadFollowUpsProps> = ({ lead }) => {
 	const { t } = useTranslation()
-	const [loading, setLoading] = useState(true)
-	const [followUps, setFollowUps] = useState<ViewLeadFollowUpResponse[]>([])
-
-	useEffect(() => {
-		const load = async () => {
-			setLoading(true)
-			try {
-				const lead = await leadService.getById(Number(id))
-				setFollowUps(lead.followUps ?? [])
-			} finally {
-				setLoading(false)
-			}
-		}
-		load()
-	}, [id])
-
-	if (loading) return <AnimationSkeleton />
+	const followUps = lead.followUps ?? []
 
 	const formatFollowUpStatus = (status: FollowUpStatus | string) => {
 		if (typeof status === 'string') return formatHelper.punctuateLabel(status)

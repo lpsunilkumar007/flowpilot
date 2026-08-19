@@ -298,6 +298,50 @@ export class DataControllersClient {
         }
         return Promise.resolve<ViewCountryLocalizationResponse[]>(null as any);
     }
+
+    /**
+     * Get active offering dropdown
+     */
+    getActiveOfferings(): Promise<OfferingDropDownItemResponse[]> {
+        let url_ = this.baseUrl + "/api/datacontrollers/active-offerings";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processGetActiveOfferings(_response);
+        });
+    }
+
+    protected processGetActiveOfferings(response: Response): Promise<OfferingDropDownItemResponse[]> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            if (Array.isArray(resultData200)) {
+                result200 = [] as any;
+                for (let item of resultData200)
+                    result200!.push(OfferingDropDownItemResponse.fromJS(item));
+            }
+            else {
+                result200 = null as any;
+            }
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<OfferingDropDownItemResponse[]>(null as any);
+    }
 }
 
 export class SubscriptionClient {
@@ -4884,12 +4928,31 @@ export class CampaignClient {
 
     /**
      * Get leads for campaign picker by offering
+     * @param searchText (optional) 
+     * @param pageNumber (optional) 
+     * @param pageSize (optional) 
+     * @param sortOrder (optional) 
+     * @param sortField (optional) 
      */
-    getLeadsByOffering(offeringId: number): Promise<ViewCampaignLeadPickerResponse[]> {
-        let url_ = this.baseUrl + "/api/v1/campaign/leads-by-offering/{offeringId}";
+    getLeadsByOffering(offeringId: number, searchText: string | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortOrder: string | null | undefined, sortField: string | null | undefined): Promise<PaginationResponseOfViewCampaignLeadPickerResponse> {
+        let url_ = this.baseUrl + "/api/v1/campaign/leads-by-offering/{offeringId}?";
         if (offeringId === undefined || offeringId === null)
             throw new globalThis.Error("The parameter 'offeringId' must be defined.");
         url_ = url_.replace("{offeringId}", encodeURIComponent("" + offeringId));
+        if (searchText !== undefined && searchText !== null)
+            url_ += "SearchText=" + encodeURIComponent("" + searchText) + "&";
+        if (pageNumber === null)
+            throw new globalThis.Error("The parameter 'pageNumber' cannot be null.");
+        else if (pageNumber !== undefined)
+            url_ += "PageNumber=" + encodeURIComponent("" + pageNumber) + "&";
+        if (pageSize === null)
+            throw new globalThis.Error("The parameter 'pageSize' cannot be null.");
+        else if (pageSize !== undefined)
+            url_ += "PageSize=" + encodeURIComponent("" + pageSize) + "&";
+        if (sortOrder !== undefined && sortOrder !== null)
+            url_ += "sortOrder=" + encodeURIComponent("" + sortOrder) + "&";
+        if (sortField !== undefined && sortField !== null)
+            url_ += "sortField=" + encodeURIComponent("" + sortField) + "&";
         url_ = url_.replace(/[?&]$/, "");
 
         let options_: RequestInit = {
@@ -4904,21 +4967,14 @@ export class CampaignClient {
         });
     }
 
-    protected processGetLeadsByOffering(response: Response): Promise<ViewCampaignLeadPickerResponse[]> {
+    protected processGetLeadsByOffering(response: Response): Promise<PaginationResponseOfViewCampaignLeadPickerResponse> {
         const status = response.status;
         let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
         if (status === 200) {
             return response.text().then((_responseText) => {
             let result200: any = null;
             let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(ViewCampaignLeadPickerResponse.fromJS(item));
-            }
-            else {
-                result200 = null as any;
-            }
+            result200 = PaginationResponseOfViewCampaignLeadPickerResponse.fromJS(resultData200);
             return result200;
             });
         } else if (status !== 200 && status !== 204) {
@@ -4926,7 +4982,7 @@ export class CampaignClient {
             return throwException("An unexpected server error occurred.", status, _responseText, _headers);
             });
         }
-        return Promise.resolve<ViewCampaignLeadPickerResponse[]>(null as any);
+        return Promise.resolve<PaginationResponseOfViewCampaignLeadPickerResponse>(null as any);
     }
 
     /**
@@ -5032,6 +5088,7 @@ export class LeadClient {
      * @param assignedToUserId (optional) 
      * @param offeringId (optional) 
      * @param offeringUniqueId (optional) 
+     * @param leadStatusId (optional) Required for Sales Pipeline column paging. Omit on the Leads list to return all statuses.
      * @param fromDate (optional) 
      * @param toDate (optional) 
      * @param pageNumber (optional) 
@@ -5039,7 +5096,7 @@ export class LeadClient {
      * @param sortOrder (optional) 
      * @param sortField (optional) 
      */
-    search(filterType: LeadFilterType | undefined, searchText: string | null | undefined, assignedToUserId: string | null | undefined, offeringId: number | null | undefined, offeringUniqueId: string | null | undefined, fromDate: moment.Moment | null | undefined, toDate: moment.Moment | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortOrder: string | null | undefined, sortField: string | null | undefined): Promise<PaginationResponseOfViewLeadListResponse> {
+    search(filterType: LeadFilterType | undefined, searchText: string | null | undefined, assignedToUserId: string | null | undefined, offeringId: number | null | undefined, offeringUniqueId: string | null | undefined, leadStatusId: number | null | undefined, fromDate: moment.Moment | null | undefined, toDate: moment.Moment | null | undefined, pageNumber: number | undefined, pageSize: number | undefined, sortOrder: string | null | undefined, sortField: string | null | undefined): Promise<PaginationResponseOfViewLeadListResponse> {
         let url_ = this.baseUrl + "/api/v1/lead?";
         if (filterType === null)
             throw new globalThis.Error("The parameter 'filterType' cannot be null.");
@@ -5053,6 +5110,8 @@ export class LeadClient {
             url_ += "OfferingId=" + encodeURIComponent("" + offeringId) + "&";
         if (offeringUniqueId !== undefined && offeringUniqueId !== null)
             url_ += "OfferingUniqueId=" + encodeURIComponent("" + offeringUniqueId) + "&";
+        if (leadStatusId !== undefined && leadStatusId !== null)
+            url_ += "LeadStatusId=" + encodeURIComponent("" + leadStatusId) + "&";
         if (fromDate !== undefined && fromDate !== null)
             url_ += "FromDate=" + encodeURIComponent(fromDate ? "" + fromDate.toISOString() : "") + "&";
         if (toDate !== undefined && toDate !== null)
@@ -6097,50 +6156,6 @@ export class OfferingClient {
     }
 
     /**
-     * Get active offering dropdown
-     */
-    getActiveDropDown(): Promise<OfferingDropDownItemResponse[]> {
-        let url_ = this.baseUrl + "/api/v1/offering/active-dropdown";
-        url_ = url_.replace(/[?&]$/, "");
-
-        let options_: RequestInit = {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            }
-        };
-
-        return this.http.fetch(url_, options_).then((_response: Response) => {
-            return this.processGetActiveDropDown(_response);
-        });
-    }
-
-    protected processGetActiveDropDown(response: Response): Promise<OfferingDropDownItemResponse[]> {
-        const status = response.status;
-        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
-        if (status === 200) {
-            return response.text().then((_responseText) => {
-            let result200: any = null;
-            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
-            if (Array.isArray(resultData200)) {
-                result200 = [] as any;
-                for (let item of resultData200)
-                    result200!.push(OfferingDropDownItemResponse.fromJS(item));
-            }
-            else {
-                result200 = null as any;
-            }
-            return result200;
-            });
-        } else if (status !== 200 && status !== 204) {
-            return response.text().then((_responseText) => {
-            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
-            });
-        }
-        return Promise.resolve<OfferingDropDownItemResponse[]>(null as any);
-    }
-
-    /**
      * Get offering by id
      */
     getById(id: number): Promise<ViewOfferingResponse> {
@@ -7180,6 +7195,50 @@ export interface IViewCountryLocalizationResponse {
     fkCountryId: number;
     key: string;
     value: string;
+}
+
+export class OfferingDropDownItemResponse implements IOfferingDropDownItemResponse {
+    value?: number;
+    uniqueId?: string;
+    text?: string;
+
+    constructor(data?: IOfferingDropDownItemResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.value = _data["value"];
+            this.uniqueId = _data["uniqueId"];
+            this.text = _data["text"];
+        }
+    }
+
+    static fromJS(data: any): OfferingDropDownItemResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new OfferingDropDownItemResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["value"] = this.value;
+        data["uniqueId"] = this.uniqueId;
+        data["text"] = this.text;
+        return data;
+    }
+}
+
+export interface IOfferingDropDownItemResponse {
+    value?: number;
+    uniqueId?: string;
+    text?: string;
 }
 
 export class GetSubscriptionPlanDetailsResponse implements IGetSubscriptionPlanDetailsResponse {
@@ -13393,6 +13452,74 @@ export enum CampaignType {
     Email = "Email",
 }
 
+export class PaginationResponseOfViewCampaignLeadPickerResponse implements IPaginationResponseOfViewCampaignLeadPickerResponse {
+    data?: ViewCampaignLeadPickerResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+
+    constructor(data?: IPaginationResponseOfViewCampaignLeadPickerResponse) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["data"])) {
+                this.data = [] as any;
+                for (let item of _data["data"])
+                    this.data!.push(ViewCampaignLeadPickerResponse.fromJS(item));
+            }
+            this.currentPage = _data["currentPage"];
+            this.totalPages = _data["totalPages"];
+            this.totalCount = _data["totalCount"];
+            this.pageSize = _data["pageSize"];
+            this.hasPreviousPage = _data["hasPreviousPage"];
+            this.hasNextPage = _data["hasNextPage"];
+        }
+    }
+
+    static fromJS(data: any): PaginationResponseOfViewCampaignLeadPickerResponse {
+        data = typeof data === 'object' ? data : {};
+        let result = new PaginationResponseOfViewCampaignLeadPickerResponse();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.data)) {
+            data["data"] = [];
+            for (let item of this.data)
+                data["data"].push(item ? item.toJSON() : undefined as any);
+        }
+        data["currentPage"] = this.currentPage;
+        data["totalPages"] = this.totalPages;
+        data["totalCount"] = this.totalCount;
+        data["pageSize"] = this.pageSize;
+        data["hasPreviousPage"] = this.hasPreviousPage;
+        data["hasNextPage"] = this.hasNextPage;
+        return data;
+    }
+}
+
+export interface IPaginationResponseOfViewCampaignLeadPickerResponse {
+    data?: ViewCampaignLeadPickerResponse[];
+    currentPage?: number;
+    totalPages?: number;
+    totalCount?: number;
+    pageSize?: number;
+    hasPreviousPage?: boolean;
+    hasNextPage?: boolean;
+}
+
 export class ViewCampaignLeadPickerResponse implements IViewCampaignLeadPickerResponse {
     id?: number;
     businessName?: string;
@@ -16161,50 +16288,6 @@ export enum OfferingType {
 export enum OfferingStatus {
     Active = "Active",
     Inactive = "Inactive",
-}
-
-export class OfferingDropDownItemResponse implements IOfferingDropDownItemResponse {
-    value?: number;
-    uniqueId?: string;
-    text?: string;
-
-    constructor(data?: IOfferingDropDownItemResponse) {
-        if (data) {
-            for (var property in data) {
-                if (data.hasOwnProperty(property))
-                    (this as any)[property] = (data as any)[property];
-            }
-        }
-    }
-
-    init(_data?: any) {
-        if (_data) {
-            this.value = _data["value"];
-            this.uniqueId = _data["uniqueId"];
-            this.text = _data["text"];
-        }
-    }
-
-    static fromJS(data: any): OfferingDropDownItemResponse {
-        data = typeof data === 'object' ? data : {};
-        let result = new OfferingDropDownItemResponse();
-        result.init(data);
-        return result;
-    }
-
-    toJSON(data?: any) {
-        data = typeof data === 'object' ? data : {};
-        data["value"] = this.value;
-        data["uniqueId"] = this.uniqueId;
-        data["text"] = this.text;
-        return data;
-    }
-}
-
-export interface IOfferingDropDownItemResponse {
-    value?: number;
-    uniqueId?: string;
-    text?: string;
 }
 
 export class CreateOfferingResponse implements ICreateOfferingResponse {

@@ -15,6 +15,11 @@ public class SearchLeadRequest : SearchRequestBaseClass
 
     public Guid? OfferingUniqueId { get; set; }
 
+    /// <summary>
+    /// Required for Sales Pipeline column paging. Omit on the Leads list to return all statuses.
+    /// </summary>
+    public DefaultIdType? LeadStatusId { get; set; }
+
     public DateTimeOffset? FromDate { get; set; }
 
     public DateTimeOffset? ToDate { get; set; }

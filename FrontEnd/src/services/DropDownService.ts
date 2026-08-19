@@ -1,11 +1,12 @@
-import { DropDownItemResponse, LookUpCodeTypes, NexusLookUpCodeTypes, ViewCountryLocalizationResponse } from '@/helpers/api/WebApiClient'
 import { dataControllersClient } from '@/helpers/api/apiClients'
+import { DropDownItemResponse, LookUpCodeTypes, NexusLookUpCodeTypes, UserDropDownItemResponse, ViewCountryLocalizationResponse } from '@/helpers/api/WebApiClient'
+import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
 import type { IDropDownRepository } from './contracts/IDropDownRepository'
 
 const dropDownService: IDropDownRepository = {
 	async getNexusLookUpCodeValues(type: NexusLookUpCodeTypes): Promise<DropDownItemResponse[]> {
 		try {
-			return await dataControllersClient.getNexusLookUpCodeValues(type)
+			return (await dataControllersClient.getNexusLookUpCodeValues(type)) ?? []
 		} catch {
 			return []
 		}
@@ -13,27 +14,35 @@ const dropDownService: IDropDownRepository = {
 
 	async getLookUpCodeValues(type: LookUpCodeTypes): Promise<DropDownItemResponse[]> {
 		try {
-			return await dataControllersClient.getLookUpCodeValues(type)
+			return (await dataControllersClient.getLookUpCodeValues(type)) ?? []
 		} catch {
 			return []
 		}
 	},
 
-	async getSystemUsers(ignoreLoggedInUser: boolean) {
+	async getSystemUsers(ignoreLoggedInUser: boolean): Promise<UserDropDownItemResponse[]> {
 		return dataControllersClient.getSystemUsers(ignoreLoggedInUser)
 	},
 
-	async getDirectReportSystemUsers() {
+	async getDirectReportSystemUsers(): Promise<UserDropDownItemResponse[]> {
 		return dataControllersClient.getDirectReportSystemUsers()
 	},
 
-	async getLocalizationCountries() {
+	async getLocalizationCountries(): Promise<DropDownItemResponse[]> {
 		return dataControllersClient.getLocalizationCountries()
 	},
 
 	async getCountryLocalization(id: number): Promise<ViewCountryLocalizationResponse[]> {
 		try {
-			return await dataControllersClient.getCountryLocalization(id)
+			return (await dataControllersClient.getCountryLocalization(id)) ?? []
+		} catch {
+			return []
+		}
+	},
+
+	async getActiveOfferings(): Promise<OfferingDropDownItemResponse[]> {
+		try {
+			return ((await dataControllersClient.getActiveOfferings()) ?? []) as OfferingDropDownItemResponse[]
 		} catch {
 			return []
 		}
@@ -41,7 +50,7 @@ const dropDownService: IDropDownRepository = {
 }
 
 /**
- * DropDown service - abstraction over data lookup API client.
+ * DropDown service - abstraction over dropdown lookup API.
  * Implements IDropDownRepository for consistency and testability.
  */
 export const DropDownService = dropDownService

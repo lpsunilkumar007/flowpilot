@@ -621,6 +621,11 @@ public class LeadService : ILeadService
             query = query.Where(x => x.FKOfferingId == request.OfferingId.Value);
         }
 
+        if (request.LeadStatusId is > 0)
+        {
+            query = query.Where(x => x.FKLeadStatusId == request.LeadStatusId.Value);
+        }
+
         if (request.FromDate.HasValue)
         {
             query = query.Where(x => x.CreatedOn >= request.FromDate.Value);

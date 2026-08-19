@@ -9,7 +9,7 @@ import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
 import type { ViewLeadDetailResponse } from '@/types/crm/lead.types'
 import { Tab } from '@headlessui/react'
-import { lazy, useEffect, useMemo, useState } from 'react'
+import { lazy, useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useParams } from 'react-router-dom'
 import { leadCardClass } from '../helpers/leadDisplay.helper'
@@ -46,18 +46,21 @@ const EditLeadLandingPage = () => {
 		load()
 	}, [id])
 
-	const refreshLead = () => id && leadService.getById(Number(id)).then(setLead)
+	const refreshLead = useCallback(() => {
+		if (!id) return Promise.resolve()
+		return leadService.getById(Number(id)).then(setLead)
+	}, [id])
 
 	const tabContents = useMemo(
 		() =>
 			[
-				{ title: t('Manage.Leads.Tab_Overview', 'Overview'), icon: 'ri-dashboard-line', content: id ? <EditLeadOverview id={id} onLeadUpdated={refreshLead} /> : null, visible: true },
+				{ title: t('Manage.Leads.Tab_Overview', 'Overview'), icon: 'ri-dashboard-line', content: id && lead ? <EditLeadOverview id={id} lead={lead} onLeadUpdated={refreshLead} /> : null, visible: true },
 				{ title: t('Manage.Leads.Tab_Activities', 'Activities'), icon: 'ri-time-line', content: id ? <ViewLeadActivities id={id} /> : null, visible: canViewActivities },
-				{ title: t('Manage.Leads.Tab_FollowUps', 'Follow-ups'), icon: 'ri-calendar-check-line', content: id ? <ViewLeadFollowUps id={id} /> : null, visible: true },
+				{ title: t('Manage.Leads.Tab_FollowUps', 'Follow-ups'), icon: 'ri-calendar-check-line', content: lead ? <ViewLeadFollowUps lead={lead} /> : null, visible: true },
 				{ title: t('Manage.Leads.Tab_Notes', 'Notes'), icon: 'ri-sticky-note-line', content: id ? <ViewLeadNotes id={id} /> : null, visible: canViewNotes },
-				{ title: t('Manage.Leads.Tab_History', 'History'), icon: 'ri-history-line', content: id ? <ViewLeadHistory id={id} /> : null, visible: true },
+				{ title: t('Manage.Leads.Tab_History', 'History'), icon: 'ri-history-line', content: lead ? <ViewLeadHistory lead={lead} /> : null, visible: true },
 			].filter((tab) => tab.visible),
-		[id, t, canViewActivities, canViewNotes]
+		[id, t, canViewActivities, canViewNotes, lead, refreshLead]
 	)
 
 	return (

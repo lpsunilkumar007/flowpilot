@@ -7,7 +7,6 @@ import { formatHelper } from '@/helpers/format.helper'
 import { messageHelper } from '@/helpers/message.helper'
 import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
-import { offeringService } from '@/services/OfferingService'
 import { InterestLevel, LeadPriority, type CreateLeadRequest } from '@/types/crm/lead.types'
 import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
@@ -48,7 +47,7 @@ const AddLeadDetails: React.FC = () => {
 			DropDownService.getDirectReportSystemUsers(),
 			DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus),
 			DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadSource),
-			offeringService.getActiveDropDown(),
+			DropDownService.getActiveOfferings(),
 		])
 			.then(([userList, statusList, sourceList, offeringList]) => {
 				setUsers(userList ?? [])

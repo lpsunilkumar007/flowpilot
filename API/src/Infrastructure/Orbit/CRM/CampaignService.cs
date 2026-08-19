@@ -91,7 +91,7 @@ public class CampaignService : ICampaignService
         };
     }
 
-    public async Task<List<ViewCampaignLeadPickerResponse>> GetLeadsByOfferingAsync(DefaultIdType offeringId, CancellationToken cancellationToken = default)
+    public async Task<PaginationResponse<ViewCampaignLeadPickerResponse>> GetLeadsByOfferingAsync(DefaultIdType offeringId, SearchCampaignLeadsRequest request, CancellationToken cancellationToken = default)
     {
         await EnsureActiveOfferingIdAsync(offeringId, cancellationToken);
 
@@ -101,8 +101,25 @@ public class CampaignService : ICampaignService
 
         query = await ApplyLeadScopeForCurrentUserAsync(query, cancellationToken);
 
+        if (!string.IsNullOrWhiteSpace(request.SearchText))
+        {
+            var term = request.SearchText.Trim().ToLower();
+            query = query.Where(x =>
+                x.BusinessName.ToLower().Contains(term)
+                || x.LeadContacts.Any(c => c.IsPrimary && c.OwnerName.ToLower().Contains(term))
+                || x.LeadContacts.Any(c => c.IsPrimary && c.Mobile.Contains(term))
+                || x.LeadContacts.Any(c => c.IsPrimary && c.Email != null && c.Email.ToLower().Contains(term))
+                || x.Id.ToString().Contains(term));
+        }
+
+        var pageNumber = request.PageNumber <= 0 ? 1 : request.PageNumber;
+        var pageSize = request.PageSize <= 0 ? 10 : request.PageSize;
+        var totalCount = await query.CountAsync(cancellationToken);
+
         var leads = await query
             .OrderBy(x => x.BusinessName)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
             .Select(x => new
             {
                 x.Id,
@@ -113,7 +130,7 @@ public class CampaignService : ICampaignService
 
         var assignedById = await GetAssignedUsersByIdAsync(leads.Select(x => x.FKAssignedToUserId));
 
-        return leads.Select(lead =>
+        var data = leads.Select(lead =>
         {
             var assignedUser = GetAssignedUser(assignedById, lead.FKAssignedToUserId);
             return new ViewCampaignLeadPickerResponse
@@ -125,6 +142,8 @@ public class CampaignService : ICampaignService
                 Mobile = assignedUser?.PhoneNumber ?? string.Empty,
             };
         }).ToList();
+
+        return new PaginationResponse<ViewCampaignLeadPickerResponse>(data, totalCount, pageNumber, pageSize);
     }
 
     public async Task<CreateCampaignResponse> CreateAsync(CreateCampaignRequest request, CancellationToken cancellationToken = default)

@@ -10,7 +10,6 @@ import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { RootState } from '@/redux/store'
 import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
-import { offeringService } from '@/services/OfferingService'
 import { InterestLevel, LeadPriority, type UpdateLeadRequest, type ViewLeadDetailResponse } from '@/types/crm/lead.types'
 import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
 import React, { useEffect, useRef, useState } from 'react'
@@ -24,7 +23,8 @@ import * as yup from 'yup'
 
 interface EditLeadOverviewProps {
 	id: string
-	onLeadUpdated?: () => void
+	lead: ViewLeadDetailResponse
+	onLeadUpdated?: () => void | Promise<void>
 }
 
 const isSameUserId = (left?: string | null, right?: string | null) => Boolean(left && right && left.localeCompare(right, undefined, { sensitivity: 'accent' }) === 0)
@@ -52,14 +52,13 @@ const metadataHref = (value: string): string | undefined => {
 	return undefined
 }
 
-const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }) => {
+const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, lead, onLeadUpdated }) => {
 	const { t } = useTranslation()
 	const { userHasPermission } = usePermission()
 	const canUpdate = userHasPermission(PermissionTypes.Permissions_ManageLeads_Update)
 	const userData = useSelector((state: RootState) => state.Auth.userData) as ViewUserDetailsResponse | undefined
 	const currentUserId = userData?.id
 	const [loading, setLoading] = useState(true)
-	const [lead, setLead] = useState<ViewLeadDetailResponse | null>(null)
 	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
 	const [leadStatuses, setLeadStatuses] = useState<{ value: number; text: string }[]>([])
 	const [leadSources, setLeadSources] = useState<{ value: number; text: string }[]>([])
@@ -77,30 +76,26 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 	}
 
 	const reload = async () => {
-		const leadRes = await leadService.getById(Number(id))
-		setLead(leadRes)
-		setStatusUpdate(leadRes.leadStatusId)
-		syncAssigneeState(leadRes.assignedToUserId)
-		setFormKey((k) => k + 1)
-		onLeadUpdated?.()
+		await onLeadUpdated?.()
 	}
+
+	useEffect(() => {
+		setStatusUpdate(lead.leadStatusId)
+		syncAssigneeState(lead.assignedToUserId)
+		setFormKey((k) => k + 1)
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [lead, currentUserId])
 
 	useEffect(() => {
 		const load = async () => {
 			setLoading(true)
 			try {
-				const [leadRes, userList, statusList, sourceList, offeringList] = await Promise.all([
-					leadService.getById(Number(id)),
+				const [userList, statusList, sourceList, offeringList] = await Promise.all([
 					DropDownService.getDirectReportSystemUsers(),
 					DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus),
 					DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadSource),
-					offeringService.getActiveDropDown(),
+					DropDownService.getActiveOfferings(),
 				])
-				setLead(leadRes)
-				setStatusUpdate(leadRes.leadStatusId)
-				const assignedToSelf = isSameUserId(leadRes.assignedToUserId, currentUserId)
-				setAssignToYourself(assignedToSelf)
-				setAssignUserId(assignedToSelf ? '' : leadRes.assignedToUserId ?? '')
 				setUsers(userList ?? [])
 				setLeadStatuses((statusList ?? []).map((item) => ({ value: item.value, text: item.text })))
 				setLeadSources((sourceList ?? []).map((item) => ({ value: item.value, text: item.text })))
@@ -110,7 +105,7 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 			}
 		}
 		load()
-	}, [id, currentUserId])
+	}, [id])
 
 	const schemaResolver = yupResolver(
 		yup.object().shape({
@@ -182,7 +177,7 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, onLeadUpdated }
 		)
 	}
 
-	if (loading || !lead) return <AnimationSkeleton />
+	if (loading) return <AnimationSkeleton />
 
 	const assignedToSelf = isSameUserId(lead.assignedToUserId, currentUserId)
 	const metadataMap = parseLeadMetadata(lead.metadata)

@@ -11,6 +11,14 @@ export interface SearchCampaignRequest {
 	campaignType?: CampaignType
 }
 
+export interface SearchCampaignLeadsRequest {
+	pageNumber: number
+	pageSize: number
+	sortOrder?: string
+	sortField?: string
+	searchText?: string
+}
+
 export interface CreateCampaignRequest {
 	title: string
 	campaignType: CampaignType
@@ -75,6 +83,16 @@ export interface ViewCampaignLeadPickerResponse {
 
 export interface PaginationResponseOfViewCampaignResponse {
 	data: ViewCampaignResponse[]
+	currentPage: number
+	totalPages: number
+	totalCount: number
+	pageSize: number
+	hasPreviousPage: boolean
+	hasNextPage: boolean
+}
+
+export interface PaginationResponseOfViewCampaignLeadPickerResponse {
+	data: ViewCampaignLeadPickerResponse[]
 	currentPage: number
 	totalPages: number
 	totalCount: number

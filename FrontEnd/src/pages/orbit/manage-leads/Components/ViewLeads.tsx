@@ -9,7 +9,6 @@ import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { RootState } from '@/redux/store'
 import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
-import { offeringService } from '@/services/OfferingService'
 import { LeadFilterType, type PaginationResponseOfViewLeadListResponse } from '@/types/crm/lead.types'
 import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -62,7 +61,7 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	const [searchText, setSearchText] = useState('')
 	const [assignedToUserId, setAssignedToUserId] = useState<string | undefined>(teamAssignedToUserId)
 	const [offeringId, setOfferingId] = useState<number | undefined>(queryOfferingId)
-	const [offeringUniqueId, setOfferingUniqueId] = useState<string | undefined>(queryOfferingUid)
+	const [offeringUniqueId, setOfferingUniqueId] = useState<string | undefined>(queryOfferingId ? undefined : queryOfferingUid)
 
 	useEffect(() => {
 		if (teamAssignedToUserId) setAssignedToUserId(teamAssignedToUserId)
@@ -76,8 +75,7 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	}, [canFilterByAssignee, isTeamContext, users, currentUserId, userData?.firstName, userData?.lastName, userData?.email])
 
 	useEffect(() => {
-		offeringService
-			.getActiveDropDown()
+		DropDownService.getActiveOfferings()
 			.then((list) => setOfferings(list ?? []))
 			.catch(() => setOfferings([]))
 	}, [])
@@ -117,16 +115,11 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	)
 
 	useEffect(() => {
-		fetchLeads(0)
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [reloadLeads, assignedToUserId, isTeamContext])
-
-	useEffect(() => {
 		setOfferingId(queryOfferingId)
 		setOfferingUniqueId(queryOfferingId ? undefined : queryOfferingUid)
 		fetchLeads(0, { offeringId: queryOfferingId, offeringUniqueId: queryOfferingId ? undefined : queryOfferingUid })
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [queryOfferingId, queryOfferingUid])
+	}, [reloadLeads, assignedToUserId, isTeamContext, queryOfferingId, queryOfferingUid])
 
 	const handleFilterChange = (value: LeadFilterType) => {
 		setFilterType(value)

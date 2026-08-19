@@ -1,7 +1,6 @@
 import type {
 	CreateOfferingRequest,
 	CreateOfferingResponse,
-	OfferingDropDownItemResponse,
 	PaginationResponseOfViewOfferingResponse,
 	SearchOfferingRequest,
 	UpdateOfferingRequest,
@@ -11,7 +10,6 @@ import type {
 
 export interface IOfferingRepository {
 	search(request: SearchOfferingRequest): Promise<PaginationResponseOfViewOfferingResponse>
-	getActiveDropDown(): Promise<OfferingDropDownItemResponse[]>
 	getById(id: number): Promise<ViewOfferingResponse>
 	create(request: CreateOfferingRequest): Promise<CreateOfferingResponse>
 	update(id: number, request: UpdateOfferingRequest): Promise<string>

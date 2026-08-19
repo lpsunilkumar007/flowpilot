@@ -2,70 +2,42 @@ import ConfirmationModal from '@/components/ConfirmationModal'
 import { ModalLayout } from '@/components/HeadlessUI'
 import { FormInput } from '@/components'
 import { MenuLinks } from '@/constants/menu'
-import { PagingVariables } from '@/constants/paging'
 import { PermissionTypes } from '@/constants/permissions'
 import { CreateLookUpCodeValueRequest, LookUpCodeTypes, UpdateLookUpCodeValueRequest } from '@/helpers/api/WebApiClient'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { formatHelper } from '@/helpers/format.helper'
 import { messageHelper } from '@/helpers/message.helper'
 import { usePermission } from '@/hooks/usePermission'
-import { leadCardClass } from '@/pages/orbit/manage-leads/helpers/leadDisplay.helper'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
-import { offeringService } from '@/services/OfferingService'
 import { lookUpService } from '@/services/LookUpService'
-import { InterestLevel, LeadFilterType, type UpdateLeadRequest, type ViewLeadDetailResponse, type ViewLeadListResponse } from '@/types/crm/lead.types'
+import { LeadFilterType, type SearchLeadRequest, type UpdateLeadRequest, type ViewLeadDetailResponse, type ViewLeadListResponse } from '@/types/crm/lead.types'
 import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
-import type { PipelineBoardState, PipelineStage } from '@/types/crm/pipeline.types'
+import {
+	emptyPipelineColumn,
+	pipelineColumnFromPage,
+	PIPELINE_COLUMN_PAGE_SIZE,
+	type PipelineBoardState,
+	type PipelineColumnState,
+	type PipelineStage,
+} from '@/types/crm/pipeline.types'
 import { DragDropContext, Draggable, Droppable, type DropResult } from '@hello-pangea/dnd'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
+import PipelineColumn from './PipelineColumn'
+import { formatPipelineRevenue } from './PipelineLeadCard'
 
 const STAGE_HEADER_CLASSES = ['bg-slate-50 dark:bg-slate-800/60', 'bg-blue-50 dark:bg-blue-900/20', 'bg-indigo-50 dark:bg-indigo-900/20', 'bg-violet-50 dark:bg-violet-900/20', 'bg-amber-50 dark:bg-amber-900/20', 'bg-orange-50 dark:bg-orange-900/20', 'bg-emerald-50 dark:bg-emerald-900/20', 'bg-rose-50 dark:bg-rose-900/20', 'bg-cyan-50 dark:bg-cyan-900/20', 'bg-teal-50 dark:bg-teal-900/20']
 
 const stageKey = (statusId: number) => String(statusId)
-
-const formatRevenue = (value?: number | null) => {
-	if (value == null) return '—'
-	if (value >= 1000) {
-		const formatted = value / 1000
-		return `$${formatted % 1 === 0 ? formatted.toFixed(0) : formatted.toFixed(1)}k`
-	}
-	return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(value)
-}
-
-const getInitials = (name?: string) => {
-	if (!name?.trim()) return '?'
-	return name
-		.trim()
-		.split(/\s+/)
-		.slice(0, 2)
-		.map((p) => p[0]?.toUpperCase() ?? '')
-		.join('')
-}
 
 const reorder = <T,>(list: T[], startIndex: number, endIndex: number): T[] => {
 	const result = Array.from(list)
 	const [removed] = result.splice(startIndex, 1)
 	result.splice(endIndex, 0, removed)
 	return result
-}
-
-const buildBoard = (stages: PipelineStage[], leads: ViewLeadListResponse[]): PipelineBoardState => {
-	const board = stages.reduce((acc, stage) => {
-		acc[stageKey(stage.id)] = []
-		return acc
-	}, {} as PipelineBoardState)
-
-	leads.forEach((lead) => {
-		const key = stageKey(lead.leadStatusId)
-		if (board[key]) board[key].push(lead)
-		else if (stages[0]) board[stageKey(stages[0].id)].push(lead)
-	})
-
-	return board
 }
 
 const detailToUpdateRequest = (lead: ViewLeadDetailResponse, overrides: Partial<UpdateLeadRequest> = {}): UpdateLeadRequest => ({
@@ -141,48 +113,148 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 	const [listActionBusy, setListActionBusy] = useState(false)
 	const [offerings, setOfferings] = useState<OfferingDropDownItemResponse[]>([])
 	const [offeringId, setOfferingId] = useState<number | undefined>(queryOfferingId)
-	const [offeringUniqueId, setOfferingUniqueId] = useState<string | undefined>(queryOfferingUid)
+	const [offeringUniqueId, setOfferingUniqueId] = useState<string | undefined>(queryOfferingId ? undefined : queryOfferingUid)
 	const menuRef = useRef<HTMLDivElement | null>(null)
+	const boardRef = useRef(board)
+	const requestGenRef = useRef<Record<string, number>>({})
+	const [boardScrollEl, setBoardScrollEl] = useState<HTMLElement | null>(null)
+	boardRef.current = board
+
+	const bumpRequestGen = (key: string) => {
+		requestGenRef.current[key] = (requestGenRef.current[key] ?? 0) + 1
+		return requestGenRef.current[key]
+	}
 
 	const buildAddLeadUrl = useCallback(() => {
 		const selectedOfferingUid = offeringUniqueId ?? offerings.find((offering) => offering.value === offeringId)?.uniqueId
 		return selectedOfferingUid ? `${MenuLinks.AddLead}?offeringUid=${encodeURIComponent(selectedOfferingUid)}` : MenuLinks.AddLead
 	}, [offeringId, offeringUniqueId, offerings])
 
+	const buildColumnSearch = useCallback(
+		(statusId: number, pageNumber: number): SearchLeadRequest => {
+			if (!Number.isFinite(statusId) || statusId <= 0) {
+				throw new Error('LeadStatusId is required for pipeline column search')
+			}
+			return {
+				pageNumber,
+				pageSize: PIPELINE_COLUMN_PAGE_SIZE,
+				filterType: LeadFilterType.All,
+				leadStatusId: statusId,
+				sortField: 'CreatedOn',
+				sortOrder: 'desc',
+				...(offeringId ? { offeringId } : {}),
+				...(!offeringId && offeringUniqueId ? { offeringUniqueId } : {}),
+			}
+		},
+		[offeringId, offeringUniqueId]
+	)
+
+	const loadColumnPage = useCallback(
+		async (statusId: number, pageNumber: number, mode: 'replace' | 'append') => {
+			if (!Number.isFinite(statusId) || statusId <= 0) return
+			const key = stageKey(statusId)
+			const current = boardRef.current[key] ?? emptyPipelineColumn()
+			if (mode === 'append' && (current.loadingMore || !current.hasMore)) return
+
+			const gen = bumpRequestGen(key)
+			if (mode === 'append') {
+				setBoard((prev) => ({
+					...prev,
+					[key]: { ...(prev[key] ?? emptyPipelineColumn()), loadingMore: true, loadError: false },
+				}))
+			}
+
+			try {
+				const page = await leadService.search(buildColumnSearch(statusId, pageNumber))
+				if (requestGenRef.current[key] !== gen) return
+
+				setBoard((prev) => {
+					const col = prev[key] ?? emptyPipelineColumn()
+					if (mode === 'replace') return { ...prev, [key]: pipelineColumnFromPage(page) }
+
+					const existingIds = new Set(col.items.map((item) => item.id))
+					const appended = (page.data ?? []).filter((item) => !existingIds.has(item.id))
+					const items = [...col.items, ...appended]
+					const totalCount = page.totalCount ?? col.totalCount
+					return {
+						...prev,
+						[key]: {
+							items,
+							pageNumber: page.currentPage ?? pageNumber,
+							totalCount,
+							hasMore: page.hasNextPage ?? items.length < totalCount,
+							loadingMore: false,
+							loadError: false,
+						},
+					}
+				})
+			} catch {
+				if (requestGenRef.current[key] !== gen) return
+				setBoard((prev) => ({
+					...prev,
+					[key]: { ...(prev[key] ?? emptyPipelineColumn()), loadingMore: false, loadError: true },
+				}))
+			}
+		},
+		[buildColumnSearch]
+	)
+
+	const loadMoreColumn = useCallback(
+		(statusId: number) => {
+			const col = boardRef.current[stageKey(statusId)]
+			if (!col || col.loadingMore || !col.hasMore || col.loadError) return
+			void loadColumnPage(statusId, col.pageNumber + 1, 'append')
+		},
+		[loadColumnPage]
+	)
+
+	const retryColumn = useCallback(
+		(statusId: number) => {
+			const col = boardRef.current[stageKey(statusId)] ?? emptyPipelineColumn()
+			const nextPage = col.items.length === 0 ? 1 : col.pageNumber + 1
+			void loadColumnPage(statusId, nextPage, col.items.length === 0 ? 'replace' : 'append')
+		},
+		[loadColumnPage]
+	)
+
 	const loadBoard = useCallback(async () => {
 		await runWithToast(
 			async () => {
-				const [statusItems, leadPage, lookUps] = await Promise.all([
-					DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus),
-					leadService.search({
-						pageNumber: 0,
-						pageSize: PagingVariables.DefaultPageSize,
-						filterType: LeadFilterType.All,
-						...(offeringId ? { offeringId } : {}),
-						...(!offeringId && offeringUniqueId ? { offeringUniqueId } : {}),
-						sortField: 'CreatedOn',
-						sortOrder: 'desc',
-					}),
-					lookUpService.getLookUpCodes(),
-				])
+				const [statusItems, lookUps] = await Promise.all([DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus), lookUpService.getLookUpCodes()])
 
 				const leadStatusLookUp = (lookUps ?? []).find((item) => item.lookUpCodeType === LookUpCodeTypes.LeadStatus || String(item.lookUpCodeType) === 'LeadStatus')
 				setLeadStatusLookUpCodeId(leadStatusLookUp?.id ?? null)
 
-				const nextStages: PipelineStage[] = (statusItems ?? []).map((item, index) => ({
-					id: item.value,
-					lookUpValue: item.text,
-					label: formatHelper.punctuateLabel(item.text),
-					headerClass: STAGE_HEADER_CLASSES[index % STAGE_HEADER_CLASSES.length],
-				}))
+				const nextStages: PipelineStage[] = (statusItems ?? [])
+					.map((item, index) => ({
+						id: Number(item.value),
+						lookUpValue: item.text,
+						label: formatHelper.punctuateLabel(item.text),
+						headerClass: STAGE_HEADER_CLASSES[index % STAGE_HEADER_CLASSES.length],
+					}))
+					.filter((stage) => Number.isFinite(stage.id) && stage.id > 0)
 
 				setStages(nextStages)
-				setBoard(buildBoard(nextStages, leadPage?.data ?? []))
-				return leadPage
+
+				const pending = nextStages.map((stage) => {
+					const key = stageKey(stage.id)
+					const gen = bumpRequestGen(key)
+					return { key, gen, promise: leadService.search(buildColumnSearch(stage.id, 1)) }
+				})
+
+				const results = await Promise.allSettled(pending.map((item) => item.promise))
+				const nextBoard: PipelineBoardState = {}
+				results.forEach((result, index) => {
+					const { key, gen } = pending[index]
+					if (requestGenRef.current[key] !== gen) return
+					nextBoard[key] = result.status === 'fulfilled' ? pipelineColumnFromPage(result.value) : { ...emptyPipelineColumn(), loadError: true }
+				})
+				setBoard(nextBoard)
+				return true
 			},
 			{ setLoading }
 		)
-	}, [offeringId, offeringUniqueId])
+	}, [buildColumnSearch])
 
 	useEffect(() => {
 		loadBoard()
@@ -194,8 +266,7 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 	}, [queryOfferingId, queryOfferingUid])
 
 	useEffect(() => {
-		offeringService
-			.getActiveDropDown()
+		DropDownService.getActiveOfferings()
 			.then((list) => setOfferings(list ?? []))
 			.catch(() => setOfferings([]))
 	}, [])
@@ -211,33 +282,46 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 		return () => document.removeEventListener('mousedown', onDocClick)
 	}, [])
 
+	const patchColumns = (sourceKey: string, destKey: string, sourceCol: PipelineColumnState, destCol: PipelineColumnState) => {
+		setBoard((current) => ({
+			...current,
+			[sourceKey]: sourceCol,
+			[destKey]: destCol,
+		}))
+	}
+
 	const moveLeadToStatus = async (lead: ViewLeadListResponse, destStatusId: number, destIndex?: number) => {
 		if (lead.leadStatusId === destStatusId) return
 
 		const sourceKey = stageKey(lead.leadStatusId)
 		const destKey = stageKey(destStatusId)
 		const destStage = stages.find((stage) => stage.id === destStatusId)
+		const previousSource = boardRef.current[sourceKey] ?? emptyPipelineColumn()
+		const previousDest = boardRef.current[destKey] ?? emptyPipelineColumn()
 
-		const previousBoard = board
-		setBoard((current) => {
-			const sourceItems = Array.from(current[sourceKey] ?? []).filter((item) => item.id !== lead.id)
-			const destItems = Array.from(current[destKey] ?? []).filter((item) => item.id !== lead.id)
-			const moved = {
-				...lead,
-				leadStatusId: destStatusId,
-				leadStatusName: destStage?.lookUpValue ?? lead.leadStatusName,
-			}
-			const insertAt = destIndex ?? destItems.length
-			destItems.splice(insertAt, 0, moved)
-			return { ...current, [sourceKey]: sourceItems, [destKey]: destItems }
-		})
+		const sourceItems = previousSource.items.filter((item) => item.id !== lead.id)
+		const destItems = previousDest.items.filter((item) => item.id !== lead.id)
+		const moved = {
+			...lead,
+			leadStatusId: destStatusId,
+			leadStatusName: destStage?.lookUpValue ?? lead.leadStatusName,
+		}
+		const insertAt = destIndex ?? destItems.length
+		destItems.splice(insertAt, 0, moved)
+
+		patchColumns(
+			sourceKey,
+			destKey,
+			{ ...previousSource, items: sourceItems, totalCount: Math.max(0, previousSource.totalCount - 1) },
+			{ ...previousDest, items: destItems, totalCount: previousDest.totalCount + 1 }
+		)
 		setOpenMenuLeadId(null)
 
 		const result = await runWithToast(() => leadService.updateStatus(lead.id, { leadStatusId: destStatusId }), {
 			onSuccess: () => messageHelper.showSuccess(t('Manage.SalesPipeline.StatusUpdated', 'Lead status updated')),
 		})
 
-		if (!result.ok) setBoard(previousBoard)
+		if (!result.ok) patchColumns(sourceKey, destKey, previousSource, previousDest)
 	}
 
 	const persistColumnOrder = async (orderedStages: PipelineStage[]) => {
@@ -315,18 +399,7 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 					})
 				)
 
-				const [statusItems, leadPage] = await Promise.all([
-					DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus),
-					leadService.search({
-						pageNumber: 0,
-						pageSize: PagingVariables.DefaultPageSize,
-						filterType: LeadFilterType.All,
-						...(offeringId ? { offeringId } : {}),
-						...(!offeringId && offeringUniqueId ? { offeringUniqueId } : {}),
-						sortField: 'CreatedOn',
-						sortOrder: 'desc',
-					}),
-				])
+				const statusItems = await DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus)
 
 				let nextStages: PipelineStage[] = (statusItems ?? []).map((item, index) => ({
 					id: item.value,
@@ -358,7 +431,14 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 				}
 
 				setStages(nextStages)
-				setBoard(buildBoard(nextStages, leadPage?.data ?? []))
+				setBoard((prev) => {
+					const next = { ...prev }
+					nextStages.forEach((stage) => {
+						const key = stageKey(stage.id)
+						if (!next[key]) next[key] = emptyPipelineColumn()
+					})
+					return next
+				})
 				return true
 			},
 			{
@@ -404,14 +484,18 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 		const destKey = destination.droppableId
 
 		if (sourceKey === destKey) {
-			setBoard((current) => ({
-				...current,
-				[sourceKey]: reorder(current[sourceKey] ?? [], source.index, destination.index),
-			}))
+			setBoard((current) => {
+				const col = current[sourceKey]
+				if (!col) return current
+				return {
+					...current,
+					[sourceKey]: { ...col, items: reorder(col.items, source.index, destination.index) },
+				}
+			})
 			return
 		}
 
-		const lead = board[sourceKey]?.[source.index]
+		const lead = boardRef.current[sourceKey]?.items[source.index]
 		if (!lead) return
 		await moveLeadToStatus(lead, Number(destKey), destination.index)
 	}
@@ -431,7 +515,10 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 					setBoard((current) => {
 						const next = { ...current }
 						Object.keys(next).forEach((key) => {
-							next[key] = next[key].filter((item) => item.id !== leadId)
+							const col = next[key]
+							const items = col.items.filter((item) => item.id !== leadId)
+							if (items.length === col.items.length) return
+							next[key] = { ...col, items, totalCount: Math.max(0, col.totalCount - 1) }
 						})
 						return next
 					})
@@ -455,10 +542,17 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 	return (
 		<div className="w-full min-w-0">
 			<div className="mb-4 flex flex-wrap items-end gap-3">
-				<FormInput label={t('Manage.Leads.Filter_Offering', 'Offering')} name="pipelineOfferingId" type="bottom-sheet" className="form-select min-w-[220px]" value={offeringId ?? ''} onChange={(e) => {
-					setOfferingUniqueId(undefined)
-					setOfferingId(e.target.value ? Number(e.target.value) : undefined)
-				}}>
+				<FormInput
+					label={t('Manage.Leads.Filter_Offering', 'Offering')}
+					name="pipelineOfferingId"
+					type="bottom-sheet"
+					className="form-select min-w-[220px]"
+					value={offeringId ?? ''}
+					onChange={(e) => {
+						setOfferingUniqueId(undefined)
+						setOfferingId(e.target.value ? Number(e.target.value) : undefined)
+					}}
+				>
 					<option value="">{t('Common.All', 'All')}</option>
 					{offerings.map((offering) => (
 						<option key={offering.value} value={offering.value}>
@@ -467,32 +561,35 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 					))}
 				</FormInput>
 			</div>
-			{/*
-			  Single scroll container only — @hello-pangea/dnd does not support nested
-			  scroll parents (e.g. board overflow-x + Droppable overflow-y).
-			*/}
 			<DragDropContext onDragEnd={onDragEnd}>
-				<div className="h-[calc(100vh-16rem)] min-h-[32rem] w-full min-w-0 overflow-auto pipeline-scroll">
+				<div ref={setBoardScrollEl} className="h-[calc(100vh-16rem)] min-h-[32rem] w-full min-w-0 overflow-auto pipeline-scroll">
 					<Droppable droppableId="board-columns" direction="horizontal" type="COLUMN">
 						{(boardProvided) => (
-							<div ref={boardProvided.innerRef} {...boardProvided.droppableProps} className="inline-flex min-h-full min-w-full items-start gap-4 pb-2">
+							<div ref={boardProvided.innerRef} {...boardProvided.droppableProps} className="inline-flex min-h-full min-w-full items-stretch gap-4 pb-2">
 								{stages.map((stage, stageIndex) => {
-									const leads = board[stageKey(stage.id)] ?? []
-									const stageTotal = leads.reduce((sum, lead) => sum + (lead.expectedRevenue ?? 0), 0)
+									const column = board[stageKey(stage.id)] ?? emptyPipelineColumn()
+									const stageTotal = column.items.reduce((sum, lead) => sum + (lead.expectedRevenue ?? 0), 0)
 
 									return (
 										<Draggable key={stage.id} draggableId={`column-${stage.id}`} index={stageIndex} isDragDisabled={!canReorderColumns}>
 											{(colProvided, colSnapshot) => (
-												<div ref={colProvided.innerRef} {...colProvided.draggableProps} className={`flex w-[300px] shrink-0 flex-col rounded-xl border border-gray-200/80 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-900/40 ${colSnapshot.isDragging ? 'shadow-xl ring-2 ring-primary/30' : ''}`}>
-													<div {...colProvided.dragHandleProps} className={`rounded-t-xl border-b border-gray-200/80 px-4 py-3 dark:border-gray-700 ${stage.headerClass} ${canReorderColumns ? 'cursor-grab active:cursor-grabbing' : ''}`}>
+												<div
+													ref={colProvided.innerRef}
+													{...colProvided.draggableProps}
+													className={`flex min-h-full w-[300px] shrink-0 flex-col rounded-xl border border-gray-200/80 bg-gray-50/50 dark:border-gray-700 dark:bg-gray-900/40 ${colSnapshot.isDragging ? 'shadow-xl ring-2 ring-primary/30' : ''}`}
+												>
+													<div
+														{...colProvided.dragHandleProps}
+														className={`sticky top-0 z-10 rounded-t-xl border-b border-gray-200/80 px-4 py-3 dark:border-gray-700 ${stage.headerClass} ${canReorderColumns ? 'cursor-grab active:cursor-grabbing' : ''}`}
+													>
 														<div className="flex items-center justify-between gap-2">
 															<div className="flex min-w-0 items-center gap-2">
 																{canReorderColumns && <i className="ri-draggable shrink-0 text-base text-gray-400" aria-hidden="true" />}
 																<h3 className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{stage.label}</h3>
-																<span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-600 shadow-sm dark:bg-gray-800 dark:text-gray-300">{leads.length}</span>
+																<span className="rounded-full bg-white px-2 py-0.5 text-xs font-medium text-gray-600 shadow-sm dark:bg-gray-800 dark:text-gray-300">{column.totalCount}</span>
 															</div>
 															<div className="flex shrink-0 items-center gap-1">
-																<span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{formatRevenue(stageTotal)}</span>
+																<span className="text-xs font-semibold text-gray-600 dark:text-gray-300">{formatPipelineRevenue(stageTotal)}</span>
 																{canShowColumnMenu && (
 																	<div className="relative" ref={openColumnMenuId === stage.id ? menuRef : undefined}>
 																		<button
@@ -546,94 +643,28 @@ const ViewSalesPipeline: React.FC<ViewSalesPipelineProps> = ({ reloadKey = 0 }) 
 														</div>
 													</div>
 
-													<Droppable droppableId={stageKey(stage.id)} type="CARD" isDropDisabled={!canUpdate}>
-														{(provided, snapshot) => (
-															<div ref={provided.innerRef} {...provided.droppableProps} className={`flex min-h-[20rem] flex-1 flex-col gap-3 p-3 transition-colors ${snapshot.isDraggingOver ? 'bg-primary/5 ring-2 ring-inset ring-primary/20 dark:bg-primary/10' : ''}`}>
-																{leads.length === 0 ? (
-																	<div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-gray-300 px-3 py-8 text-center dark:border-gray-600">
-																		<p className="text-sm text-gray-400 dark:text-gray-500">{t('Manage.SalesPipeline.DropHere', 'Drop leads here')}</p>
-																	</div>
-																) : (
-																	leads.map((lead, index) => (
-																		<Draggable key={lead.id} draggableId={String(lead.id)} index={index} isDragDisabled={!canUpdate}>
-																			{(dragProvided, dragSnapshot) => (
-																				<div ref={dragProvided.innerRef} {...dragProvided.draggableProps} {...dragProvided.dragHandleProps} className={`${leadCardClass} relative p-4 transition-shadow ${dragSnapshot.isDragging ? 'shadow-lg ring-2 ring-primary/30 rotate-1' : 'hover:shadow-md'}`}>
-																					<div className="mb-3 flex items-start justify-between gap-2">
-																						<div className="min-w-0 flex-1 cursor-pointer" onClick={() => navigate(MenuLinks.EditLead.replace(':id', String(lead.id)))} onKeyDown={(e) => e.key === 'Enter' && navigate(MenuLinks.EditLead.replace(':id', String(lead.id)))} role="button" tabIndex={0}>
-																							<p className="truncate font-semibold text-gray-900 dark:text-gray-100">{lead.businessName}</p>
-																							<p className="truncate text-sm text-gray-500 dark:text-gray-400">{lead.ownerName}</p>
-																							<p className="truncate text-xs text-gray-400">{lead.offeringName || 'Unassigned'}</p>
-																						</div>
-																						<div className="relative" ref={openMenuLeadId === lead.id ? menuRef : undefined}>
-																							<button
-																								type="button"
-																								className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-600 dark:hover:bg-gray-700"
-																								onMouseDown={(e) => e.stopPropagation()}
-																								onClick={(e) => {
-																									e.stopPropagation()
-																									setOpenColumnMenuId(null)
-																									setOpenMenuLeadId((prev) => (prev === lead.id ? null : lead.id))
-																								}}
-																								aria-label="Lead actions"
-																							>
-																								<i className="ri-more-2-fill text-lg" />
-																							</button>
-																							{openMenuLeadId === lead.id && (
-																								<div className="absolute end-0 z-20 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800" onMouseDown={(e) => e.stopPropagation()}>
-																									<button type="button" className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => navigate(MenuLinks.EditLead.replace(':id', String(lead.id)))}>
-																										<i className="ri-pencil-line" />
-																										{t('Common.Edit', 'Edit')}
-																									</button>
-																									{canUpdate && (
-																										<div className="border-t border-gray-100 py-1 dark:border-gray-700">
-																											<p className="px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">{t('Manage.SalesPipeline.MoveTo', 'Move to')}</p>
-																											{stages
-																												.filter((s) => s.id !== stage.id)
-																												.map((s) => (
-																													<button key={s.id} type="button" className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700" onClick={() => moveLeadToStatus(lead, s.id)}>
-																														{s.label}
-																													</button>
-																												))}
-																										</div>
-																									)}
-																									{canUpdate && (
-																										<button
-																											type="button"
-																											className="flex w-full items-center gap-2 border-t border-gray-100 px-3 py-2 text-left text-sm text-rose-600 hover:bg-rose-50 dark:border-gray-700 dark:hover:bg-rose-900/20"
-																											onClick={() => {
-																												setOpenMenuLeadId(null)
-																												setArchiveLead(lead)
-																											}}
-																										>
-																											<i className="ri-archive-line" />
-																											{t('Common.Archive', 'Archive')}
-																										</button>
-																									)}
-																								</div>
-																							)}
-																						</div>
-																					</div>
-
-																					<div className="mb-3 flex flex-wrap gap-1.5">
-																						<span className="rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-600 dark:bg-gray-700 dark:text-gray-300">{lead.businessType}</span>
-																						{lead.interestLevel === InterestLevel.High ? <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-700 dark:bg-rose-900/40 dark:text-rose-300">Hot</span> : null}
-																					</div>
-
-																					<div className="flex items-center justify-between gap-2">
-																						<p className="text-base font-semibold text-gray-900 dark:text-gray-100">{formatRevenue(lead.expectedRevenue)}</p>
-																						<span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-[10px] font-semibold text-white" title={lead.ownerName}>
-																							{getInitials(lead.ownerName)}
-																						</span>
-																					</div>
-																				</div>
-																			)}
-																		</Draggable>
-																	))
-																)}
-																{provided.placeholder}
-															</div>
-														)}
-													</Droppable>
+													<PipelineColumn
+														stage={stage}
+														column={column}
+														stages={stages}
+														scrollParent={boardScrollEl}
+														canUpdate={canUpdate}
+														openMenuLeadId={openMenuLeadId}
+														menuRef={menuRef}
+														onToggleMenu={(leadId) => {
+															setOpenColumnMenuId(null)
+															setOpenMenuLeadId((prev) => (prev === leadId ? null : leadId))
+														}}
+														onMoveTo={(lead, statusId) => {
+															void moveLeadToStatus(lead, statusId)
+														}}
+														onArchive={(lead) => {
+															setOpenMenuLeadId(null)
+															setArchiveLead(lead)
+														}}
+														onLoadMore={() => loadMoreColumn(stage.id)}
+														onRetry={() => retryColumn(stage.id)}
+													/>
 												</div>
 											)}
 										</Draggable>

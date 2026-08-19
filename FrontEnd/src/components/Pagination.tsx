@@ -82,19 +82,25 @@ const Pagination: React.FC<PaginationProps> = ({
 
 	const pageItems = useMemo(() => buildPageItems(safeCurrentPage, safeTotalPages), [safeCurrentPage, safeTotalPages])
 
-	const handlePageClick = (pageNumber: number) => {
+	const handlePageClick = (event: React.MouseEvent<HTMLButtonElement>, pageNumber: number) => {
+		event.preventDefault()
+		event.stopPropagation()
 		if (safeCurrentPage !== pageNumber) {
 			onPageChange(pageNumber)
 		}
 	}
 
-	const handlePrevious = () => {
+	const handlePrevious = (event: React.MouseEvent<HTMLButtonElement>) => {
+		event.preventDefault()
+		event.stopPropagation()
 		if (canGoPrevious && safeCurrentPage > 1) {
 			onPageChange(safeCurrentPage - 1)
 		}
 	}
 
-	const handleNext = () => {
+	const handleNext = (event: React.MouseEvent<HTMLButtonElement>) => {
+		event.preventDefault()
+		event.stopPropagation()
 		if (canGoNext && safeCurrentPage < safeTotalPages) {
 			onPageChange(safeCurrentPage + 1)
 		}
@@ -108,18 +114,18 @@ const Pagination: React.FC<PaginationProps> = ({
 		<div className="pt-5">
 			<div className="gridjs-pagination">
 				<div className="gridjs-pages">
-					<button role="button" title="First" aria-label="First" onClick={() => handlePageClick(1)} disabled={safeCurrentPage === 1}>
+					<button type="button" role="button" title="First" aria-label="First" onClick={(event) => handlePageClick(event, 1)} disabled={safeCurrentPage === 1}>
 						First
 					</button>
 
-					<button role="button" title="Previous" aria-label="Previous" onClick={handlePrevious} disabled={!canGoPrevious}>
+					<button type="button" role="button" title="Previous" aria-label="Previous" onClick={handlePrevious} disabled={!canGoPrevious}>
 						Previous
 					</button>
 
 					{pageItems.map((item) => {
 						if (item === 'ellipsis-start' || item === 'ellipsis-end') {
 							return (
-								<button key={item} role="button" title="More pages" aria-label="More pages" disabled className="pointer-events-none">
+								<button type="button" key={item} role="button" title="More pages" aria-label="More pages" disabled className="pointer-events-none">
 									...
 								</button>
 							)
@@ -127,24 +133,25 @@ const Pagination: React.FC<PaginationProps> = ({
 
 						return (
 							<button
+								type="button"
 								key={item}
 								role="button"
 								className={safeCurrentPage === item ? 'gridjs-currentPage' : ''}
 								title={`Page ${item}`}
 								aria-label={`Page ${item}`}
 								aria-current={safeCurrentPage === item ? 'page' : undefined}
-								onClick={() => handlePageClick(item)}
+								onClick={(event) => handlePageClick(event, item)}
 							>
 								{item}
 							</button>
 						)
 					})}
 
-					<button role="button" title="Next" aria-label="Next" onClick={handleNext} disabled={!canGoNext}>
+					<button type="button" role="button" title="Next" aria-label="Next" onClick={handleNext} disabled={!canGoNext}>
 						Next
 					</button>
 
-					<button role="button" title="Last" aria-label="Last" onClick={() => handlePageClick(safeTotalPages)} disabled={safeCurrentPage === safeTotalPages}>
+					<button type="button" role="button" title="Last" aria-label="Last" onClick={(event) => handlePageClick(event, safeTotalPages)} disabled={safeCurrentPage === safeTotalPages}>
 						Last
 					</button>
 				</div>

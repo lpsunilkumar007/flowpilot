@@ -3,7 +3,6 @@ import { authenticatedFetch } from '@/helpers/api/httpClient'
 import type {
 	CreateOfferingRequest,
 	CreateOfferingResponse,
-	OfferingDropDownItemResponse,
 	PaginationResponseOfViewOfferingResponse,
 	SearchOfferingRequest,
 	UpdateOfferingRequest,
@@ -53,8 +52,6 @@ export const offeringService: IOfferingRepository = {
 				sortField: request.sortField,
 			})}`
 		),
-
-	getActiveDropDown: () => requestJson<OfferingDropDownItemResponse[]>('/api/v1/offering/active-dropdown'),
 
 	getById: (id: number) => requestJson<ViewOfferingResponse>(`/api/v1/offering/${id}`),
 

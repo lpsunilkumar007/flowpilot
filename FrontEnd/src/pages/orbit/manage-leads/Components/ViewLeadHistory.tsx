@@ -2,8 +2,7 @@ import type { UserDropDownItemResponse } from '@/helpers/api/WebApiClient'
 import { formatHelper } from '@/helpers/format.helper'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { DropDownService } from '@/services/DropDownService'
-import { leadService } from '@/services/LeadService'
-import type { ViewLeadAssignmentHistoryResponse, ViewLeadStatusHistoryResponse } from '@/types/crm/lead.types'
+import type { ViewLeadDetailResponse } from '@/types/crm/lead.types'
 import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { getUserDisplayName, leadCardClass } from '../helpers/leadDisplay.helper'
@@ -11,32 +10,30 @@ import LeadSectionCard from './shared/LeadSectionCard'
 import LeadStatusBadge from './shared/LeadStatusBadge'
 
 interface ViewLeadHistoryProps {
-	id: string
+	lead: ViewLeadDetailResponse
 }
 
-const ViewLeadHistory: React.FC<ViewLeadHistoryProps> = ({ id }) => {
+const ViewLeadHistory: React.FC<ViewLeadHistoryProps> = ({ lead }) => {
 	const { t } = useTranslation()
-	const [loading, setLoading] = useState(true)
-	const [statusHistories, setStatusHistories] = useState<ViewLeadStatusHistoryResponse[]>([])
-	const [assignmentHistories, setAssignmentHistories] = useState<ViewLeadAssignmentHistoryResponse[]>([])
 	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
+	const [loadingUsers, setLoadingUsers] = useState(true)
+	const statusHistories = lead.statusHistories ?? []
+	const assignmentHistories = lead.assignmentHistories ?? []
 
 	useEffect(() => {
 		const load = async () => {
-			setLoading(true)
+			setLoadingUsers(true)
 			try {
-				const [lead, userList] = await Promise.all([leadService.getById(Number(id)), DropDownService.getSystemUsers(true)])
-				setStatusHistories(lead.statusHistories ?? [])
-				setAssignmentHistories(lead.assignmentHistories ?? [])
+				const userList = await DropDownService.getSystemUsers(true)
 				setUsers(userList ?? [])
 			} finally {
-				setLoading(false)
+				setLoadingUsers(false)
 			}
 		}
 		load()
-	}, [id])
+	}, [])
 
-	if (loading) return <AnimationSkeleton />
+	if (loadingUsers) return <AnimationSkeleton />
 
 	return (
 		<div className="space-y-6 p-4">

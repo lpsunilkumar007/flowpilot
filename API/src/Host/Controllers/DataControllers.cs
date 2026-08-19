@@ -1,4 +1,6 @@
 using FlowPilot.Application.Common.Models.Response;
+using FlowPilot.Application.CRM;
+using FlowPilot.Application.CRM.Model.Response.Offering;
 using FlowPilot.Application.LookUp;
 using FlowPilot.Application.Nexus.Identity.Users;
 using FlowPilot.Application.Nexus.Localization;
@@ -12,19 +14,24 @@ namespace FlowPilot.Host.Controllers;
 
 public class DataControllers : VersionNeutralApiController
 {
-
-    public readonly ILookUpService _lookUpService;
-    public readonly INexusLookUpService _nexusLookUpService;
+    private readonly ILookUpService _lookUpService;
+    private readonly INexusLookUpService _nexusLookUpService;
     private readonly IUserService _userService;
     private readonly ILocalizationService _localizationService;
+    private readonly IOfferingService _offeringService;
 
-
-    public DataControllers(ILookUpService lookUpService, INexusLookUpService nexusLookUpService, IUserService userService, ILocalizationService localizationService)
+    public DataControllers(
+        ILookUpService lookUpService,
+        INexusLookUpService nexusLookUpService,
+        IUserService userService,
+        ILocalizationService localizationService,
+        IOfferingService offeringService)
     {
         _lookUpService = lookUpService;
         _nexusLookUpService = nexusLookUpService;
         _userService = userService;
         _localizationService = localizationService;
+        _offeringService = offeringService;
     }
 
     [HttpPost("drp-get-look-up-values")]
@@ -70,4 +77,10 @@ public class DataControllers : VersionNeutralApiController
         return await _localizationService.GetCountryLocalizationAsync(id);
     }
 
+    [HttpGet("active-offerings")]
+    [OpenApiOperation("Get active offering dropdown", "")]
+    public async Task<List<OfferingDropDownItemResponse>> GetActiveOfferings(CancellationToken cancellationToken)
+    {
+        return await _offeringService.GetActiveDropDownAsync(cancellationToken);
+    }
 }

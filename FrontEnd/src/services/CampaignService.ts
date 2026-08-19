@@ -25,7 +25,17 @@ export const campaignService: ICampaignRepository = {
 
 	getById: (id) => asUi(campaignClient.getById(id)),
 
-	getLeadsByOffering: (offeringId) => asUi(campaignClient.getLeadsByOffering(offeringId)),
+	getLeadsByOffering: (offeringId, request) =>
+		asUi(
+			campaignClient.getLeadsByOffering(
+				offeringId,
+				request.searchText,
+				request.pageNumber,
+				request.pageSize,
+				request.sortOrder,
+				request.sortField
+			)
+		),
 
 	create: (request) =>
 		asUi(

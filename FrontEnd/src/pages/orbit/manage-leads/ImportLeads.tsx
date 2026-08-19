@@ -16,7 +16,7 @@ import { messageHelper } from '@/helpers/message.helper'
 import ValidationHelper from '@/helpers/validation.helper'
 import { usePermission } from '@/hooks/usePermission'
 import type { IErrorResult } from '@/interfaces/IErrorResult'
-import { offeringService } from '@/services/OfferingService'
+import { DropDownService } from '@/services/DropDownService'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -221,8 +221,7 @@ const ImportLeads = () => {
 
 		if (canView || canCreate) {
 			void loadDefinitions()
-			void offeringService
-				.getActiveDropDown()
+			void DropDownService.getActiveOfferings()
 				.then((items) => {
 					setOfferingNames(new Set((items ?? []).map((item) => (item.text ?? '').trim().toLowerCase()).filter(Boolean)))
 				})
@@ -292,26 +291,9 @@ const ImportLeads = () => {
 				data: selectedFile,
 				fileName: selectedFile.name,
 			}
-			const parseStartedAt = performance.now()
-			// #region agent log
-			fetch('http://127.0.0.1:7417/ingest/6348a9ad-0cfe-459b-b00f-c31ec15f41c1',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'024bd0'},body:JSON.stringify({sessionId:'024bd0',hypothesisId:'H3',location:'ImportLeads.tsx:handleParse:start',message:'parse started',data:{fileSize:selectedFile.size,fileNameLength:selectedFile.name.length},timestamp:Date.now()})}).catch(()=>{})
-			// #endregion
 			const response = await importClient.parse(ENTITY_KEY, fileParameter)
-			const apiMs = Math.round(performance.now() - parseStartedAt)
-			const rowCount = response.rows?.length ?? 0
-			const setRowsStartedAt = performance.now()
 			setRows((response.rows ?? []).map((row) => applyClientRowValidation(row, offeringNames)))
 			setPreviewPage(1)
-			requestAnimationFrame(() => {
-				requestAnimationFrame(() => {
-					// #region agent log
-					fetch('http://127.0.0.1:7417/ingest/6348a9ad-0cfe-459b-b00f-c31ec15f41c1',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'024bd0'},body:JSON.stringify({sessionId:'024bd0',hypothesisId:'H4',location:'ImportLeads.tsx:handleParse:afterPaint',message:'parse client timings',data:{apiMs,renderMs:Math.round(performance.now()-setRowsStartedAt),rowCount,totalRows:response.totalRows??0,validRows:response.validRows??0},timestamp:Date.now()})}).catch(()=>{})
-					// #endregion
-					// #region agent log
-					fetch('http://127.0.0.1:7417/ingest/6348a9ad-0cfe-459b-b00f-c31ec15f41c1',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'024bd0'},body:JSON.stringify({sessionId:'024bd0',runId:'post-fix',hypothesisId:'H4',location:'ImportLeads.tsx:handleParse:pagedPaint',message:'paged preview paint',data:{pageSize:PREVIEW_PAGE_SIZE,displayedRows:Math.min(PREVIEW_PAGE_SIZE,rowCount),totalRows:rowCount},timestamp:Date.now()})}).catch(()=>{})
-					// #endregion
-				})
-			})
 			messageHelper.showSuccess(`Parsed ${response.totalRows ?? 0} rows.`)
 		} catch (error) {
 			messageHelper.showError(getErrorMessage(error, 'Unable to parse the CSV file.'))
@@ -356,19 +338,12 @@ const ImportLeads = () => {
 
 		try {
 			setIsSubmitting(true)
-			const submitStartedAt = performance.now()
-			// #region agent log
-			fetch('http://127.0.0.1:7417/ingest/6348a9ad-0cfe-459b-b00f-c31ec15f41c1',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'024bd0'},body:JSON.stringify({sessionId:'024bd0',hypothesisId:'H5',location:'ImportLeads.tsx:handleSubmit:start',message:'submit started',data:{rowCount:rows.length,validCount:rows.filter((row)=>row.isValid).length},timestamp:Date.now()})}).catch(()=>{})
-			// #endregion
 			const response = await importClient.submit(
 				ENTITY_KEY,
 				new SubmitImportRequest({
 					rows: validRows,
 				})
 			)
-			// #region agent log
-			fetch('http://127.0.0.1:7417/ingest/6348a9ad-0cfe-459b-b00f-c31ec15f41c1',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'024bd0'},body:JSON.stringify({sessionId:'024bd0',hypothesisId:'H5',location:'ImportLeads.tsx:handleSubmit:done',message:'submit client timings',data:{apiMs:Math.round(performance.now()-submitStartedAt),inserted:response.inserted??0,updated:response.updated??0,failed:response.failed??0,resultCount:response.results?.length??0},timestamp:Date.now()})}).catch(()=>{})
-			// #endregion
 			setRows((current) =>
 				current.map((row) => {
 					const result = response.results?.find((item) => item.rowNumber === row.rowNumber)

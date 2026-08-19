@@ -26,9 +26,9 @@ public class CampaignController : VersionedApiController
     [HttpGet("leads-by-offering/{offeringId}")]
     [MustHavePermission(SystemAction.View, SystemResource.ManageCampaigns)]
     [OpenApiOperation("Get leads for campaign picker by offering", "")]
-    public async Task<List<ViewCampaignLeadPickerResponse>> GetLeadsByOffering(DefaultIdType offeringId, CancellationToken cancellationToken)
+    public async Task<PaginationResponse<ViewCampaignLeadPickerResponse>> GetLeadsByOffering(DefaultIdType offeringId, [FromQuery] SearchCampaignLeadsRequest request, CancellationToken cancellationToken)
     {
-        return await _campaignService.GetLeadsByOfferingAsync(offeringId, cancellationToken);
+        return await _campaignService.GetLeadsByOfferingAsync(offeringId, request, cancellationToken);
     }
 
     [HttpGet("{id}")]

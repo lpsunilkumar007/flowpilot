@@ -27,6 +27,7 @@ export const leadService: ILeadRepository = {
 				request.assignedToUserId,
 				request.offeringId,
 				request.offeringUniqueId,
+				request.leadStatusId,
 				toMoment(request.fromDate),
 				toMoment(request.toDate),
 				request.pageNumber,

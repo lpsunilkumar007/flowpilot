@@ -70,6 +70,7 @@ export interface SearchLeadRequest {
 	assignedToUserId?: string
 	offeringId?: number
 	offeringUniqueId?: string
+	leadStatusId?: number
 	fromDate?: string
 	toDate?: string
 }

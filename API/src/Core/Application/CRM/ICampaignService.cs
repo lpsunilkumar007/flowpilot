@@ -10,7 +10,7 @@ public interface ICampaignService : ITransientService
 
     Task<ViewCampaignDetailResponse> GetByIdAsync(DefaultIdType id, CancellationToken cancellationToken = default);
 
-    Task<List<ViewCampaignLeadPickerResponse>> GetLeadsByOfferingAsync(DefaultIdType offeringId, CancellationToken cancellationToken = default);
+    Task<PaginationResponse<ViewCampaignLeadPickerResponse>> GetLeadsByOfferingAsync(DefaultIdType offeringId, SearchCampaignLeadsRequest request, CancellationToken cancellationToken = default);
 
     Task<CreateCampaignResponse> CreateAsync(CreateCampaignRequest request, CancellationToken cancellationToken = default);
 
