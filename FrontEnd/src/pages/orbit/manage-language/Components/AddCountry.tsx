@@ -5,6 +5,8 @@ import { localizationService } from '@/services/LocalizationService'
 import { messageHelper } from '@/helpers/message.helper'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { useTranslation } from 'react-i18next'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface AddCountryProps {
 	onClose: () => void
@@ -13,6 +15,13 @@ interface AddCountryProps {
 
 const AddCountry: React.FC<AddCountryProps> = ({ onClose, onAdded }) => {
 	const { t } = useTranslation()
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			countryName: yup.string().trim().required('This field cannot be left empty'),
+			countryCode: yup.string().trim().required('This field cannot be left empty'),
+			displayOrder: yup.mixed().required('This field cannot be left empty'),
+		})
+	)
 
 	const onSubmit = async (formData: CreateCountryRequest) => {
 		await runWithToast(() => localizationService.createCountry(formData), {
@@ -27,7 +36,7 @@ const AddCountry: React.FC<AddCountryProps> = ({ onClose, onAdded }) => {
 		<PopupWrapper variant="compact">
 			<PopupHeader title={t('Manage.Languages.Add_AddCountry', 'Add Country')} onClose={onClose} />
 
-			<VerticalForm onSubmit={onSubmit}>
+			<VerticalForm onSubmit={onSubmit} resolver={schemaResolver as any}>
 				<PopupBody>
 					<div className="grid lg:grid-cols-1 gap-6">
 						<FormInput label={t('Manage.Languages.Add_CountryName', 'Country Name')} labelClassName="form-label" containerClass="form-field" name="countryName" type="text" required className="form-input" />

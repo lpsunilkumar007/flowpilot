@@ -4,6 +4,8 @@ import { lookUpService } from '@/services/LookUpService'
 import { messageHelper } from '@/helpers/message.helper'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { useTranslation } from 'react-i18next'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface AddLookUpCodeValueProps {
 	addNewLookUpCodeValueOutPut: (refreshGrid: boolean, closePopup: boolean) => void
@@ -12,6 +14,12 @@ interface AddLookUpCodeValueProps {
 
 const AddLookUpCodeValue: React.FC<AddLookUpCodeValueProps> = (props) => {
 	const { t } = useTranslation()
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			lookUpValue: yup.string().trim().required('This field cannot be left empty'),
+			displayOrder: yup.number().typeError('This field cannot be left empty').required('This field cannot be left empty'),
+		})
+	)
 	const onSubmit = async (formData: CreateLookUpCodeValueRequest) => {
 		if (!Number(formData.displayOrder)) {
 			formData.displayOrder = 0
@@ -28,7 +36,7 @@ const AddLookUpCodeValue: React.FC<AddLookUpCodeValueProps> = (props) => {
 		<>
 			<PopupWrapper variant="default">
 				<PopupHeader title={t('Manage.Values.Add_AddNew', 'Add New')} onClose={() => props.addNewLookUpCodeValueOutPut(false, true)} />
-				<VerticalForm<CreateLookUpCodeValueRequest> onSubmit={onSubmit}>
+				<VerticalForm<CreateLookUpCodeValueRequest> onSubmit={onSubmit} resolver={schemaResolver as any}>
 					<PopupBody>
 						<div className="grid lg:grid-cols-1 gap-6">
 							<FormInput label={t('Manage.Values.Add_Value', 'Value')} labelClassName="form-label" containerClass="form-field" required type="text" name="lookUpValue" className="form-input" key="lookUpValue" />

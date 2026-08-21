@@ -7,6 +7,8 @@ import { runWithToast } from '@/helpers/asyncToast.helper'
 import { PermissionTypes } from '@/constants/permissions'
 import { usePermission } from '@/hooks/usePermission'
 import { useTranslation } from 'react-i18next'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface AddEmailTemplatesProps {
 	addNewUserOutPut: (isAdded: boolean) => void
@@ -15,6 +17,14 @@ interface AddEmailTemplatesProps {
 const AddEmailTemplates: React.FC<AddEmailTemplatesProps> = (props) => {
 	const { userHasPermission } = usePermission()
 	const { t } = useTranslation()
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			name: yup.string().trim().required('This field cannot be left empty'),
+			templateUsedFor: yup.mixed().required('Please select a value'),
+			emailSubject: yup.string().trim().required('This field cannot be left empty'),
+			emailBody: yup.string().trim().required('This field cannot be left empty'),
+		})
+	)
 	const onSubmit = async (formData: CreateEmailTemplateRequest) => {
 		const createdRequest = new CreateEmailTemplateRequest()
 		createdRequest.name = formData.name
@@ -37,7 +47,7 @@ const AddEmailTemplates: React.FC<AddEmailTemplatesProps> = (props) => {
 		<>
 			<PopupWrapper variant="default">
 				<PopupHeader title={t('Manage.EmailTemplates.Add_AddNew', 'Add New')} onClose={() => props.addNewUserOutPut(false)} />
-				<VerticalForm<CreateEmailTemplateRequest> onSubmit={onSubmit}>
+				<VerticalForm<CreateEmailTemplateRequest> onSubmit={onSubmit} resolver={schemaResolver as any}>
 					<PopupBody>
 						<div className="grid lg:grid-cols-1 gap-6">
 							<FormInput label={t('Manage.EmailTemplates.Add_Name', 'Name')} labelClassName="form-label" containerClass="form-field" type="text" name="name" className="form-input" key="Name" required />
@@ -55,7 +65,7 @@ const AddEmailTemplates: React.FC<AddEmailTemplatesProps> = (props) => {
 
 							<FormInput label={t('Manage.EmailTemplates.Add_EmailSubject', 'Email Subject')} labelClassName="form-label" containerClass="form-field" type="text" name="emailSubject" className="form-input" key="emailSubject" required />
 							<FormInput label={t('Manage.EmailTemplates.Add_EmailBody', 'Email Body')} labelClassName="form-label" containerClass="form-field" type="textarea" name="emailBody" className="form-input" key="emailBody" required />
-							<FormInput type="checkbox" defaultChecked={false} name="isShared" className="form-checkbox" key="isShared" label={t('Manage.EmailTemplates.Add_IsShared', 'Is Shared')} required labelClassName="form-label" containerClass="form-field" />
+							<FormInput type="checkbox" defaultChecked={false} name="isShared" className="form-checkbox" key="isShared" label={t('Manage.EmailTemplates.Add_IsShared', 'Is Shared')} labelClassName="form-label" containerClass="form-field" />
 						</div>
 					</PopupBody>
 					<PopupFooter>

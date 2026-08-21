@@ -6,8 +6,10 @@ import useObjectState from '@/hooks/useObjectState'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { DropDownService } from '@/services/DropDownService'
 import { userService } from '@/services/UserService'
+import { yupResolver } from '@hookform/resolvers/yup'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import * as yup from 'yup'
 
 interface AddUserProps {
 	addNewUserOutPut: (isAdded: boolean) => void
@@ -31,6 +33,20 @@ const AddUser: React.FC<AddUserProps> = (props) => {
 		managers: [],
 		loading: true,
 	})
+
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			firstName: yup.string().trim().required('This field cannot be left empty'),
+			lastName: yup.string().trim().required('This field cannot be left empty'),
+			email: yup.string().trim().required('This field cannot be left empty').email('Please enter a valid email address'),
+			password: yup.string().required('This field cannot be left empty'),
+			confirmPassword: yup
+				.string()
+				.required('This field cannot be left empty')
+				.oneOf([yup.ref('password')], 'Passwords must match'),
+			timeZone: yup.string().required('Please select a value'),
+		})
+	)
 
 	const onSubmit = async (formData: CreateUserRequest) => {
 		const payload = {
@@ -68,15 +84,14 @@ const AddUser: React.FC<AddUserProps> = (props) => {
 				<PopupHeader title={t('Manage.Users.Add_AddNew', 'Add New User')} onClose={() => props.addNewUserOutPut(false)} />
 				{modalState.loading && loadingIndicator()}
 				{!modalState.loading && (
-					<VerticalForm<CreateUserRequest> onSubmit={onSubmit}>
+					<VerticalForm<CreateUserRequest> onSubmit={onSubmit} resolver={schemaResolver as any}>
 						<PopupBody>
 							<div className="grid lg:grid-cols-2 gap-6">
 								<FormInput label={t('Manage.Users.Add_FirstName', 'First Name')} labelClassName="form-label" containerClass="form-field" type="text" name="firstName" className="form-input" key="firstName" />
-								<FormInput label={t('Manage.Users.Add_EmailAddress', 'Email Address')} labelClassName="form-label" containerClass="form-field" type="text" name="email" className="form-input" key="email" />
-								<FormInput label={t('Manage.Users.Add_Password', 'Password')} labelClassName="form-label" containerClass="form-field" type="password" name="password" className="form-input" key="password" />
-
 								<FormInput label={t('Manage.Users.Add_LastName', 'Last Name')} labelClassName="form-label" containerClass="form-field" type="text" name="lastName" className="form-input" key="lastName" />
+								<FormInput label={t('Manage.Users.Add_EmailAddress', 'Email Address')} labelClassName="form-label" containerClass="form-field" type="text" name="email" className="form-input" key="email" />
 								<FormInput label={t('Manage.Users.Add_PhoneNumber', 'Phone Number')} labelClassName="form-label" containerClass="form-field" type="number" name="phoneNumber" className="form-input" key="phoneNumber" />
+								<FormInput label={t('Manage.Users.Add_Password', 'Password')} labelClassName="form-label" containerClass="form-field" type="password" name="password" className="form-input" key="password" />
 								<FormInput label={t('Manage.Users.Add_ConfirmPassword', 'Confirm Password')} labelClassName="form-label" containerClass="form-field" type="password" name="confirmPassword" className="form-input" key="confirmPassword" />
 
 								<FormInput className="form-select" label={t('Manage.Users.Add_UserTimeZone', 'Time Zone')} labelClassName="form-label" containerClass="form-field" name="timeZone" type="bottom-sheet">

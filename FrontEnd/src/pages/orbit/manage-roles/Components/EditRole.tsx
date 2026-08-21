@@ -8,6 +8,8 @@ import { usePermission } from '@/hooks/usePermission'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface EditRoleProps {
 	editRoleOutPut: (isAdded: boolean) => void
@@ -20,6 +22,11 @@ const EditRole: React.FC<EditRoleProps> = (props) => {
 	const [roleDetail, setRoleDetail] = useState<RoleDto>()
 	const { userHasPermission } = usePermission()
 	const loadingIndicator = () => <AnimationSkeleton />
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			name: yup.string().trim().required('This field cannot be left empty'),
+		})
+	)
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -53,10 +60,10 @@ const EditRole: React.FC<EditRoleProps> = (props) => {
 				<PopupHeader title={t('Manage.Role.Edit_EditDetails', 'Edit Role')} onClose={() => props.editRoleOutPut(false)} />
 				{loading && loadingIndicator()}
 				{!loading && (
-					<VerticalForm<CreateOrUpdateRoleRequest> onSubmit={onSubmit} defaultValues={roleDetail}>
+					<VerticalForm<CreateOrUpdateRoleRequest> onSubmit={onSubmit} resolver={schemaResolver as any} defaultValues={roleDetail}>
 						<PopupBody>
 							<div className="grid lg:grid-cols-1 gap-6">
-								<FormInput label={t('Manage.Role.Edit_RoleName', 'Role Name')} labelClassName="form-label" containerClass="form-field" type="text" name="name" className="form-input" key="name" />
+								<FormInput label={t('Manage.Role.Edit_RoleName', 'Role Name')} labelClassName="form-label" containerClass="form-field" type="text" name="name" className="form-input" key="name" required />
 								<FormInput label={t('Manage.Role.Edit_RoleDescription', 'Role Description')} labelClassName="form-label" containerClass="form-field" type="textarea" name="description" className="form-input" key="description" />
 							</div>
 						</PopupBody>

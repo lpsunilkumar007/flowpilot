@@ -11,6 +11,8 @@ import React, { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { leadCardClass } from '../helpers/leadDisplay.helper'
 import LeadSectionCard from './shared/LeadSectionCard'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface ViewLeadNotesProps {
 	id: string
@@ -18,6 +20,11 @@ interface ViewLeadNotesProps {
 
 const ViewLeadNotes: React.FC<ViewLeadNotesProps> = ({ id }) => {
 	const { t } = useTranslation()
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			noteText: yup.string().trim().required('This field cannot be left empty'),
+		})
+	)
 	const { userHasPermission } = usePermission()
 	const canView = userHasPermission(PermissionTypes.Permissions_ManageLeadNotes_View)
 	const canCreate = userHasPermission(PermissionTypes.Permissions_ManageLeadNotes_Create)
@@ -73,7 +80,7 @@ const ViewLeadNotes: React.FC<ViewLeadNotesProps> = ({ id }) => {
 		<div className="space-y-6 p-4">
 			{canCreate && (
 				<LeadSectionCard title={t('Manage.Leads.AddNote', 'Add note')} subtitle={t('Manage.Leads.AddNote_Sub', 'Capture context for your team')} icon="ri-quill-pen-line">
-					<VerticalForm<CreateEntityNoteRequest> onSubmit={onSubmit} defaultValues={{ entityNoteType: EntityNoteType.Lead, noteText: '' }}>
+					<VerticalForm<CreateEntityNoteRequest> onSubmit={onSubmit} resolver={schemaResolver as any} defaultValues={{ entityNoteType: EntityNoteType.Lead, noteText: '' }}>
 						<FormInput label={t('Manage.Leads.NoteText', 'Note')} required name="noteText" type="textarea" className="form-input" />
 						<div className="mt-4 flex justify-end">
 							<button type="submit" className="btn btn-primary">

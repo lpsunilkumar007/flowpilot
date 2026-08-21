@@ -1,6 +1,7 @@
 using FlowPilot.Application.Common.Exceptions;
 using FlowPilot.Application.Common.Interfaces;
 using FlowPilot.Application.Common.Models;
+using FlowPilot.Application.Common.Models.Response;
 using FlowPilot.Application.Email;
 using FlowPilot.Application.Email.Model.Request.EmailTemplate;
 using FlowPilot.Application.Email.Model.Response.EmailTemplate;
@@ -149,5 +150,21 @@ public class EmailTemplateService : IEmailTemplateService
         });
 
         return await selectQuery.PaginatedListAsync<ViewEmailTemplateResponse, ViewEmailTemplateResponse>(request.PageNumber, request.PageSize);
+    }
+
+    public async Task<List<DropDownItemResponse>> GetEmailTemplatesForDropDownAsync(CancellationToken cancellationToken = default)
+    {
+        var userId = _currentUser.GetUserId();
+
+        return await _applicationDbContext.EmailTemplates
+            .AsNoTracking()
+            .Where(x => x.IsShared || x.CreatedBy == userId)
+            .OrderBy(x => x.Name)
+            .Select(x => new DropDownItemResponse
+            {
+                Value = x.Id,
+                Text = x.Name,
+            })
+            .ToListAsync(cancellationToken);
     }
 }

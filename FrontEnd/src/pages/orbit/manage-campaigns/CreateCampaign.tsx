@@ -1,15 +1,13 @@
 import { FormInput, PageBreadcrumbsWithLinks, VerticalForm } from '@/components'
 import { PageBody, PageWrapper } from '@/components/PageWrapper'
 import { MenuLinks } from '@/constants/menu'
-import { PagingVariables } from '@/constants/paging'
 import { PermissionTypes } from '@/constants/permissions'
-import { SearchEmailTemplateRequest } from '@/helpers/api/WebApiClient'
+import { DropDownItemResponse } from '@/helpers/api/WebApiClient'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { messageHelper } from '@/helpers/message.helper'
 import { usePermission } from '@/hooks/usePermission'
 import { campaignService } from '@/services/CampaignService'
 import { DropDownService } from '@/services/DropDownService'
-import { emailTemplateService } from '@/services/EmailTemplateService'
 import { CampaignType, type CreateCampaignRequest } from '@/types/crm/campaign.types'
 import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
 import { yupResolver } from '@hookform/resolvers/yup'
@@ -36,20 +34,13 @@ const CreateCampaign: React.FC = () => {
 	const { userHasPermission } = usePermission()
 	const canCreate = userHasPermission(PermissionTypes.Permissions_ManageCampaigns_Create)
 	const [offerings, setOfferings] = useState<OfferingDropDownItemResponse[]>([])
-	const [templates, setTemplates] = useState<{ id: number; name: string }[]>([])
+	const [templates, setTemplates] = useState<DropDownItemResponse[]>([])
 
 	useEffect(() => {
-		const searchModel = new SearchEmailTemplateRequest()
-		searchModel.pageNumber = 1
-		searchModel.pageSize = PagingVariables.DefaultPageSize
-		Promise.all([DropDownService.getActiveOfferings(), emailTemplateService.getEmailTemplates(searchModel)])
-			.then(([offeringList, templatePage]) => {
+		Promise.all([DropDownService.getActiveOfferings(), DropDownService.getEmailTemplates()])
+			.then(([offeringList, templateList]) => {
 				setOfferings(offeringList ?? [])
-				setTemplates(
-					(templatePage.data ?? [])
-						.filter((item): item is typeof item & { id: number; name: string } => Boolean(item.id && item.name))
-						.map((item) => ({ id: item.id, name: item.name }))
-				)
+				setTemplates(templateList ?? [])
 			})
 			.catch(() => {
 				setOfferings([])
@@ -133,8 +124,8 @@ const CreateCampaign: React.FC = () => {
 							<FormInput label={t('Manage.Campaigns.Template', 'Email template')} name="templateId" type="bottom-sheet" required className="form-select">
 								<option value="">{t('Common.Select', 'Select')}</option>
 								{templates.map((template) => (
-									<option key={template.id} value={template.id}>
-										{template.name}
+									<option key={template.value} value={template.value}>
+										{template.text}
 									</option>
 								))}
 							</FormInput>

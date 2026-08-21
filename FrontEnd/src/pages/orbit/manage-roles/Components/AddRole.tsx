@@ -4,6 +4,8 @@ import { roleService } from '@/services/RoleService'
 import { messageHelper } from '@/helpers/message.helper'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { useTranslation } from 'react-i18next'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface AddRoleProps {
 	addNewRoleOutPut: (isAdded: boolean) => void
@@ -11,6 +13,11 @@ interface AddRoleProps {
 
 const AddRole: React.FC<AddRoleProps> = (props) => {
 	const { t } = useTranslation()
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			name: yup.string().trim().required('This field cannot be left empty'),
+		})
+	)
 	const onSubmit = async (formData: CreateOrUpdateRoleRequest) => {
 		await runWithToast(() => roleService.registerRole(formData), {
 			onSuccess: (response) => {
@@ -23,10 +30,10 @@ const AddRole: React.FC<AddRoleProps> = (props) => {
 		<>
 			<PopupWrapper variant="default">
 				<PopupHeader title={t('Manage.Role_Add', 'Add Role')} onClose={() => props.addNewRoleOutPut(false)} />
-				<VerticalForm<CreateOrUpdateRoleRequest> onSubmit={onSubmit}>
+				<VerticalForm<CreateOrUpdateRoleRequest> onSubmit={onSubmit} resolver={schemaResolver as any}>
 					<PopupBody>
 						<div className="grid lg:grid-cols-1 gap-6">
-							<FormInput label={t('Manage.Role.Add_RoleName', 'Role Name')} labelClassName="form-label" containerClass="form-field" type="text" name="name" className="form-input" key="name" />
+							<FormInput label={t('Manage.Role.Add_RoleName', 'Role Name')} labelClassName="form-label" containerClass="form-field" type="text" name="name" className="form-input" key="name" required />
 							<FormInput label={t('Manage.Role.Add_RoleDescription', 'Role Description')} labelClassName="form-label" containerClass="form-field" type="textarea" name="description" className="form-input" key="description" />
 						</div>
 					</PopupBody>

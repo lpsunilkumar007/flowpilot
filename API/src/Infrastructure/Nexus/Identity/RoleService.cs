@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowPilot.Infrastructure.Nexus.Identity;
+
 internal class RoleService : IRoleService
 {
     private readonly ICurrentUser _currentUser;
@@ -160,7 +161,7 @@ internal class RoleService : IRoleService
         var role = await _nexusDbContext.Roles.SingleOrDefaultAsync(x => x.Id == request.RoleId && x.FKTenantPKId == _currentUser.GetTenant());
         _ = role ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Role"));
 
-        if (SystemRoles.IsDefaultForTenant(role.Name!))
+        if (SystemRoles.GetRoleNameWithoutTenantName(role.Name) == SystemRoles.Admin)
         {
             throw new ConflictException(ErrorMessages.UpdateCantModifyPermission);
         }
@@ -199,8 +200,8 @@ internal class RoleService : IRoleService
             }
         }
 
-        await _userService.ResetUserPermissionAsync(string.Empty, new CancellationToken(), true);
+            await _userService.ResetUserPermissionAsync(string.Empty, new CancellationToken(), true);
 
-        return SuccessMessages.UpdatePermissions;
+            return SuccessMessages.UpdatePermissions;
+        }
     }
-}

@@ -8,6 +8,8 @@ import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { usePermission } from '@/hooks/usePermission'
 import { PermissionTypes } from '@/constants/permissions'
 import { useTranslation } from 'react-i18next'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface EditEmailTemplatesProps {
 	editEmailTemplatePut: (isAdded: boolean) => void
@@ -20,6 +22,14 @@ const EditEmailTemplates: React.FC<EditEmailTemplatesProps> = (props) => {
 	const [emailTemplateDetail, setEmailTemplateDetail] = useState<ViewEmailTemplateDetailResponse>()
 	const { userHasPermission } = usePermission()
 	const loadingIndicator = () => <AnimationSkeleton />
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			name: yup.string().trim().required('This field cannot be left empty'),
+			templateUsedFor: yup.mixed().required('Please select a value'),
+			emailSubject: yup.string().trim().required('This field cannot be left empty'),
+			emailBody: yup.string().trim().required('This field cannot be left empty'),
+		})
+	)
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -62,12 +72,12 @@ const EditEmailTemplates: React.FC<EditEmailTemplatesProps> = (props) => {
 				<PopupHeader title={t('Manage.EmailTemplates.Edit_EditDetails', 'Edit Details')} onClose={() => props.editEmailTemplatePut(false)} />
 				{loading && loadingIndicator()}
 				{!loading && (
-					<VerticalForm<any> onSubmit={onSubmit} defaultValues={emailTemplateDetail}>
+					<VerticalForm<any> onSubmit={onSubmit} resolver={schemaResolver as any} defaultValues={emailTemplateDetail}>
 						<PopupBody>
 							<div className="grid lg:grid-cols-1 gap-6">
-								<FormInput label={t('Manage.EmailTemplates.Edit_Name', 'Name')} labelClassName="form-label" containerClass="form-field" type="text" name="name" className="form-input" key="name" />
+								<FormInput label={t('Manage.EmailTemplates.Edit_Name', 'Name')} labelClassName="form-label" containerClass="form-field" type="text" name="name" className="form-input" key="name" required />
 								<FormInput label={t('Manage.EmailTemplates.Edit_Description', 'Description')} labelClassName="form-label" containerClass="form-field" type="textarea" name="description" className="form-input" key="description" />
-								 <FormInput label={t('Manage.EmailTemplates.Edit_TemplateUsedFor', 'Template Used For')} labelClassName="form-label" containerClass="form-field" type="bottom-sheet" name="templateUsedFor" className="form-select" key="templateUsedFor">
+								 <FormInput label={t('Manage.EmailTemplates.Edit_TemplateUsedFor', 'Template Used For')} labelClassName="form-label" containerClass="form-field" type="bottom-sheet" name="templateUsedFor" className="form-select" key="templateUsedFor" required>
 									<option value="">{t('Manage.EmailTemplates.Edit.Placeholder_SelectTemplateUsedFor', 'Select Template Used For')}</option>
 									{Object.keys(EmailTemplateUsedFor)
 										.filter((key) => isNaN(Number(key)))
@@ -77,8 +87,8 @@ const EditEmailTemplates: React.FC<EditEmailTemplatesProps> = (props) => {
 											</option>
 										))}
 								</FormInput> 
-								<FormInput label={t('Manage.EmailTemplates.Edit_EmailSubject', 'Email Subject')} labelClassName="form-label" containerClass="form-field" type="text" name="emailSubject" className="form-input" key="emailSubject" />
-								<FormInput label={t('Manage.EmailTemplates.Edit_EmailBody', 'Email Body')} labelClassName="form-label" containerClass="form-field" type="textarea" name="emailBody" className="form-input" key="emailBody" />
+								<FormInput label={t('Manage.EmailTemplates.Edit_EmailSubject', 'Email Subject')} labelClassName="form-label" containerClass="form-field" type="text" name="emailSubject" className="form-input" key="emailSubject" required />
+								<FormInput label={t('Manage.EmailTemplates.Edit_EmailBody', 'Email Body')} labelClassName="form-label" containerClass="form-field" type="textarea" name="emailBody" className="form-input" key="emailBody" required />
 								<FormInput label={t('Manage.EmailTemplates.Edit_IsShared', 'Is Shared')} type="checkbox" name="isShared" className="form-checkbox" key="isShared" labelClassName="form-label" containerClass="form-field" />
 							</div>
 						</PopupBody>

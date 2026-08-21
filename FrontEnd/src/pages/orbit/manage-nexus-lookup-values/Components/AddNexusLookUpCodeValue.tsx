@@ -4,6 +4,8 @@ import { nexusLookUpService } from '@/services/NexusLookUpService'
 import { messageHelper } from '@/helpers/message.helper'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { useTranslation } from 'react-i18next'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface AddNexusLookUpCodeValueProps {
 	addNewLookUpCodeValueOutPut: (refreshGrid: boolean, closePopup: boolean) => void
@@ -12,6 +14,12 @@ interface AddNexusLookUpCodeValueProps {
 
 const AddNexusLookUpCodeValue: React.FC<AddNexusLookUpCodeValueProps> = (props) => {
 	const { t } = useTranslation()
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			lookUpValue: yup.string().trim().required('This field cannot be left empty'),
+			displayOrder: yup.number().typeError('This field cannot be left empty').required('This field cannot be left empty'),
+		})
+	)
 	const onSubmit = async (formData: CreateNexusLookUpCodeValueRequest, resetForm: () => void) => {
 		if (!Number(formData.displayOrder)) {
 			formData.displayOrder = 0
@@ -29,7 +37,7 @@ const AddNexusLookUpCodeValue: React.FC<AddNexusLookUpCodeValueProps> = (props) 
 		<>
 			<PopupWrapper variant="default">
 				<PopupHeader title={t('Manage.Nexus.Values.Add_AddNew', 'Add New')} onClose={() => props.addNewLookUpCodeValueOutPut(false, true)} />
-				<VerticalForm<CreateNexusLookUpCodeValueRequest> onSubmit={(data: CreateNexusLookUpCodeValueRequest, { reset }: { reset: () => void }) => onSubmit(data, reset)}>
+				<VerticalForm<CreateNexusLookUpCodeValueRequest> onSubmit={(data: CreateNexusLookUpCodeValueRequest, { reset }: { reset: () => void }) => onSubmit(data, reset)} resolver={schemaResolver as any}>
 					<PopupBody>
 						<div className="grid lg:grid-cols-1 gap-6">
 							<FormInput label={t('Manage.Nexus.Values.Add_Value', 'Value')} labelClassName="form-label" containerClass="form-field" required type="text" name="lookUpValue" className="form-input" key="lookUpValue" />

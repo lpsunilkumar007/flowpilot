@@ -68,17 +68,33 @@ const AddLeadDetails: React.FC = () => {
 
 	const schemaResolver = yupResolver(
 		yup.object().shape({
-			businessName: yup.string().required('This field cannot be left empty'),
-			businessType: yup.string().required('This field cannot be left empty'),
-			ownerName: yup.string().required('This field cannot be left empty'),
-			mobile: yup.string().required('Please enter Mobile Number'),
+			businessName: yup.string().trim().required('This field cannot be left empty'),
+			businessType: yup.string().trim().required('This field cannot be left empty'),
+			ownerName: yup.string().trim().required('This field cannot be left empty'),
+			mobile: yup.string().trim().required('Please enter Mobile Number'),
 			offeringId: yup.number().moreThan(0, 'Please select a value').required('Please select a value'),
+			leadSourceId: yup.number().moreThan(0, 'Please select a value').required('Please select a value'),
 			leadStatusId: yup.number().required('Please select a value'),
 			assignToYourself: yup.boolean(),
 			assignedToUserId: yup.string().optional().nullable(),
-			email: yup.string().email('Please enter a valid email address').nullable(),
-			website: yup.string().url('Please enter a valid URL').nullable(),
-			GoogleMapsLink: yup.string().url('Please enter a valid URL').nullable(),
+			email: yup
+				.string()
+				.transform((value) => (value === '' ? undefined : value))
+				.email('Please enter a valid email address')
+				.nullable()
+				.optional(),
+			website: yup
+				.string()
+				.transform((value) => (value === '' ? undefined : value))
+				.url('Please enter a valid URL')
+				.nullable()
+				.optional(),
+			googleMapsLink: yup
+				.string()
+				.transform((value) => (value === '' ? undefined : value))
+				.url('Please enter a valid URL')
+				.nullable()
+				.optional(),
 		})
 	)
 

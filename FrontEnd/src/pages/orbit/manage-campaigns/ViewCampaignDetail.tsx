@@ -1,14 +1,13 @@
 import { FormInput, PageBreadcrumbsWithLinks, VerticalForm } from '@/components'
 import { MenuLinks } from '@/constants/menu'
-import { PagingVariables } from '@/constants/paging'
 import { PermissionTypes } from '@/constants/permissions'
-import { SearchEmailTemplateRequest } from '@/helpers/api/WebApiClient'
+import { DropDownItemResponse } from '@/helpers/api/WebApiClient'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { messageHelper } from '@/helpers/message.helper'
 import { usePermission } from '@/hooks/usePermission'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { campaignService } from '@/services/CampaignService'
-import { emailTemplateService } from '@/services/EmailTemplateService'
+import { DropDownService } from '@/services/DropDownService'
 import { CampaignType, type UpdateCampaignRequest, type ViewCampaignDetailResponse } from '@/types/crm/campaign.types'
 import { yupResolver } from '@hookform/resolvers/yup'
 import moment from 'moment'
@@ -37,7 +36,7 @@ const ViewCampaignDetail: React.FC = () => {
 	const [loading, setLoading] = useState(true)
 	const [formKey, setFormKey] = useState(0)
 	const [campaign, setCampaign] = useState<ViewCampaignDetailResponse | null>(null)
-	const [templates, setTemplates] = useState<{ id: number; name: string }[]>([])
+	const [templates, setTemplates] = useState<DropDownItemResponse[]>([])
 
 	const reload = async () => {
 		if (!id) return
@@ -51,16 +50,9 @@ const ViewCampaignDetail: React.FC = () => {
 		const load = async () => {
 			setLoading(true)
 			try {
-				const searchModel = new SearchEmailTemplateRequest()
-				searchModel.pageNumber = 1
-				searchModel.pageSize = PagingVariables.DefaultPageSize
-				const [campaignRes, templatePage] = await Promise.all([campaignService.getById(Number(id)), emailTemplateService.getEmailTemplates(searchModel)])
+				const [campaignRes, templateList] = await Promise.all([campaignService.getById(Number(id)), DropDownService.getEmailTemplates()])
 				setCampaign(campaignRes)
-				setTemplates(
-					(templatePage.data ?? [])
-						.filter((item): item is typeof item & { id: number; name: string } => Boolean(item.id && item.name))
-						.map((item) => ({ id: item.id, name: item.name }))
-				)
+				setTemplates(templateList ?? [])
 			} catch {
 				setCampaign(null)
 			} finally {
@@ -113,8 +105,8 @@ const ViewCampaignDetail: React.FC = () => {
 	}
 
 	const templateOptions =
-		campaign.templateId && !templates.some((template) => template.id === campaign.templateId)
-			? [{ id: campaign.templateId, name: campaign.templateName }, ...templates]
+		campaign.templateId && !templates.some((template) => template.value === campaign.templateId)
+			? [{ value: campaign.templateId, text: campaign.templateName }, ...templates]
 			: templates
 
 	const defaultValues: CampaignDetailsFormValues = {
@@ -150,8 +142,8 @@ const ViewCampaignDetail: React.FC = () => {
 								<FormInput label={t('Manage.Campaigns.Template', 'Email template')} required name="templateId" type="bottom-sheet" className="form-select">
 									<option value="">{t('Common.Select', 'Select')}</option>
 									{templateOptions.map((template) => (
-										<option key={template.id} value={template.id}>
-											{template.name}
+										<option key={template.value} value={template.value}>
+											{template.text}
 										</option>
 									))}
 								</FormInput>

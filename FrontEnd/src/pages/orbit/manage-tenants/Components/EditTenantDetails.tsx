@@ -6,6 +6,8 @@ import { messageHelper } from '@/helpers/message.helper'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface EditTenantDetailsProps {
 	id: string
@@ -15,6 +17,12 @@ const EditTenantDetails: React.FC<EditTenantDetailsProps> = (props) => {
 	const { t } = useTranslation()
 	const [tenantDetailResponse, setTenantDetailResponse] = useState<ViewTenantResponse>()
 	const [loading, setLoading] = useState<boolean>(false)
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			name: yup.string().trim().required('This field cannot be left empty'),
+			adminEmail: yup.string().trim().required('This field cannot be left empty').email('Please enter a valid email address'),
+		})
+	)
 	const fetchData = async () => {
 		setLoading(true)
 		try {
@@ -38,12 +46,12 @@ const EditTenantDetails: React.FC<EditTenantDetailsProps> = (props) => {
 		<>
 			{loading && <AnimationSkeleton />}
 			{!loading && (
-				<VerticalForm<UpdateTenantRequest> defaultValues={tenantDetailResponse} onSubmit={onSubmit}>
+				<VerticalForm<UpdateTenantRequest> defaultValues={tenantDetailResponse} onSubmit={onSubmit} resolver={schemaResolver as any}>
 					<div className="card overflow-hidden">
 						<div className="p-4 overflow-y-auto">
 							<div className="grid lg:grid-cols-2 gap-6 pt-5">
-								<FormInput label={t('Manage.Tenant.Edit_Name', 'Name')} labelClassName="form-label" containerClass="form-field" type="text" name="name" className="form-input" key="name" />
-								<FormInput label={t('Manage.Tenant.Edit_Email', 'Email')} labelClassName="form-label" containerClass="form-field" type="text" name="adminEmail" className="form-input" key="adminEmail" />
+								<FormInput label={t('Manage.Tenant.Edit_Name', 'Name')} labelClassName="form-label" containerClass="form-field" type="text" name="name" className="form-input" key="name" required />
+								<FormInput label={t('Manage.Tenant.Edit_Email', 'Email')} labelClassName="form-label" containerClass="form-field" type="text" name="adminEmail" className="form-input" key="adminEmail" required />
 								<FormInput label={t('Manage.Tenant.Edit_IsActive', 'Is Active')} labelClassName="form-label" containerClass="form-field" type="checkbox" name="isActive" key="isActive" />
 							</div>
 						</div>

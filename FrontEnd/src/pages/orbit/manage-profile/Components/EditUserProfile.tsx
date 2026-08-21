@@ -14,6 +14,8 @@ import { useTranslation } from 'react-i18next'
 import useObjectState from '@/hooks/useObjectState'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { FileUploader } from '@/components'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 type ModalState = {
 	timeZone: DropDownItemResponse[]
@@ -48,6 +50,14 @@ const EditUserProfile = () => {
 			{ setLoading: (loading) => setModalKey('loading', loading) }
 		)
 	}
+
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			firstName: yup.string().trim().required('This field cannot be left empty'),
+			lastName: yup.string().trim().required('This field cannot be left empty'),
+			timeZone: yup.string().required('Please select a value'),
+		})
+	)
 
 	const onSubmit = async (formData: UpdateUserRequest) => {
 		const modifiedFormData = { ...formData }
@@ -86,7 +96,7 @@ const EditUserProfile = () => {
 					{t('Manage.Profile.Edit_EditProfile', 'Edit Profile')} {viewUserDetailsResponse && `(${viewUserDetailsResponse.email})`}
 				</h4>
 				{viewUserDetailsResponse && (
-					<VerticalForm<UpdateUserRequest> onSubmit={onSubmit} defaultValues={viewUserDetailsResponse}>
+					<VerticalForm<UpdateUserRequest> onSubmit={onSubmit} resolver={schemaResolver as any} defaultValues={viewUserDetailsResponse}>
 						<div className="flex flex-col md:flex-row items-center gap-8 my-2 p-6 rounded-xl bg-gray-50/50 dark:bg-gray-800/30 border border-gray-100 dark:border-gray-700/50">
 							<div className="relative group">
 								<div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white dark:border-gray-700 shadow-xl">

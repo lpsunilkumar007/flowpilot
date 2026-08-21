@@ -47,6 +47,14 @@ const dropDownService: IDropDownRepository = {
 			return []
 		}
 	},
+
+	async getEmailTemplates(): Promise<DropDownItemResponse[]> {
+		try {
+			return (await dataControllersClient.getEmailTemplates()) ?? []
+		} catch {
+			return []
+		}
+	},
 }
 
 /**

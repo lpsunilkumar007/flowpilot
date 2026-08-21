@@ -9,4 +9,5 @@ export interface IDropDownRepository {
 	getLocalizationCountries(): Promise<DropDownItemResponse[]>
 	getCountryLocalization(id: number): Promise<ViewCountryLocalizationResponse[]>
 	getActiveOfferings(): Promise<OfferingDropDownItemResponse[]>
+	getEmailTemplates(): Promise<DropDownItemResponse[]>
 }

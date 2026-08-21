@@ -8,6 +8,7 @@ using FlowPilot.Shared.Nexus;
 using Microsoft.EntityFrameworkCore;
 
 namespace FlowPilot.Infrastructure.Nexus.Identity;
+
 internal partial class UserService
 {
     public async Task AssignDefaultRoleToNewTenantAsync(int tenantId, Guid uniqueId, CancellationToken cancellationToken)
@@ -17,8 +18,14 @@ internal partial class UserService
         foreach (string roleName in SystemRoles.DefaultRoles)
         {
             var role = await EnsureDefaultRoleExistsAsync(tenantId, roleName, cancellationToken);
-            await SyncPermissionsToTenantRoleAsync(GetPermissionsForDefaultRole(roleName, uniqueId), role, cancellationToken);
+            bool hasPermissionClaims = await _nexusDbContext.RoleClaims
+                .AnyAsync(c => c.RoleId == role.Id && c.ClaimType == SystemClaims.Permission, cancellationToken);
+            if (!hasPermissionClaims)
+            {
+                await SyncPermissionsToTenantRoleAsync(GetPermissionsForDefaultRole(roleName, uniqueId), role, cancellationToken);
+            }
         }
+
     }
 
     private static IReadOnlyList<SystemPermission> GetPermissionsForDefaultRole(string roleName, Guid tenantUniqueId)

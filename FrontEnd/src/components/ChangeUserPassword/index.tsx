@@ -8,6 +8,8 @@ import { messageHelper } from '@/helpers/message.helper'
 import { usePermission } from '@/hooks/usePermission'
 import React from 'react'
 import { useTranslation } from 'react-i18next'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 export interface ChangeUserPasswordProps {
 	/** When provided, admin flow (change password for another user). When omitted, self flow (change own password). */
@@ -23,6 +25,25 @@ const ChangeUserPassword: React.FC<ChangeUserPasswordProps> = (props) => {
 	const { userHasPermission } = usePermission()
 	const isAdminMode = !!props.userId
 	const variant = props.variant ?? (isAdminMode ? 'popup' : 'inline')
+	const passwordMatchResolver = yupResolver(
+		yup.object().shape({
+			newPassword: yup.string().required('This field cannot be left empty'),
+			confirmNewPassword: yup
+				.string()
+				.required('This field cannot be left empty')
+				.oneOf([yup.ref('newPassword')], 'Passwords must match'),
+		})
+	)
+	const selfPasswordResolver = yupResolver(
+		yup.object().shape({
+			password: yup.string().required('This field cannot be left empty'),
+			newPassword: yup.string().required('This field cannot be left empty'),
+			confirmNewPassword: yup
+				.string()
+				.required('This field cannot be left empty')
+				.oneOf([yup.ref('newPassword')], 'Passwords must match'),
+		})
+	)
 
 	const handleAdminSubmit = async (formData: ChangePasswordForcefullyRequest) => {
 		await runWithToast(() => userService.changePasswordForcefully(props.userId!, formData), {
@@ -43,7 +64,7 @@ const ChangeUserPassword: React.FC<ChangeUserPasswordProps> = (props) => {
 		return (
 			<PopupWrapper variant="default">
 				<PopupHeader title={t('Manage.User.ChangeUserPassword_Heading', 'Change User Password')} onClose={() => props.onUserActionClick?.(false)} />
-				<VerticalForm<ChangePasswordForcefullyRequest> onSubmit={handleAdminSubmit}>
+				<VerticalForm<ChangePasswordForcefullyRequest> onSubmit={handleAdminSubmit} resolver={passwordMatchResolver as any}>
 					<PopupBody>
 						<div className="grid lg:grid-cols-2 gap-6">
 							<FormInput label={t('Manage.User.ChangeUserPassword.New_Password', 'New Password')} labelClassName="form-label" containerClass="form-field" type="password" name="newPassword" className="form-input" key="newPassword" />
@@ -68,7 +89,7 @@ const ChangeUserPassword: React.FC<ChangeUserPasswordProps> = (props) => {
 	return (
 		<div className="card p-6 mb-6">
 			<h4 className="card-title mb-1">{t('Manage.Profile.Edit_ChangePassword', 'Change Password')}</h4>
-			<VerticalForm<ChangePasswordRequest> onSubmit={handleSelfSubmit}>
+			<VerticalForm<ChangePasswordRequest> onSubmit={handleSelfSubmit} resolver={selfPasswordResolver as any}>
 				<div className="grid lg:grid-cols-1 gap-6 pt-5">
 					<FormInput label={t('Manage.Profile.Edit_OldPassword', 'Old Password')} labelClassName="form-label" containerClass="form-field" type="password" name="password" placeholder={t('Manage.Profile.Edit.Placeholder_OldPassword', 'Old Password')} className="form-input" key="password" />
 					<FormInput label={t('Manage.Profile.Edit_NewPassword', 'New Password')} labelClassName="form-label" containerClass="form-field" type="password" name="newPassword" placeholder={t('Manage.Profile.Edit.Placeholder_NewPassword', 'New Password')} className="form-input" key="newPassword" />

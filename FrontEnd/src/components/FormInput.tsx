@@ -142,11 +142,12 @@ const FormInput = <TFieldValues extends FieldValues = FieldValues>({ label, type
 											ref={(r: HTMLInputElement) => {
 												if (refCallback) refCallback(r)
 											}}
-											className={`${className} ${errors && errors[name] ? 'border-red-500 focus:border-red-500 text-red-700  pe-10' : ''}`}
+											className={`${className} ${errors && errors[name] ? 'border-red-500 focus:border-red-500 text-red-700 pe-10' : ''}`}
 											{...(register ? register(name) : {})}
 											{...otherProps}
 											autoComplete={name}
 										/>
+										{errors && errors[name] && <p className="text-xs text-red-600 mt-2">{errors[name]['message']}</p>}
 									</div>
 								</>
 							) : (

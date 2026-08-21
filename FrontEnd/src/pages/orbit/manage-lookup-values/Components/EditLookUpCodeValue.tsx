@@ -8,6 +8,8 @@ import { usePermission } from '@/hooks/usePermission'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface EditLookUpCodeValueProps {
 	editLookUpCodeValueOutPut: (isAdded: boolean) => void
@@ -20,6 +22,12 @@ const EditLookUpCodeValue: React.FC<EditLookUpCodeValueProps> = (props) => {
 	const [lookUpCodeValueDetail, setLookUpCodeValueDetail] = useState<ViewLookUpCodeValuesResponse>()
 	const { userHasPermission } = usePermission()
 	const loadingIndicator = () => <AnimationSkeleton />
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			lookUpValue: yup.string().trim().required('This field cannot be left empty'),
+			displayOrder: yup.number().typeError('This field cannot be left empty').required('This field cannot be left empty'),
+		})
+	)
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -56,7 +64,7 @@ const EditLookUpCodeValue: React.FC<EditLookUpCodeValueProps> = (props) => {
 				<PopupHeader title={t('Manage.Values.Edit_EditDetails', 'Edit Details')} onClose={() => props.editLookUpCodeValueOutPut(false)} />
 				{loading && loadingIndicator()}
 				{!loading && (
-					<VerticalForm<UpdateLookUpCodeValueRequest> onSubmit={onSubmit} defaultValues={lookUpCodeValueDetail}>
+					<VerticalForm<UpdateLookUpCodeValueRequest> onSubmit={onSubmit} resolver={schemaResolver as any} defaultValues={lookUpCodeValueDetail}>
 						<PopupBody>
 							<div className="grid lg:grid-cols-1 gap-6">
 								<FormInput label={t('Manage.Values.Edit_Value', 'Value')} labelClassName="form-label" containerClass="form-field" required type="text" name="lookUpValue" className="form-input" key="lookUpValue" />

@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { PermissionTypes } from '@/constants/permissions'
 import { usePermission } from '@/hooks/usePermission'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface EditCountryProps {
 	id: number
@@ -21,6 +23,13 @@ const EditCountry: React.FC<EditCountryProps> = ({ id, onClose, onUpdated }) => 
 	const [loading, setLoading] = useState(true)
 	const [countryDetail, setCountryDetail] = useState<any>(null)
 	const loadingIndicator = () => <AnimationSkeleton />
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			countryName: yup.string().trim().required('This field cannot be left empty'),
+			countryCode: yup.string().trim().required('This field cannot be left empty'),
+			displayOrder: yup.mixed().required('This field cannot be left empty'),
+		})
+	)
 	const fetchCountry = async () => {
 		try {
 			setLoading(true)
@@ -50,7 +59,7 @@ const EditCountry: React.FC<EditCountryProps> = ({ id, onClose, onUpdated }) => 
 
 			{loading && loadingIndicator()}
 			{!loading && countryDetail && (
-				<VerticalForm onSubmit={onSubmit} defaultValues={countryDetail}>
+				<VerticalForm onSubmit={onSubmit} resolver={schemaResolver as any} defaultValues={countryDetail}>
 					<PopupBody>
 						<div className="grid lg:grid-cols-1 gap-6">
 							<FormInput label={t('Manage.Languages.Edit_CountryName', 'Country Name')} labelClassName="form-label" containerClass="form-field" name="countryName" type="text" required className="form-input" key="countryName" />

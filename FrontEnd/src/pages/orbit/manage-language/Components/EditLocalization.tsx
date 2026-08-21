@@ -8,6 +8,8 @@ import { useTranslation } from 'react-i18next'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { PermissionTypes } from '@/constants/permissions'
 import { usePermission } from '@/hooks/usePermission'
+import { yupResolver } from '@hookform/resolvers/yup'
+import * as yup from 'yup'
 
 interface Props {
 	id: number
@@ -20,6 +22,12 @@ const EditLocalization: React.FC<Props> = ({ id, onClose, onUpdated }) => {
 	const { userHasPermission } = usePermission()
 	const [loading, setLoading] = useState(true)
 	const [detail, setDetail] = useState<any>(null)
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			key: yup.string().trim().required('This field cannot be left empty'),
+			value: yup.string().trim().required('This field cannot be left empty'),
+		})
+	)
 
 	const fetchDetail = async () => {
 		try {
@@ -50,7 +58,7 @@ const EditLocalization: React.FC<Props> = ({ id, onClose, onUpdated }) => {
 
 			{loading && <AnimationSkeleton />}
 			{!loading && detail && (
-				<VerticalForm onSubmit={onSubmit} defaultValues={detail}>
+				<VerticalForm onSubmit={onSubmit} resolver={schemaResolver as any} defaultValues={detail}>
 					<PopupBody>
 						<div className="grid lg:grid-cols-1 gap-6 ">
 							<FormInput label={t('Manage.Localization.Edit_Key', 'Key')} labelClassName="form-label" containerClass="form-field" name="key" disabled type="text" required className="form-input" key="key" />

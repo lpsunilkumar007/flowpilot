@@ -7,9 +7,11 @@ import { runWithToast } from '@/helpers/asyncToast.helper'
 import { usePermission } from '@/hooks/usePermission'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { DropDownService } from '@/services/DropDownService'
+import { yupResolver } from '@hookform/resolvers/yup'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import useObjectState from '@/hooks/useObjectState'
+import * as yup from 'yup'
 
 interface EditUserProps {
 	editUserOutPut: (isAdded: boolean) => void
@@ -65,6 +67,14 @@ const EditUser: React.FC<EditUserProps> = (props) => {
 		}
 	}
 
+	const schemaResolver = yupResolver(
+		yup.object().shape({
+			firstName: yup.string().trim().required('This field cannot be left empty'),
+			lastName: yup.string().trim().required('This field cannot be left empty'),
+			timeZone: yup.string().required('Please select a value'),
+		})
+	)
+
 	const onSubmit = async (formData: UpdateUserDetailsRequest) => {
 		formData.userId = props.id
 		formData.reportsToUserId = formData.reportsToUserId || undefined
@@ -82,7 +92,7 @@ const EditUser: React.FC<EditUserProps> = (props) => {
 				<PopupHeader title={t('Manage.Users.Edit_EditDetails', 'Edit User')} onClose={() => props.editUserOutPut(false)} />
 				{modalState.loading && loadingIndicator()}
 				{!modalState.loading && userDetail && (
-					<VerticalForm<UpdateUserDetailsRequest> onSubmit={onSubmit} defaultValues={userDetail}>
+					<VerticalForm<UpdateUserDetailsRequest> onSubmit={onSubmit} resolver={schemaResolver as any} defaultValues={userDetail}>
 						<PopupBody>
 							<div className="grid lg:grid-cols-2 gap-6">
 								<FormInput label={t('Manage.Users.Edit_FirstName', 'First Name')} labelClassName="form-label" containerClass="form-field" type="text" name="firstName" className="form-input" key="firstName" />
