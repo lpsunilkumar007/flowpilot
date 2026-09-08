@@ -114,8 +114,18 @@ const EditLeadOverview: React.FC<EditLeadOverviewProps> = ({ id, lead, onLeadUpd
 			businessType: yup.string().trim().required('This field cannot be left empty'),
 			ownerName: yup.string().trim().required('This field cannot be left empty'),
 			mobile: yup.string().trim().required('Please enter Mobile Number'),
-			offeringId: yup.number().moreThan(0, 'Please select a value').required('Please select a value'),
-			leadSourceId: yup.number().moreThan(0, 'Please select a value').required('Please select a value'),
+			offeringId: yup
+				.number()
+				.transform((value, originalValue) => (originalValue === '' || originalValue === null ? undefined : value))
+				.typeError('Please select a value')
+				.moreThan(0, 'Please select a value')
+				.required('Please select a value'),
+			leadSourceId: yup
+				.number()
+				.transform((value, originalValue) => (originalValue === '' || originalValue === null ? undefined : value))
+				.typeError('Please select a value')
+				.moreThan(0, 'Please select a value')
+				.required('Please select a value'),
 			assignToYourself: yup.boolean(),
 			assignedToUserId: yup.string().optional().nullable(),
 			email: yup

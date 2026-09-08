@@ -43,12 +43,7 @@ const AddLeadDetails: React.FC = () => {
 	}, [offerings, requestedOfferingId, requestedOfferingUid])
 
 	useEffect(() => {
-		Promise.all([
-			DropDownService.getDirectReportSystemUsers(),
-			DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus),
-			DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadSource),
-			DropDownService.getActiveOfferings(),
-		])
+		Promise.all([DropDownService.getDirectReportSystemUsers(), DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadStatus), DropDownService.getLookUpCodeValues(LookUpCodeTypes.LeadSource), DropDownService.getActiveOfferings()])
 			.then(([userList, statusList, sourceList, offeringList]) => {
 				setUsers(userList ?? [])
 				const statuses = (statusList ?? []).map((item) => ({ value: item.value, text: item.text }))
@@ -72,9 +67,23 @@ const AddLeadDetails: React.FC = () => {
 			businessType: yup.string().trim().required('This field cannot be left empty'),
 			ownerName: yup.string().trim().required('This field cannot be left empty'),
 			mobile: yup.string().trim().required('Please enter Mobile Number'),
-			offeringId: yup.number().moreThan(0, 'Please select a value').required('Please select a value'),
-			leadSourceId: yup.number().moreThan(0, 'Please select a value').required('Please select a value'),
-			leadStatusId: yup.number().required('Please select a value'),
+			offeringId: yup
+				.number()
+				.transform((value, originalValue) => (originalValue === '' || originalValue === null ? undefined : value))
+				.typeError('Please select a value')
+				.moreThan(0, 'Please select a value')
+				.required('Please select a value'),
+			leadSourceId: yup
+				.number()
+				.transform((value, originalValue) => (originalValue === '' || originalValue === null ? undefined : value))
+				.typeError('Please select a value')
+				.moreThan(0, 'Please select a value')
+				.required('Please select a value'),
+			leadStatusId: yup
+				.number()
+				.transform((value, originalValue) => (originalValue === '' || originalValue === null ? undefined : value))
+				.typeError('Please select a value')
+				.required('Please select a value'),
 			assignToYourself: yup.boolean(),
 			assignedToUserId: yup.string().optional().nullable(),
 			email: yup
