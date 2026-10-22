@@ -59,6 +59,7 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	const [loading, setLoading] = useState(true)
 	const [rowData, setRowData] = useState<PaginationResponseOfViewLeadListResponse>()
 	const [users, setUsers] = useState<UserDropDownItemResponse[]>([])
+	const [filterUsers, setFilterUsers] = useState<UserDropDownItemResponse[]>([])
 	const [offerings, setOfferings] = useState<OfferingDropDownItemResponse[]>([])
 	const [filterType, setFilterType] = useState(LeadFilterType.All)
 	const [searchText, setSearchText] = useState('')
@@ -91,6 +92,22 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 			.then((list) => setUsers(list ?? []))
 			.catch(() => setUsers([]))
 	}, [canFilterByAssignee, isTeamContext])
+
+	useEffect(() => {
+		if (!canFilterByAssignee) return
+		DropDownService.getDirectReportSystemUsers()
+			.then((list) => setFilterUsers(list ?? []))
+			.catch(() => setFilterUsers([]))
+	}, [canFilterByAssignee])
+
+	const assigneeFilterUsers = useMemo(() => {
+		if (!currentUserId) return filterUsers
+		const selfId = String(currentUserId)
+		const alreadyListed = filterUsers.some((u) => u.strValue?.localeCompare(selfId, undefined, { sensitivity: 'accent' }) === 0)
+		if (alreadyListed) return filterUsers
+		const name = `${userData?.firstName ?? ''} ${userData?.lastName ?? ''}`.trim() || userData?.email || selfId
+		return [{ strValue: selfId, text: name }, ...filterUsers]
+	}, [filterUsers, currentUserId, userData?.firstName, userData?.lastName, userData?.email])
 
 	const fetchLeads = useCallback(
 		async (pageNumber: number, overrides?: {
@@ -198,7 +215,7 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 					{canFilterByAssignee && (
 						<FormInput label={t('Manage.Leads.Filter_AssignedTo', 'Assigned to')} name="assignedToUserId" type="bottom-sheet" className="form-select" value={assignedToUserId ?? ''} onChange={(e) => setAssignedToUserId(e.target.value || undefined)}>
 							<option value="">{t('Common.All', 'All')}</option>
-							{users.map((u) => (
+							{assigneeFilterUsers.map((u) => (
 								<option key={u.strValue} value={u.strValue}>
 									{u.text}
 								</option>
