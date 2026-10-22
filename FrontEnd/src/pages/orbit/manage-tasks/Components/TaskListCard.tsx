@@ -42,12 +42,12 @@ const TaskListCard: React.FC<TaskListCardProps> = ({ task, disabled = false, onT
 			</div>
 
 			{isCompleted && (
-				<span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+				<span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-3 text-[10px] font-semibold uppercase tracking-wide text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
 					{t('Manage.Tasks.Completed_Status', 'Completed')}
 				</span>
 			)}
 
-			<span className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-semibold tracking-wide ${getPriorityPillClass(task.priority)}`}>
+			<span className={`shrink-0 rounded-full px-2.5 py-3 text-[10px] font-semibold tracking-wide ${getPriorityPillClass(task.priority)}`}>
 				{formatPriorityLabel(task.priority)}
 			</span>
 		</article>

@@ -107,7 +107,7 @@ const ViewCampaigns: React.FC = () => {
 						>
 							<div className="flex items-start justify-between gap-3">
 								<h3 className="truncate text-base font-semibold text-gray-800 dark:text-gray-100">{campaign.title}</h3>
-								<span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">{campaignTypeLabel(campaign.campaignType)}</span>
+								<span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">{campaignTypeLabel(campaign.campaignType)}</span>
 							</div>
 							<div className="mt-4 grid grid-cols-2 gap-3 text-sm">
 								<div>

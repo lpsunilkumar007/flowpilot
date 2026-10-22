@@ -5,7 +5,9 @@ import type {
     CreateLeadActivityRequest as ApiCreateLeadActivityRequest,
     CreateLeadRequest as ApiCreateLeadRequest,
     LeadFilterType as ApiLeadFilterType,
+    UpdateLeadActivityRequest as ApiUpdateLeadActivityRequest,
     UpdateLeadFollowUpDateRequest as ApiUpdateLeadFollowUpDateRequest,
+    UpdateLeadFollowUpRequest as ApiUpdateLeadFollowUpRequest,
     UpdateLeadRequest as ApiUpdateLeadRequest,
     UpdateLeadStatusRequest as ApiUpdateLeadStatusRequest,
 } from '@/helpers/api/WebApiClient'
@@ -45,6 +47,8 @@ export const leadService: ILeadRepository = {
 	update: (id, request) =>
 		leadClient.update(id, sanitizeLeadApiPayload({ ...request, id }) as unknown as ApiUpdateLeadRequest),
 
+	delete: (id) => leadClient.delete(id),
+
 	updateStatus: (id, request) =>
 		leadClient.updateStatus(id, request as unknown as ApiUpdateLeadStatusRequest),
 
@@ -57,6 +61,15 @@ export const leadService: ILeadRepository = {
 			sanitizeLeadApiPayload(request) as unknown as ApiUpdateLeadFollowUpDateRequest
 		),
 
+	updateFollowUp: (leadId, followUpId, request) =>
+		leadClient.updateFollowUp(
+			leadId,
+			followUpId,
+			sanitizeLeadApiPayload(request) as unknown as ApiUpdateLeadFollowUpRequest
+		),
+
+	cancelFollowUp: (leadId, followUpId) => leadClient.cancelFollowUp(leadId, followUpId),
+
 	getActivities: (id) => asUi(leadClient.getActivities(id)),
 
 	createActivity: (id, request) =>
@@ -66,6 +79,15 @@ export const leadService: ILeadRepository = {
 				sanitizeLeadApiPayload(request) as unknown as ApiCreateLeadActivityRequest
 			)
 		),
+
+	updateActivity: (leadId, activityId, request) =>
+		leadClient.updateActivity(
+			leadId,
+			activityId,
+			sanitizeLeadApiPayload(request) as unknown as ApiUpdateLeadActivityRequest
+		),
+
+	deleteActivity: (leadId, activityId) => leadClient.deleteActivity(leadId, activityId),
 
 	getTodayFollowUps: () => asUi(leadClient.getTodayFollowUps()),
 

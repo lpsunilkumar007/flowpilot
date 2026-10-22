@@ -135,6 +135,21 @@ export interface UpdateLeadFollowUpDateRequest {
 	nextFollowUpDate: string
 }
 
+export interface UpdateLeadFollowUpRequest {
+	nextFollowUpDate: string
+	followUpType: FollowUpType | string
+	reminderNote?: string
+}
+
+export interface UpdateLeadActivityRequest {
+	activityType: LeadActivityType | string
+	activityDate: string
+	durationMinutes?: number
+	outcome?: string
+	notes?: string
+	nextFollowUpDate?: string
+}
+
 export interface CreateLeadActivityRequest {
 	activityType: LeadActivityType | string
 	activityDate: string

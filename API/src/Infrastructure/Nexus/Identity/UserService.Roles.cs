@@ -18,12 +18,9 @@ internal partial class UserService
         foreach (string roleName in SystemRoles.DefaultRoles)
         {
             var role = await EnsureDefaultRoleExistsAsync(tenantId, roleName, cancellationToken);
-            bool hasPermissionClaims = await _nexusDbContext.RoleClaims
-                .AnyAsync(c => c.RoleId == role.Id && c.ClaimType == SystemClaims.Permission, cancellationToken);
-            if (!hasPermissionClaims)
-            {
-                await SyncPermissionsToTenantRoleAsync(GetPermissionsForDefaultRole(roleName, uniqueId), role, cancellationToken);
-            }
+            // Always sync so existing default roles (Admin / SalesManager / SalesRepresentative),
+            // including Root Admin, pick up new or changed SystemPermissions on startup.
+            await SyncPermissionsToTenantRoleAsync(GetPermissionsForDefaultRole(roleName, uniqueId), role, cancellationToken);
         }
 
     }

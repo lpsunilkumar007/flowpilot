@@ -1,12 +1,25 @@
+import ActionDropdown from '@/components/ActionDropdown'
+import DeleteConfirmation from '@/components/DeleteConfirmation'
+import { ModalLayout } from '@/components/HeadlessUI'
+import { MODAL_PANEL_CLASS } from '@/constants'
+import { PermissionTypes } from '@/constants/permissions'
+import { runWithToast } from '@/helpers/asyncToast.helper'
 import { formatHelper } from '@/helpers/format.helper'
-import { FollowUpStatus, FollowUpType, type ViewLeadDetailResponse } from '@/types/crm/lead.types'
-import React from 'react'
+import { messageHelper } from '@/helpers/message.helper'
+import withSuspense from '@/helpers/suspense.helper'
+import { usePermission } from '@/hooks/usePermission'
+import { leadService } from '@/services/LeadService'
+import { FollowUpStatus, FollowUpType, type ViewLeadDetailResponse, type ViewLeadFollowUpResponse } from '@/types/crm/lead.types'
+import React, { lazy, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { leadCardClass } from '../helpers/leadDisplay.helper'
 import LeadSectionCard from './shared/LeadSectionCard'
 
+const EditFollowUpModal = withSuspense(lazy(() => import('./EditFollowUpModal')))
+
 interface ViewLeadFollowUpsProps {
 	lead: ViewLeadDetailResponse
+	onLeadUpdated?: () => void | Promise<void>
 }
 
 const statusTone: Record<string, string> = {
@@ -16,9 +29,20 @@ const statusTone: Record<string, string> = {
 	Cancelled: 'bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:text-slate-300',
 }
 
-const ViewLeadFollowUps: React.FC<ViewLeadFollowUpsProps> = ({ lead }) => {
+const isPendingStatus = (status: FollowUpStatus | string) => {
+	if (typeof status === 'string') return status === 'Pending'
+	return status === FollowUpStatus.Pending
+}
+
+const ViewLeadFollowUps: React.FC<ViewLeadFollowUpsProps> = ({ lead, onLeadUpdated }) => {
 	const { t } = useTranslation()
+	const { userHasPermission } = usePermission()
 	const followUps = lead.followUps ?? []
+	const [editingFollowUp, setEditingFollowUp] = useState<ViewLeadFollowUpResponse | null>(null)
+	const [cancelTarget, setCancelTarget] = useState<ViewLeadFollowUpResponse | null>(null)
+	const [isCancelling, setIsCancelling] = useState(false)
+
+	const canUpdate = userHasPermission(PermissionTypes.Permissions_ManageLeads_Update) || userHasPermission(PermissionTypes.Permissions_ManageLeadCalendar_Update)
 
 	const formatFollowUpStatus = (status: FollowUpStatus | string) => {
 		if (typeof status === 'string') return formatHelper.punctuateLabel(status)
@@ -28,6 +52,24 @@ const ViewLeadFollowUps: React.FC<ViewLeadFollowUpsProps> = ({ lead }) => {
 	const formatFollowUpType = (type: FollowUpType | string) => {
 		if (typeof type === 'string') return formatHelper.punctuateLabel(type)
 		return formatHelper.punctuateLabel(FollowUpType[type])
+	}
+
+	const handleEditClose = async (saved: boolean) => {
+		setEditingFollowUp(null)
+		if (saved) await onLeadUpdated?.()
+	}
+
+	const handleCancel = async () => {
+		if (!cancelTarget || isCancelling) return
+
+		await runWithToast(() => leadService.cancelFollowUp(lead.id, cancelTarget.id), {
+			setLoading: setIsCancelling,
+			onSuccess: async (response) => {
+				messageHelper.showSuccess(typeof response === 'string' && response.trim() ? response : t('Manage.Leads.FollowUp_Cancelled', 'Follow-up cancelled successfully'))
+				setCancelTarget(null)
+				await onLeadUpdated?.()
+			},
+		})
 	}
 
 	return (
@@ -49,7 +91,33 @@ const ViewLeadFollowUps: React.FC<ViewLeadFollowUpsProps> = ({ lead }) => {
 											<p className="text-sm text-gray-500">{formatFollowUpType(f.followUpType)}</p>
 											<p className="mt-1 text-lg font-semibold text-gray-900 dark:text-gray-100">{formatHelper.MomentDateFormat(f.nextFollowUpDate)}</p>
 										</div>
-										<span className={`rounded-full px-2.5 py-1 text-xs font-medium ${statusTone[statusKey] ?? statusTone.Pending}`}>{formatFollowUpStatus(f.followUpStatus)}</span>
+										<div className="flex items-center gap-4">
+											<span
+												className={`rounded-full px-2.5 py-3 text-xs font-medium 
+											${statusTone[statusKey] ?? statusTone.Pending}`}
+											>
+												{formatFollowUpStatus(f.followUpStatus)}
+											</span>
+											{canUpdate && isPendingStatus(f.followUpStatus) && (
+												<ActionDropdown
+													label={t('Common.Action', 'Action')}
+													menuWidth={140}
+													minWidthPx={140}
+													items={[
+														{
+															key: 'edit',
+															label: t('Common.Edit', 'Edit'),
+															onClick: () => setEditingFollowUp(f),
+														},
+														{
+															key: 'delete',
+															label: t('Common.Cancel', 'Cancel'),
+															onClick: () => setCancelTarget(f),
+														},
+													]}
+												/>
+											)}
+										</div>
 									</div>
 									{f.reminderNote && <p className="mt-3 text-sm text-gray-600 dark:text-gray-400">{f.reminderNote}</p>}
 								</div>
@@ -58,6 +126,22 @@ const ViewLeadFollowUps: React.FC<ViewLeadFollowUpsProps> = ({ lead }) => {
 					</div>
 				)}
 			</LeadSectionCard>
+
+			<ModalLayout isStatic={true} showModal={Boolean(editingFollowUp)} toggleModal={() => setEditingFollowUp(null)} panelClassName={MODAL_PANEL_CLASS} placement="justify-center items-start">
+				{editingFollowUp && <EditFollowUpModal leadId={lead.id} followUp={editingFollowUp} onClose={handleEditClose} />}
+			</ModalLayout>
+
+			<DeleteConfirmation
+				isOpen={Boolean(cancelTarget)}
+				onClose={() => {
+					if (!isCancelling) setCancelTarget(null)
+				}}
+				onConfirm={handleCancel}
+				title={t('Manage.Leads.CancelFollowUp_Title', 'Cancel Follow-up')}
+				description={t('Manage.Leads.CancelFollowUp_Description', 'Are you sure you want to cancel this follow-up?')}
+				confirmButtonText={t('Manage.Leads.CancelFollowUp_Confirm', 'Cancel Follow-up')}
+				confirmDisabled={isCancelling}
+			/>
 		</div>
 	)
 }

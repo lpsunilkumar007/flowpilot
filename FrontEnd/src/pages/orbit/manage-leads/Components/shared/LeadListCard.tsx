@@ -1,6 +1,9 @@
+import ActionDropdown from '@/components/ActionDropdown'
 import { MenuLinks } from '@/constants/menu'
+import { PermissionTypes } from '@/constants/permissions'
 import { formatHelper } from '@/helpers/format.helper'
 import type { ViewLeadListResponse } from '@/types/crm/lead.types'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { getUserDisplayName, leadCardClass, type LeadUserLookup } from '../../helpers/leadDisplay.helper'
 import LeadStatusBadge from './LeadStatusBadge'
@@ -8,13 +11,17 @@ import LeadStatusBadge from './LeadStatusBadge'
 interface LeadListCardProps {
 	lead: ViewLeadListResponse
 	users: LeadUserLookup[]
+	canDelete?: boolean
+	onDelete?: () => void
 }
 
-const LeadListCard: React.FC<LeadListCardProps> = ({ lead, users }) => {
+const LeadListCard: React.FC<LeadListCardProps> = ({ lead, users, canDelete = false, onDelete }) => {
+	const { t } = useTranslation()
 	const navigate = useNavigate()
+	const detailUrl = MenuLinks.EditLead.replace(':id', String(lead.id))
 
 	return (
-		<article className={`${leadCardClass} group cursor-pointer p-5 transition-all hover:-translate-y-0.5 hover:shadow-md`} onClick={() => navigate(MenuLinks.EditLead.replace(':id', String(lead.id)))} onKeyDown={(e) => e.key === 'Enter' && navigate(MenuLinks.EditLead.replace(':id', String(lead.id)))} role="button" tabIndex={0}>
+		<article className={`${leadCardClass} group cursor-pointer p-5 transition-all hover:-translate-y-0.5 hover:shadow-md`} onClick={() => navigate(detailUrl)} onKeyDown={(e) => e.key === 'Enter' && navigate(detailUrl)} role="button" tabIndex={0}>
 			<div className="flex items-start justify-between gap-3">
 				<div className="min-w-0">
 					<p className="text-xs font-medium uppercase tracking-wide text-gray-400">#{lead.id}</p>
@@ -23,7 +30,30 @@ const LeadListCard: React.FC<LeadListCardProps> = ({ lead, users }) => {
 						{lead.ownerName} · {lead.mobile}
 					</p>
 				</div>
-				<LeadStatusBadge statusName={lead.leadStatusName} />
+				<div className="flex shrink-0 items-start gap-2">
+					<LeadStatusBadge statusName={lead.leadStatusName} />
+					{canDelete && onDelete && (
+						<div
+							onClick={(e) => e.stopPropagation()}
+							onKeyDown={(e) => e.stopPropagation()}
+						>
+							<ActionDropdown
+								label={t('Common.Action', 'Action')}
+								menuWidth={140}
+								minWidthPx={140}
+								items={[
+									{
+										key: 'delete',
+										label: t('Common.Delete', 'Delete'),
+										onClick: onDelete,
+										permission: PermissionTypes.Permissions_ManageLeads_Delete,
+										disabled: !canDelete,
+									},
+								]}
+							/>
+						</div>
+					)}
+				</div>
 			</div>
 
 			<div className="mt-4 grid grid-cols-2 gap-3 text-sm">

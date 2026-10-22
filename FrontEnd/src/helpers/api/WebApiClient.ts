@@ -5419,6 +5419,47 @@ export class LeadClient {
     }
 
     /**
+     * Delete lead
+     */
+    delete(id: number): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDelete(_response);
+        });
+    }
+
+    protected processDelete(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
      * Update lead status
      */
     updateStatus(id: number, request: UpdateLeadStatusRequest): Promise<string> {
@@ -5554,6 +5595,98 @@ export class LeadClient {
     }
 
     /**
+     * Update a lead follow-up
+     */
+    updateFollowUp(id: number, followUpId: number, request: UpdateLeadFollowUpRequest): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}/followups/{followUpId}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (followUpId === undefined || followUpId === null)
+            throw new globalThis.Error("The parameter 'followUpId' must be defined.");
+        url_ = url_.replace("{followUpId}", encodeURIComponent("" + followUpId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdateFollowUp(_response);
+        });
+    }
+
+    protected processUpdateFollowUp(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Cancel a lead follow-up
+     */
+    cancelFollowUp(id: number, followUpId: number): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}/followups/{followUpId}/cancel";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (followUpId === undefined || followUpId === null)
+            throw new globalThis.Error("The parameter 'followUpId' must be defined.");
+        url_ = url_.replace("{followUpId}", encodeURIComponent("" + followUpId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "POST",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processCancelFollowUp(_response);
+        });
+    }
+
+    protected processCancelFollowUp(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
      * Get lead activity timeline
      */
     getActivities(id: number): Promise<ViewLeadActivityResponse[]> {
@@ -5642,6 +5775,98 @@ export class LeadClient {
             });
         }
         return Promise.resolve<ViewLeadActivityResponse>(null as any);
+    }
+
+    /**
+     * Update a lead activity
+     */
+    updateActivity(id: number, activityId: number, request: UpdateLeadActivityRequest): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}/activities/{activityId}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (activityId === undefined || activityId === null)
+            throw new globalThis.Error("The parameter 'activityId' must be defined.");
+        url_ = url_.replace("{activityId}", encodeURIComponent("" + activityId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        const content_ = JSON.stringify(request);
+
+        let options_: RequestInit = {
+            body: content_,
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processUpdateActivity(_response);
+        });
+    }
+
+    protected processUpdateActivity(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
+    }
+
+    /**
+     * Delete a lead activity
+     */
+    deleteActivity(id: number, activityId: number): Promise<string> {
+        let url_ = this.baseUrl + "/api/v1/lead/{id}/activities/{activityId}";
+        if (id === undefined || id === null)
+            throw new globalThis.Error("The parameter 'id' must be defined.");
+        url_ = url_.replace("{id}", encodeURIComponent("" + id));
+        if (activityId === undefined || activityId === null)
+            throw new globalThis.Error("The parameter 'activityId' must be defined.");
+        url_ = url_.replace("{activityId}", encodeURIComponent("" + activityId));
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_: RequestInit = {
+            method: "DELETE",
+            headers: {
+                "Accept": "application/json"
+            }
+        };
+
+        return this.http.fetch(url_, options_).then((_response: Response) => {
+            return this.processDeleteActivity(_response);
+        });
+    }
+
+    protected processDeleteActivity(response: Response): Promise<string> {
+        const status = response.status;
+        let _headers: any = {}; if (response.headers && response.headers.forEach) { response.headers.forEach((v: any, k: any) => _headers[k] = v); };
+        if (status === 200) {
+            return response.text().then((_responseText) => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+                result200 = resultData200 !== undefined ? resultData200 : null as any;
+    
+            return result200;
+            });
+        } else if (status !== 200 && status !== 204) {
+            return response.text().then((_responseText) => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            });
+        }
+        return Promise.resolve<string>(null as any);
     }
 
     /**
@@ -15392,6 +15617,50 @@ export interface IUpdateLeadFollowUpDateRequest {
     nextFollowUpDate: moment.Moment;
 }
 
+export class UpdateLeadFollowUpRequest implements IUpdateLeadFollowUpRequest {
+    nextFollowUpDate!: moment.Moment;
+    followUpType!: FollowUpType;
+    reminderNote?: string | undefined;
+
+    constructor(data?: IUpdateLeadFollowUpRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.nextFollowUpDate = _data["nextFollowUpDate"] ? moment(_data["nextFollowUpDate"].toString()) : undefined as any;
+            this.followUpType = _data["followUpType"];
+            this.reminderNote = _data["reminderNote"];
+        }
+    }
+
+    static fromJS(data: any): UpdateLeadFollowUpRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateLeadFollowUpRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["nextFollowUpDate"] = this.nextFollowUpDate ? this.nextFollowUpDate.toISOString() : undefined as any;
+        data["followUpType"] = this.followUpType;
+        data["reminderNote"] = this.reminderNote;
+        return data;
+    }
+}
+
+export interface IUpdateLeadFollowUpRequest {
+    nextFollowUpDate: moment.Moment;
+    followUpType: FollowUpType;
+    reminderNote?: string | undefined;
+}
+
 export class CreateLeadActivityRequest implements ICreateLeadActivityRequest {
     activityType!: LeadActivityType;
     activityDate!: moment.Moment;
@@ -15458,6 +15727,62 @@ export interface ICreateLeadActivityRequest {
     nextFollowUpDate?: moment.Moment | undefined;
     followUpType?: FollowUpType | undefined;
     reminderNote?: string | undefined;
+}
+
+export class UpdateLeadActivityRequest implements IUpdateLeadActivityRequest {
+    activityType!: LeadActivityType;
+    activityDate!: moment.Moment;
+    durationMinutes?: number | undefined;
+    outcome?: string | undefined;
+    notes?: string | undefined;
+    nextFollowUpDate?: moment.Moment | undefined;
+
+    constructor(data?: IUpdateLeadActivityRequest) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (this as any)[property] = (data as any)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.activityType = _data["activityType"];
+            this.activityDate = _data["activityDate"] ? moment(_data["activityDate"].toString()) : undefined as any;
+            this.durationMinutes = _data["durationMinutes"];
+            this.outcome = _data["outcome"];
+            this.notes = _data["notes"];
+            this.nextFollowUpDate = _data["nextFollowUpDate"] ? moment(_data["nextFollowUpDate"].toString()) : undefined as any;
+        }
+    }
+
+    static fromJS(data: any): UpdateLeadActivityRequest {
+        data = typeof data === 'object' ? data : {};
+        let result = new UpdateLeadActivityRequest();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["activityType"] = this.activityType;
+        data["activityDate"] = this.activityDate ? this.activityDate.toISOString() : undefined as any;
+        data["durationMinutes"] = this.durationMinutes;
+        data["outcome"] = this.outcome;
+        data["notes"] = this.notes;
+        data["nextFollowUpDate"] = this.nextFollowUpDate ? this.nextFollowUpDate.toISOString() : undefined as any;
+        return data;
+    }
+}
+
+export interface IUpdateLeadActivityRequest {
+    activityType: LeadActivityType;
+    activityDate: moment.Moment;
+    durationMinutes?: number | undefined;
+    outcome?: string | undefined;
+    notes?: string | undefined;
+    nextFollowUpDate?: moment.Moment | undefined;
 }
 
 export class CreateEntityNoteRequest implements ICreateEntityNoteRequest {

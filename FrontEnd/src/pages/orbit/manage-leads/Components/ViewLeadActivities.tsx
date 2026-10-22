@@ -1,30 +1,43 @@
 import { EmptyState, FormInput, VerticalForm } from '@/components'
+import ActionDropdown from '@/components/ActionDropdown'
+import DeleteConfirmation from '@/components/DeleteConfirmation'
+import { ModalLayout } from '@/components/HeadlessUI'
+import { MODAL_PANEL_CLASS } from '@/constants'
 import { PermissionTypes } from '@/constants/permissions'
 import { runWithToast } from '@/helpers/asyncToast.helper'
 import { formatHelper } from '@/helpers/format.helper'
 import { messageHelper } from '@/helpers/message.helper'
+import withSuspense from '@/helpers/suspense.helper'
 import { usePermission } from '@/hooks/usePermission'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { leadService } from '@/services/LeadService'
 import { LeadActivityType, type CreateLeadActivityRequest, type ViewLeadActivityResponse } from '@/types/crm/lead.types'
-import React, { useEffect, useState } from 'react'
+import React, { lazy, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatActivityType, getActivityIcon, leadCardClass } from '../helpers/leadDisplay.helper'
 import LeadSectionCard from './shared/LeadSectionCard'
+
+const EditActivityModal = withSuspense(lazy(() => import('./EditActivityModal')))
 // form validation
 import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 interface ViewLeadActivitiesProps {
 	id: string
+	onLeadUpdated?: () => void | Promise<void>
 }
 
-const ViewLeadActivities: React.FC<ViewLeadActivitiesProps> = ({ id }) => {
+const ViewLeadActivities: React.FC<ViewLeadActivitiesProps> = ({ id, onLeadUpdated }) => {
 	const { t } = useTranslation()
 	const { userHasPermission } = usePermission()
 	const canView = userHasPermission(PermissionTypes.Permissions_ManageLeadActivities_View)
 	const canCreate = userHasPermission(PermissionTypes.Permissions_ManageLeadActivities_Create)
+	const canUpdate = userHasPermission(PermissionTypes.Permissions_ManageLeadActivities_Update)
+	const canDelete = userHasPermission(PermissionTypes.Permissions_ManageLeadActivities_Delete)
 	const [loading, setLoading] = useState(true)
 	const [activities, setActivities] = useState<ViewLeadActivityResponse[]>([])
+	const [editingActivity, setEditingActivity] = useState<ViewLeadActivityResponse | null>(null)
+	const [deleteTarget, setDeleteTarget] = useState<ViewLeadActivityResponse | null>(null)
+	const [isDeleting, setIsDeleting] = useState(false)
 
 	const load = async () => {
 		if (!canView) {
@@ -52,11 +65,36 @@ const ViewLeadActivities: React.FC<ViewLeadActivitiesProps> = ({ id }) => {
 		})
 	)
 
+	const refreshAfterChange = async () => {
+		const res = await leadService.getActivities(Number(id))
+		setActivities(res)
+		await onLeadUpdated?.()
+	}
+
 	const onSubmit = async (formInfo: CreateLeadActivityRequest) => {
 		await runWithToast(() => leadService.createActivity(Number(id), formInfo), {
 			onSuccess: () => {
 				messageHelper.showSuccess(t('Manage.Leads.ActivityAdded', 'Activity added'))
 				load()
+				onLeadUpdated?.()
+			},
+		})
+	}
+
+	const handleEditClose = async (saved: boolean) => {
+		setEditingActivity(null)
+		if (saved) await refreshAfterChange()
+	}
+
+	const handleDelete = async () => {
+		if (!deleteTarget || isDeleting) return
+
+		await runWithToast(() => leadService.deleteActivity(Number(id), deleteTarget.id), {
+			setLoading: setIsDeleting,
+			onSuccess: async (response) => {
+				messageHelper.showSuccess(typeof response === 'string' && response.trim() ? response : t('Manage.Leads.Activity_Deleted', 'Activity deleted successfully'))
+				setDeleteTarget(null)
+				await refreshAfterChange()
 			},
 		})
 	}
@@ -124,17 +162,62 @@ const ViewLeadActivities: React.FC<ViewLeadActivitiesProps> = ({ id }) => {
 								<div className="min-w-0 flex-1">
 									<div className="flex flex-wrap items-center justify-between gap-2">
 										<h4 className="font-semibold text-gray-900 dark:text-gray-100">{formatActivityType(a.activityType)}</h4>
-										<span className="text-sm text-gray-500">{formatHelper.MomentDateFormat(a.activityDate)}</span>
+										<div className="flex items-center gap-4">
+											<span className="text-sm text-gray-500">{formatHelper.MomentDateFormat(a.activityDate)}</span>
+											{(canUpdate || canDelete) && (
+												<ActionDropdown
+													label={t('Common.Action', 'Action')}
+													menuWidth={140}
+													minWidthPx={140}
+													items={[
+														...(canUpdate
+															? [
+																	{
+																		key: 'edit',
+																		label: t('Common.Edit', 'Edit'),
+																		onClick: () => setEditingActivity(a),
+																	},
+																]
+															: []),
+														...(canDelete
+															? [
+																	{
+																		key: 'delete',
+																		label: t('Common.Delete', 'Delete'),
+																		onClick: () => setDeleteTarget(a),
+																	},
+																]
+															: []),
+													]}
+												/>
+											)}
+										</div>
 									</div>
 									{a.outcome && <p className="mt-2 text-sm font-medium text-gray-700 dark:text-gray-300">{a.outcome}</p>}
 									{a.notes && <p className="mt-1 text-sm text-gray-600 dark:text-gray-400">{a.notes}</p>}
-									{a.nextFollowUpDate && <p className="mt-2 inline-flex rounded-full bg-amber-50 px-2.5 py-1 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">Next follow-up: {formatHelper.MomentDateFormat(a.nextFollowUpDate)}</p>}
+									{a.nextFollowUpDate && <p className="mt-2 inline-flex rounded-full bg-amber-50 px-2.5 py-3 text-xs text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">Next follow-up: {formatHelper.MomentDateFormat(a.nextFollowUpDate)}</p>}
 								</div>
 							</div>
 						))}
 					</div>
 				)}
 			</LeadSectionCard>
+
+			<ModalLayout isStatic={true} showModal={Boolean(editingActivity)} toggleModal={() => setEditingActivity(null)} panelClassName={MODAL_PANEL_CLASS} placement="justify-center items-start">
+				{editingActivity && <EditActivityModal leadId={Number(id)} activity={editingActivity} onClose={handleEditClose} />}
+			</ModalLayout>
+
+			<DeleteConfirmation
+				isOpen={Boolean(deleteTarget)}
+				onClose={() => {
+					if (!isDeleting) setDeleteTarget(null)
+				}}
+				onConfirm={handleDelete}
+				title={t('Manage.Leads.DeleteActivity_Title', 'Delete Activity')}
+				description={t('Manage.Leads.DeleteActivity_Description', 'Are you sure you want to delete this activity? This action cannot be undone.')}
+				confirmButtonText={t('Common.Delete', 'Delete')}
+				confirmDisabled={isDeleting}
+			/>
 		</div>
 	)
 }

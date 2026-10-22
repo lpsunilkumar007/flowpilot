@@ -11,6 +11,7 @@ internal class ErrorMessages
     public static readonly string CreateRoleFailed = "Register role failed";
     public static readonly string UpdateRoleFailed = "Register role failed";
     public static readonly string NotAllowedToDeleteRole = "Not allowed to delete {0} Role as it is being used.";
+    public static readonly string NotAllowedToDeleteBecauseInUse = "Not allowed to delete {0} as it is linked to related records.";
     public static readonly string UpdateProfileFailed = "Update profile failed";
     public static readonly string ChangePasswordFailed = "Change password failed";
     public static readonly string ConfirmEmail = "An error occurred while confirming E-Mail.";

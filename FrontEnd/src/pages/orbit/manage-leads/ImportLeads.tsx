@@ -16,7 +16,6 @@ import { messageHelper } from '@/helpers/message.helper'
 import ValidationHelper from '@/helpers/validation.helper'
 import { usePermission } from '@/hooks/usePermission'
 import type { IErrorResult } from '@/interfaces/IErrorResult'
-import { DropDownService } from '@/services/DropDownService'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 
@@ -27,9 +26,9 @@ const PHONE_COLUMN_KEY = 'companyPhone'
 const OFFERING_COLUMN_KEY = 'offering'
 
 const EMAIL_FORMAT_ERROR = 'Email is not a valid email address.'
-const PHONE_REQUIRED_ERROR = 'Company Phone is required.'
 const PHONE_FORMAT_ERROR = 'Company Phone is not a valid mobile number.'
 const OFFERING_REQUIRED_ERROR = 'Offering is required.'
+const MISSING_PHONE_PLACEHOLDER = '---'
 
 const COLUMN_SECTIONS: { title: string; keys: string[] }[] = [
 	{ title: 'Business Information', keys: ['company', 'offering', 'publicPrivate', 'domain', 'employee', 'revenue'] },
@@ -104,10 +103,16 @@ const isContactFieldError = (error: string, field: 'email' | 'phone') => {
 
 const isOfferingFieldError = (error: string) => error.toLowerCase().includes('offering')
 
-const matchesOfferingName = (value: string, offeringNames: Set<string>) => offeringNames.has(value.toLowerCase())
+const isMissingPhonePlaceholder = (phone: string) => phone === MISSING_PHONE_PLACEHOLDER
 
-const applyClientRowValidation = (row: ImportParsedRow, offeringNames: Set<string>, editedKey?: string) => {
-	let errors = [...(row.errors ?? [])]
+const isStaleImportError = (error: string) => {
+	const lower = error.toLowerCase()
+	return lower.includes('company phone is required') || (lower.includes('offering') && lower.includes('was not found'))
+}
+
+const applyClientRowValidation = (row: ImportParsedRow, editedKey?: string) => {
+	let errors = (row.errors ?? []).filter((error) => !isStaleImportError(error))
+	const values = { ...(row.values ?? {}) }
 
 	if (editedKey === EMAIL_COLUMN_KEY) {
 		errors = errors.filter((error) => !isContactFieldError(error, 'email'))
@@ -122,31 +127,29 @@ const applyClientRowValidation = (row: ImportParsedRow, offeringNames: Set<strin
 	}
 
 	const email = getRowValue(row, EMAIL_COLUMN_KEY)
-	const phone = getRowValue(row, PHONE_COLUMN_KEY)
+	let phone = getRowValue(row, PHONE_COLUMN_KEY)
 	const offering = getRowValue(row, OFFERING_COLUMN_KEY)
+
+	if (!phone) {
+		phone = MISSING_PHONE_PLACEHOLDER
+		values[PHONE_COLUMN_KEY] = MISSING_PHONE_PLACEHOLDER
+	}
 
 	if (email && !ValidationHelper.isValidEmail(email) && !errors.includes(EMAIL_FORMAT_ERROR)) {
 		errors.push(EMAIL_FORMAT_ERROR)
 	}
 
-	if (!phone) {
-		if (editedKey === PHONE_COLUMN_KEY && !errors.some((error) => error.toLowerCase().includes('company phone is required'))) {
-			errors.push(PHONE_REQUIRED_ERROR)
-		}
-	} else if (!ValidationHelper.isValidMobile(phone) && !errors.includes(PHONE_FORMAT_ERROR)) {
+	if (!isMissingPhonePlaceholder(phone) && !ValidationHelper.isValidMobile(phone) && !errors.includes(PHONE_FORMAT_ERROR)) {
 		errors.push(PHONE_FORMAT_ERROR)
 	}
 
-	if (editedKey === OFFERING_COLUMN_KEY) {
-		if (!offering) {
-			errors.push(OFFERING_REQUIRED_ERROR)
-		} else if (offeringNames.size > 0 && !matchesOfferingName(offering, offeringNames)) {
-			errors.push(`Row ${row.rowNumber}: Offering '${offering}' was not found.`)
-		}
+	if (editedKey === OFFERING_COLUMN_KEY && !offering) {
+		errors.push(OFFERING_REQUIRED_ERROR)
 	}
 
 	return new ImportParsedRow({
 		...row,
+		values,
 		errors,
 		isValid: errors.length === 0,
 	})
@@ -183,8 +186,6 @@ const ImportLeads = () => {
 	const [isExporting, setIsExporting] = useState(false)
 	const [showInvalidFirst, setShowInvalidFirst] = useState(true)
 	const [previewPage, setPreviewPage] = useState(1)
-	const [offeringNames, setOfferingNames] = useState<Set<string>>(new Set())
-
 	const columns = definition?.columns ?? []
 	const columnGroups = useMemo(() => groupColumns(columns), [columns])
 	const flatColumns = useMemo(() => columnGroups.flatMap((group) => group.columns), [columnGroups])
@@ -221,13 +222,6 @@ const ImportLeads = () => {
 
 		if (canView || canCreate) {
 			void loadDefinitions()
-			void DropDownService.getActiveOfferings()
-				.then((items) => {
-					setOfferingNames(new Set((items ?? []).map((item) => (item.text ?? '').trim().toLowerCase()).filter(Boolean)))
-				})
-				.catch(() => {
-					setOfferingNames(new Set())
-				})
 		} else {
 			setIsLoadingDefinitions(false)
 		}
@@ -292,7 +286,7 @@ const ImportLeads = () => {
 				fileName: selectedFile.name,
 			}
 			const response = await importClient.parse(ENTITY_KEY, fileParameter)
-			setRows((response.rows ?? []).map((row) => applyClientRowValidation(row, offeringNames)))
+			setRows((response.rows ?? []).map((row) => applyClientRowValidation(row)))
 			setPreviewPage(1)
 			messageHelper.showSuccess(`Parsed ${response.totalRows ?? 0} rows.`)
 		} catch (error) {
@@ -313,7 +307,6 @@ const ImportLeads = () => {
 					...row,
 					values: { ...row.values, [key]: value },
 				}),
-				offeringNames,
 				key
 			)
 			return next

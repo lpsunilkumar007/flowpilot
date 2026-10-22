@@ -24,6 +24,12 @@ public interface ILeadService : ITransientService
 
     Task<string> UpdateFollowUpDateAsync(DefaultIdType id, UpdateLeadFollowUpDateRequest request, CancellationToken cancellationToken = default);
 
+    Task<string> UpdateFollowUpAsync(DefaultIdType leadId, DefaultIdType followUpId, UpdateLeadFollowUpRequest request, CancellationToken cancellationToken = default);
+
+    Task<string> CancelFollowUpAsync(DefaultIdType leadId, DefaultIdType followUpId, CancellationToken cancellationToken = default);
+
+    Task<string> DeleteAsync(DefaultIdType id, CancellationToken cancellationToken = default);
+
     Task<List<ViewLeadListResponse>> GetTodayFollowUpsAsync(CancellationToken cancellationToken = default);
 
     Task<List<ViewLeadListResponse>> GetOverdueFollowUpsAsync(CancellationToken cancellationToken = default);
@@ -31,6 +37,10 @@ public interface ILeadService : ITransientService
     Task<List<ViewLeadActivityResponse>> GetActivitiesAsync(DefaultIdType leadId, CancellationToken cancellationToken = default);
 
     Task<ViewLeadActivityResponse> CreateActivityAsync(DefaultIdType leadId, CreateLeadActivityRequest request, CancellationToken cancellationToken = default);
+
+    Task<string> UpdateActivityAsync(DefaultIdType leadId, DefaultIdType activityId, UpdateLeadActivityRequest request, CancellationToken cancellationToken = default);
+
+    Task<string> DeleteActivityAsync(DefaultIdType leadId, DefaultIdType activityId, CancellationToken cancellationToken = default);
 
     Task<List<ViewEntityNoteResponse>> GetNotesAsync(DefaultIdType leadId, CancellationToken cancellationToken = default);
 

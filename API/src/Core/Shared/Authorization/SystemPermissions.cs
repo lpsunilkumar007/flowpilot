@@ -88,6 +88,7 @@ public class SystemPermissions
         new("Create Lead", SystemAction.Create, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
         new("Update Lead", SystemAction.Update, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
         new("Export Leads", SystemAction.Export, SystemResource.ManageLeads, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+        new("Delete Lead", SystemAction.Delete, SystemResource.ManageLeads, IsSalesRepresentative: false, IsSalesManager: true, IsRoot: true, IsAdmin: true),
 
         // Manage Offerings (CRM)
         new("View Offerings", SystemAction.View, SystemResource.ManageOfferings, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
@@ -117,6 +118,8 @@ public class SystemPermissions
         // Manage Lead Activities (CRM)
         new("View Lead Activities", SystemAction.View, SystemResource.ManageLeadActivities, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
         new("Create Lead Activity", SystemAction.Create, SystemResource.ManageLeadActivities, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+        new("Update Lead Activity", SystemAction.Update, SystemResource.ManageLeadActivities, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),
+        new("Delete Lead Activity", SystemAction.Delete, SystemResource.ManageLeadActivities, IsSalesRepresentative: false, IsSalesManager: true, IsRoot: true, IsAdmin: true),
 
         // Manage Lead Notes (CRM)
         new("View Lead Notes", SystemAction.View, SystemResource.ManageLeadNotes, IsSalesRepresentative: true, IsSalesManager: true, IsRoot: true, IsAdmin: true),

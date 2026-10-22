@@ -1,4 +1,5 @@
 import {
+    FollowUpType,
     InterestLevel,
     LeadActivityType,
     LeadPriority,
@@ -11,6 +12,7 @@ const ENUM_FIELD_MAP: Record<string, Record<string, string | number>> = {
 	priority: LeadPriority,
 	interestLevel: InterestLevel,
 	activityType: LeadActivityType,
+	followUpType: FollowUpType,
 }
 
 const toEnumName = (enumObj: Record<string, string | number>, value: unknown): unknown => {
@@ -35,6 +37,10 @@ const normalizeDate = (value: unknown): string | undefined => {
 	// HTML date input: YYYY-MM-DD — append UTC midnight for DateTimeOffset parsing
 	if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
 		return `${trimmed}T00:00:00.000Z`
+	}
+
+	if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(trimmed)) {
+		return `${trimmed}:00`
 	}
 
 	return trimmed

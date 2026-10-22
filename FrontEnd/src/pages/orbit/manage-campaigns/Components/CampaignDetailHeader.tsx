@@ -22,7 +22,7 @@ const CampaignDetailHeader: React.FC<CampaignDetailHeaderProps> = ({ campaign })
 						<h1 className="mt-1 text-2xl font-bold text-gray-900 dark:text-white">{campaign.title}</h1>
 						<p className="mt-2 text-gray-600 dark:text-gray-300">{campaign.templateName}</p>
 						<div className="mt-3 flex flex-wrap gap-2">
-							<span className="inline-flex rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{typeLabel}</span>
+							<span className="inline-flex rounded-full bg-gray-100 px-3 py-3 text-xs font-medium text-gray-700 dark:bg-gray-700 dark:text-gray-200">{typeLabel}</span>
 						</div>
 					</div>
 					<div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:min-w-[28rem]">

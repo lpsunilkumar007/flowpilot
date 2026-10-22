@@ -53,6 +53,7 @@ export enum PermissionTypes {
 	Permissions_ManageLeads_Create = 'Permissions.ManageLeads.Create',
 	Permissions_ManageLeads_Update = 'Permissions.ManageLeads.Update',
 	Permissions_ManageLeads_Export = 'Permissions.ManageLeads.Export',
+	Permissions_ManageLeads_Delete = 'Permissions.ManageLeads.Delete',
 
 	Permissions_ManageOfferings_View = 'Permissions.ManageOfferings.View',
 	Permissions_ManageOfferings_Create = 'Permissions.ManageOfferings.Create',
@@ -77,6 +78,8 @@ export enum PermissionTypes {
 
 	Permissions_ManageLeadActivities_View = 'Permissions.ManageLeadActivities.View',
 	Permissions_ManageLeadActivities_Create = 'Permissions.ManageLeadActivities.Create',
+	Permissions_ManageLeadActivities_Update = 'Permissions.ManageLeadActivities.Update',
+	Permissions_ManageLeadActivities_Delete = 'Permissions.ManageLeadActivities.Delete',
 
 	Permissions_ManageLeadNotes_View = 'Permissions.ManageLeadNotes.View',
 	Permissions_ManageLeadNotes_Create = 'Permissions.ManageLeadNotes.Create',

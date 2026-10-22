@@ -55,8 +55,8 @@ const EditLeadLandingPage = () => {
 		() =>
 			[
 				{ title: t('Manage.Leads.Tab_Overview', 'Overview'), icon: 'ri-dashboard-line', content: id && lead ? <EditLeadOverview id={id} lead={lead} onLeadUpdated={refreshLead} /> : null, visible: true },
-				{ title: t('Manage.Leads.Tab_Activities', 'Activities'), icon: 'ri-time-line', content: id ? <ViewLeadActivities id={id} /> : null, visible: canViewActivities },
-				{ title: t('Manage.Leads.Tab_FollowUps', 'Follow-ups'), icon: 'ri-calendar-check-line', content: lead ? <ViewLeadFollowUps lead={lead} /> : null, visible: true },
+				{ title: t('Manage.Leads.Tab_Activities', 'Activities'), icon: 'ri-time-line', content: id ? <ViewLeadActivities id={id} onLeadUpdated={refreshLead} /> : null, visible: canViewActivities },
+				{ title: t('Manage.Leads.Tab_FollowUps', 'Follow-ups'), icon: 'ri-calendar-check-line', content: lead ? <ViewLeadFollowUps lead={lead} onLeadUpdated={refreshLead} /> : null, visible: true },
 				{ title: t('Manage.Leads.Tab_Notes', 'Notes'), icon: 'ri-sticky-note-line', content: id ? <ViewLeadNotes id={id} /> : null, visible: canViewNotes },
 				{ title: t('Manage.Leads.Tab_History', 'History'), icon: 'ri-history-line', content: lead ? <ViewLeadHistory lead={lead} /> : null, visible: true },
 			].filter((tab) => tab.visible),

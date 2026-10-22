@@ -1,15 +1,17 @@
 import { FormInput } from '@/components'
+import DeleteConfirmation from '@/components/DeleteConfirmation'
 import Pagination from '@/components/Pagination'
 import { PagingVariables } from '@/constants/paging'
 import { PermissionTypes } from '@/constants/permissions'
 import type { UserDropDownItemResponse, ViewUserDetailsResponse } from '@/helpers/api/WebApiClient'
 import { runWithToast } from '@/helpers/asyncToast.helper'
+import { messageHelper } from '@/helpers/message.helper'
 import { usePermission } from '@/hooks/usePermission'
 import { AnimationSkeleton } from '@/pages/ui/Skeleton'
 import { RootState } from '@/redux/store'
 import { DropDownService } from '@/services/DropDownService'
 import { leadService } from '@/services/LeadService'
-import { LeadFilterType, type PaginationResponseOfViewLeadListResponse } from '@/types/crm/lead.types'
+import { LeadFilterType, type PaginationResponseOfViewLeadListResponse, type ViewLeadListResponse } from '@/types/crm/lead.types'
 import type { OfferingDropDownItemResponse } from '@/types/crm/offering.types'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -50,6 +52,7 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	const isTeamContext = Boolean(teamMode && teamAssignedToUserId)
 	const isIndirectTeam = teamMode === 'indirect'
 	const canFilterByAssignee = userHasPermission(PermissionTypes.Permissions_Users_View) && !isTeamContext
+	const canDelete = userHasPermission(PermissionTypes.Permissions_ManageLeads_Delete)
 	const userData = useSelector((state: RootState) => state.Auth.userData) as ViewUserDetailsResponse | undefined
 	const currentUserId = userData?.id
 
@@ -62,6 +65,8 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	const [assignedToUserId, setAssignedToUserId] = useState<string | undefined>(teamAssignedToUserId)
 	const [offeringId, setOfferingId] = useState<number | undefined>(queryOfferingId)
 	const [offeringUniqueId, setOfferingUniqueId] = useState<string | undefined>(queryOfferingId ? undefined : queryOfferingUid)
+	const [deleteTarget, setDeleteTarget] = useState<ViewLeadListResponse | null>(null)
+	const [isDeleting, setIsDeleting] = useState(false)
 
 	useEffect(() => {
 		if (teamAssignedToUserId) setAssignedToUserId(teamAssignedToUserId)
@@ -88,7 +93,10 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 	}, [canFilterByAssignee, isTeamContext])
 
 	const fetchLeads = useCallback(
-		async (pageNumber: number, overrides?: { filterType?: LeadFilterType; searchText?: string; assignedToUserId?: string; offeringId?: number; offeringUniqueId?: string }) => {
+		async (pageNumber: number, overrides?: {
+			filterType?: LeadFilterType; searchText?: string; assignedToUserId?: string; offeringId?: number; offeringUniqueId?:
+				string
+		}) => {
 			const assigneeFilter = canFilterByAssignee || isTeamContext ? (overrides?.assignedToUserId ?? assignedToUserId) : undefined
 			const offeringFilter = Object.prototype.hasOwnProperty.call(overrides ?? {}, 'offeringId') ? overrides?.offeringId : offeringId
 			const offeringUidFilter = Object.prototype.hasOwnProperty.call(overrides ?? {}, 'offeringUniqueId') ? overrides?.offeringUniqueId : offeringUniqueId
@@ -140,6 +148,18 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 		const resetAssignee = isTeamContext ? teamAssignedToUserId : undefined
 		setAssignedToUserId(resetAssignee)
 		fetchLeads(0, { filterType: LeadFilterType.All, searchText: '', assignedToUserId: resetAssignee, offeringId: undefined, offeringUniqueId: undefined })
+	}
+
+	const handleDelete = async () => {
+		if (!deleteTarget || isDeleting) return
+		await runWithToast(() => leadService.delete(deleteTarget.id), {
+			setLoading: setIsDeleting,
+			onSuccess: (message) => {
+				messageHelper.showSuccess(message)
+				setDeleteTarget(null)
+				fetchLeads(rowData?.currentPage ?? 0)
+			},
+		})
 	}
 
 	if (loading && !rowData) return <AnimationSkeleton />
@@ -210,7 +230,13 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 				<>
 					<div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
 						{leads.map((lead) => (
-							<LeadListCard key={lead.id} lead={lead} users={usersForDisplay} />
+							<LeadListCard
+								key={lead.id}
+								lead={lead}
+								users={usersForDisplay}
+								canDelete={canDelete}
+								onDelete={() => setDeleteTarget(lead)}
+							/>
 						))}
 					</div>
 					{rowData && (
@@ -224,6 +250,18 @@ const ViewLeads: React.FC<ViewLeadsProps> = ({ reloadLeads }) => {
 					)}
 				</>
 			)}
+
+			<DeleteConfirmation
+				isOpen={Boolean(deleteTarget)}
+				onClose={() => {
+					if (!isDeleting) setDeleteTarget(null)
+				}}
+				onConfirm={handleDelete}
+				title={t('Manage.Leads.Delete_Title', 'Delete Lead')}
+				description={t('Manage.Leads.Delete_Description', 'Are you sure you want to delete this lead? This action cannot be undone.')}
+				confirmButtonText={t('Common.Delete', 'Delete')}
+				confirmDisabled={isDeleting}
+			/>
 		</div>
 	)
 }

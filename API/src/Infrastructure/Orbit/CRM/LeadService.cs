@@ -26,6 +26,8 @@ namespace FlowPilot.Infrastructure.Orbit.CRM;
 
 public class LeadService : ILeadService
 {
+    private const string MissingPhonePlaceholder = "---";
+
     private readonly ApplicationDbContext _db;
     private readonly ICurrentUser _currentUser;
     private readonly IDateTimeService _dateTimeService;
@@ -410,6 +412,55 @@ public class LeadService : ILeadService
         return SuccessMessages.CommonRecordUpdated;
     }
 
+    public async Task<string> UpdateFollowUpAsync(DefaultIdType leadId, DefaultIdType followUpId, UpdateLeadFollowUpRequest request, CancellationToken cancellationToken = default)
+    {
+        var (lead, followUp) = await GetPendingFollowUpForWriteAsync(leadId, followUpId, cancellationToken);
+
+        followUp.NextFollowUpDate = request.NextFollowUpDate;
+        followUp.FollowUpType = request.FollowUpType;
+        followUp.ReminderNote = request.ReminderNote;
+        SyncLeadNextFollowUpDate(lead);
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return SuccessMessages.CommonRecordUpdated;
+    }
+
+    public async Task<string> CancelFollowUpAsync(DefaultIdType leadId, DefaultIdType followUpId, CancellationToken cancellationToken = default)
+    {
+        var (lead, followUp) = await GetPendingFollowUpForWriteAsync(leadId, followUpId, cancellationToken);
+
+        followUp.FollowUpStatus = FollowUpStatus.Cancelled;
+        SyncLeadNextFollowUpDate(lead);
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return SuccessMessages.CommonRecordUpdated;
+    }
+
+    public async Task<string> DeleteAsync(DefaultIdType id, CancellationToken cancellationToken = default)
+    {
+        var lead = await _db.Leads.SingleOrDefaultAsync(x => x.Id == id, cancellationToken);
+        _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
+
+        var leadContacts = await _db.LeadContacts.SingleOrDefaultAsync(x => x.FKLeadPKId == lead.Id, cancellationToken);
+        _ = leadContacts ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead Contact"));
+
+        var entityCustomFields = await _db.EntityCustomFields.Where(x => x.FKEntityPKId == lead.Id).ToListAsync();
+        var leadStatusHistories = await _db.LeadStatusHistories.Where(x => x.FKLeadPKId == lead.Id).ToListAsync();
+        var leadAssignmentHistories = await _db.LeadAssignmentHistories.Where(x => x.FKLeadPKId == lead.Id).ToListAsync();
+
+        await EnsureCanWriteLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+        await EnsureLeadHasNoRelatedRecordsAsync(id, cancellationToken);
+
+        _db.EntityCustomFields.RemoveRange(entityCustomFields);
+        _db.LeadStatusHistories.RemoveRange(leadStatusHistories);
+        _db.LeadAssignmentHistories.RemoveRange(leadAssignmentHistories);
+        _db.LeadContacts.Remove(leadContacts);
+        _db.Leads.Remove(lead);
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return string.Format(SuccessMessages.RecordDeletedSuccessfully, "Lead");
+    }
+
     public async Task<List<ViewLeadListResponse>> GetTodayFollowUpsAsync(CancellationToken cancellationToken = default)
     {
         var today = _dateTimeService.UtcNow.Date;
@@ -526,6 +577,34 @@ public class LeadService : ILeadService
         await _db.SaveChangesAsync(cancellationToken);
 
         return activity.Adapt<ViewLeadActivityResponse>();
+    }
+
+    public async Task<string> UpdateActivityAsync(DefaultIdType leadId, DefaultIdType activityId, UpdateLeadActivityRequest request, CancellationToken cancellationToken = default)
+    {
+        var (lead, activity) = await GetActivityForWriteAsync(leadId, activityId, cancellationToken);
+
+        activity.ActivityType = request.ActivityType;
+        activity.ActivityDate = request.ActivityDate;
+        activity.DurationMinutes = request.DurationMinutes;
+        activity.Outcome = request.Outcome;
+        activity.Notes = request.Notes;
+        activity.NextFollowUpDate = request.NextFollowUpDate;
+
+        await SyncLeadLastActivityDateAsync(lead, cancellationToken, activity.Id, activity.ActivityDate);
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return SuccessMessages.CommonRecordUpdated;
+    }
+
+    public async Task<string> DeleteActivityAsync(DefaultIdType leadId, DefaultIdType activityId, CancellationToken cancellationToken = default)
+    {
+        var (lead, activity) = await GetActivityForWriteAsync(leadId, activityId, cancellationToken);
+
+        _db.LeadActivities.Remove(activity);
+        await SyncLeadLastActivityDateAsync(lead, cancellationToken, activity.Id);
+
+        await _db.SaveChangesAsync(cancellationToken);
+        return string.Format(SuccessMessages.RecordDeletedSuccessfully, "Activity");
     }
 
     public async Task<List<ViewEntityNoteResponse>> GetNotesAsync(DefaultIdType leadId, CancellationToken cancellationToken = default)
@@ -695,6 +774,101 @@ public class LeadService : ILeadService
         }
     }
 
+    private async Task<(Leads Lead, LeadFollowUps FollowUp)> GetPendingFollowUpForWriteAsync(
+        DefaultIdType leadId,
+        DefaultIdType followUpId,
+        CancellationToken cancellationToken)
+    {
+        var lead = await _db.Leads
+            .Include(x => x.LeadFollowUps)
+            .SingleOrDefaultAsync(x => x.Id == leadId, cancellationToken);
+
+        _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
+
+        await EnsureCanWriteLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+
+        var followUp = lead.LeadFollowUps.FirstOrDefault(x => x.Id == followUpId);
+        _ = followUp ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead FollowUp"));
+
+        if (followUp.FollowUpStatus != FollowUpStatus.Pending)
+        {
+            throw new BadRequestException("Only pending follow-ups can be updated or cancelled.");
+        }
+
+        return (lead, followUp);
+    }
+
+    private static void SyncLeadNextFollowUpDate(Leads lead)
+    {
+        lead.NextFollowUpDate = lead.LeadFollowUps
+            .Where(x => x.FollowUpStatus == FollowUpStatus.Pending)
+            .OrderBy(x => x.NextFollowUpDate)
+            .Select(x => (DateTimeOffset?)x.NextFollowUpDate)
+            .FirstOrDefault();
+    }
+
+    private async Task<(Leads Lead, LeadActivities Activity)> GetActivityForWriteAsync(
+        DefaultIdType leadId,
+        DefaultIdType activityId,
+        CancellationToken cancellationToken)
+    {
+        var lead = await _db.Leads.SingleOrDefaultAsync(x => x.Id == leadId, cancellationToken);
+        _ = lead ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead"));
+
+        await EnsureCanWriteLeadAsync(lead.FKAssignedToUserId, cancellationToken);
+
+        var activity = await _db.LeadActivities
+            .SingleOrDefaultAsync(x => x.Id == activityId && x.FKLeadPKId == leadId, cancellationToken);
+        _ = activity ?? throw new NotFoundException(string.Format(ErrorMessages.ItemNotFound, "Lead Activity"));
+
+        return (lead, activity);
+    }
+
+    private async Task SyncLeadLastActivityDateAsync(
+        Leads lead,
+        CancellationToken cancellationToken,
+        DefaultIdType? excludeActivityId = null,
+        DateTimeOffset? replacementDate = null)
+    {
+        var query = _db.LeadActivities.Where(x => x.FKLeadPKId == lead.Id);
+        if (excludeActivityId.HasValue)
+        {
+            query = query.Where(x => x.Id != excludeActivityId.Value);
+        }
+
+        var latest = await query
+            .OrderByDescending(x => x.ActivityDate)
+            .Select(x => (DateTimeOffset?)x.ActivityDate)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (replacementDate.HasValue && (latest is null || replacementDate.Value > latest.Value))
+        {
+            latest = replacementDate;
+        }
+
+        lead.LastActivityDate = latest;
+    }
+
+    // Blocks delete when the lead is referenced by related entities.
+    // Intrinsic create-time children (contacts, status/assignment histories) are excluded.
+    private async Task EnsureLeadHasNoRelatedRecordsAsync(DefaultIdType leadId, CancellationToken cancellationToken)
+    {
+        var hasActivities = await _db.LeadActivities.AnyAsync(x => x.FKLeadPKId == leadId, cancellationToken);
+        var hasFollowUps = await _db.LeadFollowUps.AnyAsync(x => x.FKLeadPKId == leadId, cancellationToken);
+        var hasNotes = await _db.EntityNotes.AnyAsync(
+            x => x.FKEntityPKId == leadId
+                && (x.EntityNoteType == EntityNoteType.Lead || x.EntityNoteType == EntityNoteType.LeadSummary),
+            cancellationToken);
+
+        // CampaignUsers.UserId stores the lead id for email campaign recipients.
+        var hasCampaignLinks = await _db.CampaignUsers.AnyAsync(x => x.UserId == leadId, cancellationToken);
+
+        if (hasActivities || hasFollowUps || hasNotes || hasCampaignLinks)
+        {
+            throw new ConflictException(string.Format(ErrorMessages.NotAllowedToDeleteBecauseInUse, "Lead"));
+        }
+    }
+
     private async Task EnsureLeadAccessibleAsync(DefaultIdType leadId, CancellationToken cancellationToken)
     {
         var lead = await _db.Leads
@@ -743,7 +917,7 @@ public class LeadService : ILeadService
         foreach (var lead in leads)
         {
             var contact = lead.LeadContacts.FirstOrDefault(c => c.IsPrimary);
-            if (contact?.Mobile == mobile)
+            if (!IsMissingPhonePlaceholder(mobile) && contact?.Mobile == mobile)
             {
                 throw new ConflictException(string.Format(ErrorMessages.ItemAlreadyExists, mobile));
             }
@@ -758,6 +932,11 @@ public class LeadService : ILeadService
                 throw new ConflictException(string.Format(ErrorMessages.ItemAlreadyExists, gstNumber));
             }
         }
+    }
+
+    private static bool IsMissingPhonePlaceholder(string mobile)
+    {
+        return mobile.Equals(MissingPhonePlaceholder, StringComparison.Ordinal);
     }
 
     private static ViewLeadDetailResponse MapToDetail(

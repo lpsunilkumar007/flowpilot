@@ -15,7 +15,7 @@ const toneClasses = {
 const LeadStatusBadge: React.FC<LeadStatusBadgeProps> = ({ statusName, className = '' }) => {
 	const tone = getLeadStatusTone(statusName)
 	return (
-		<span className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset ${toneClasses[tone]} ${className}`}>
+		<span className={`inline-flex items-center rounded-full px-2.5 py-3 text-xs font-medium ring-1 ring-inset ${toneClasses[tone]} ${className}`}>
 			{formatLeadStatus(statusName)}
 		</span>
 	)

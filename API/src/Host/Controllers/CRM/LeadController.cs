@@ -72,6 +72,14 @@ public class LeadController : VersionedApiController
         return await _leadService.UpdateAsync(id, request, cancellationToken);
     }
 
+    [HttpDelete("{id}")]
+    [MustHavePermission(SystemAction.Delete, SystemResource.ManageLeads)]
+    [OpenApiOperation("Delete lead", "")]
+    public async Task<string> Delete(DefaultIdType id, CancellationToken cancellationToken)
+    {
+        return await _leadService.DeleteAsync(id, cancellationToken);
+    }
+
     [HttpPost("{id}/status")]
     [RequireAnyResource(SystemAction.Update, [SystemResource.ManageLeads, SystemResource.ManageSalePipelines])]
     [OpenApiOperation("Update lead status", "")]
@@ -96,6 +104,22 @@ public class LeadController : VersionedApiController
         return await _leadService.UpdateFollowUpDateAsync(id, request, cancellationToken);
     }
 
+    [HttpPut("{id}/followups/{followUpId}")]
+    [RequireAnyResource(SystemAction.Update, [SystemResource.ManageLeads, SystemResource.ManageLeadCalendar])]
+    [OpenApiOperation("Update a lead follow-up", "")]
+    public async Task<string> UpdateFollowUp(DefaultIdType id, DefaultIdType followUpId, UpdateLeadFollowUpRequest request, CancellationToken cancellationToken)
+    {
+        return await _leadService.UpdateFollowUpAsync(id, followUpId, request, cancellationToken);
+    }
+
+    [HttpPost("{id}/followups/{followUpId}/cancel")]
+    [RequireAnyResource(SystemAction.Update, [SystemResource.ManageLeads, SystemResource.ManageLeadCalendar])]
+    [OpenApiOperation("Cancel a lead follow-up", "")]
+    public async Task<string> CancelFollowUp(DefaultIdType id, DefaultIdType followUpId, CancellationToken cancellationToken)
+    {
+        return await _leadService.CancelFollowUpAsync(id, followUpId, cancellationToken);
+    }
+
     [HttpGet("{id}/activities")]
     [MustHavePermission(SystemAction.View, SystemResource.ManageLeadActivities)]
     [OpenApiOperation("Get lead activity timeline", "")]
@@ -110,6 +134,22 @@ public class LeadController : VersionedApiController
     public async Task<ViewLeadActivityResponse> CreateActivity(DefaultIdType id, CreateLeadActivityRequest request, CancellationToken cancellationToken)
     {
         return await _leadService.CreateActivityAsync(id, request, cancellationToken);
+    }
+
+    [HttpPut("{id}/activities/{activityId}")]
+    [MustHavePermission(SystemAction.Update, SystemResource.ManageLeadActivities)]
+    [OpenApiOperation("Update a lead activity", "")]
+    public async Task<string> UpdateActivity(DefaultIdType id, DefaultIdType activityId, UpdateLeadActivityRequest request, CancellationToken cancellationToken)
+    {
+        return await _leadService.UpdateActivityAsync(id, activityId, request, cancellationToken);
+    }
+
+    [HttpDelete("{id}/activities/{activityId}")]
+    [MustHavePermission(SystemAction.Delete, SystemResource.ManageLeadActivities)]
+    [OpenApiOperation("Delete a lead activity", "")]
+    public async Task<string> DeleteActivity(DefaultIdType id, DefaultIdType activityId, CancellationToken cancellationToken)
+    {
+        return await _leadService.DeleteActivityAsync(id, activityId, cancellationToken);
     }
 
     [HttpGet("{id}/notes")]

@@ -23,6 +23,7 @@ public sealed class LeadImportProvider : ImportProviderBase
 {
     private const string ExcelImportSourceName = "Excel Import";
     private const string DefaultBusinessType = "Unknown";
+    private const string MissingPhonePlaceholder = "---";
 
     private static readonly JsonSerializerOptions MetadataJsonOptions = new()
     {
@@ -74,7 +75,7 @@ public sealed class LeadImportProvider : ImportProviderBase
             Column(ImportColumnKeys.ExternalId, "ID", sample: "12345", aliases: ["externalId", "externalid"]),
             Column(ImportColumnKeys.Domain, "Domain", sample: "acme.com", aliases: ["website", "domain"]),
             Column(ImportColumnKeys.Company, "Company", required: true, sample: "Acme Inc", aliases: ["businessName", "businessname", "company"]),
-            Column(ImportColumnKeys.Offering, "Offering", required: true, sample: "Core Product", lookupHint: "Exact name of an existing active Offering", aliases: ["offeringName", "offering"]),
+            Column(ImportColumnKeys.Offering, "Offering", required: true, sample: "Core Product", lookupHint: "Offering name; created automatically if it does not already exist", aliases: ["offeringName", "offering"]),
             Column(ImportColumnKeys.Sic4, "SIC4", sample: "5812", aliases: ["sic4"]),
             Column(ImportColumnKeys.Naics6, "NAICS6", sample: "722511", aliases: ["naics6"]),
             Column(ImportColumnKeys.Employee, "Employee", sample: "50", aliases: ["companySize", "companysize", "employee"]),
@@ -105,6 +106,23 @@ public sealed class LeadImportProvider : ImportProviderBase
         var lookups = await LoadLookupsAsync(cancellationToken);
         var parsed = rows.Select(row => CreateParsedRow(row, definition)).ToList();
         ValidateRows(parsed, lookups);
+        try
+        {
+            await EnsureMissingOfferingsAsync(parsed, lookups, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _ = _dbContext.ChangeTracker.Entries<Offerings>()
+                .Where(entry => entry.State == EntityState.Added)
+                .Select(entry =>
+                {
+                    entry.State = EntityState.Detached;
+                    return entry;
+                })
+                .ToList();
+
+            MarkUnresolvedOfferingRows(parsed, lookups, ex.Message);
+        }
 
         var response = new SubmitImportResponse();
         foreach (var row in parsed)
@@ -290,19 +308,24 @@ public sealed class LeadImportProvider : ImportProviderBase
 
             if (string.IsNullOrWhiteSpace(phone))
             {
-                AddError(row, "Company Phone is required.");
+                phone = MissingPhonePlaceholder;
+                row.Values[ImportColumnKeys.CompanyPhone] = MissingPhonePlaceholder;
             }
-            else if (!ImportValueParser.IsValidMobile(phone))
+
+            if (!IsMissingPhonePlaceholder(phone))
             {
-                AddError(row, "Company Phone is not a valid mobile number.");
-            }
-            else if (!seenMobiles.Add(phone))
-            {
-                AddError(row, $"Duplicate Company Phone '{phone}' in file.");
-            }
-            else if (lookups.Mobiles.Contains(phone))
-            {
-                AddError(row, $"Mobile '{phone}' already exists.");
+                if (!ImportValueParser.IsValidMobile(phone))
+                {
+                    AddError(row, "Company Phone is not a valid mobile number.");
+                }
+                else if (!seenMobiles.Add(phone))
+                {
+                    AddError(row, $"Duplicate Company Phone '{phone}' in file.");
+                }
+                else if (lookups.Mobiles.Contains(phone))
+                {
+                    AddError(row, $"Mobile '{phone}' already exists.");
+                }
             }
 
             if (string.IsNullOrWhiteSpace(ownerName))
@@ -346,10 +369,6 @@ public sealed class LeadImportProvider : ImportProviderBase
             if (string.IsNullOrWhiteSpace(offering))
             {
                 AddError(row, "Offering is required.");
-            }
-            else if (!lookups.OfferingsByName.ContainsKey(offering))
-            {
-                AddError(row, $"Row {row.RowNumber}: Offering '{offering}' was not found.");
             }
 
             if (!string.IsNullOrWhiteSpace(leadSource) && !lookups.LeadSourcesByName.ContainsKey(leadSource))
@@ -448,7 +467,7 @@ public sealed class LeadImportProvider : ImportProviderBase
             CompanySize = ImportValueParser.NullIfEmpty(GetValue(row, ImportColumnKeys.Employee)),
             OwnerName = ResolveOwnerName(row),
             Designation = ImportValueParser.NullIfEmpty(GetValue(row, ImportColumnKeys.Title)),
-            Mobile = GetValue(row, ImportColumnKeys.CompanyPhone),
+            Mobile = ResolveCompanyPhone(row),
             WhatsApp = ImportValueParser.NullIfEmpty(GetValue(row, ImportColumnKeys.WhatsApp)),
             Email = ImportValueParser.NullIfEmpty(GetValue(row, ImportColumnKeys.Email)),
             AlternatePhone = ImportValueParser.NullIfEmpty(GetValue(row, ImportColumnKeys.AlternatePhone)),
@@ -525,6 +544,15 @@ public sealed class LeadImportProvider : ImportProviderBase
         return string.Join(' ', new[] { first, last }.Where(x => !string.IsNullOrWhiteSpace(x))).Trim();
     }
 
+    private static string ResolveCompanyPhone(ImportParsedRow row)
+    {
+        var phone = GetValue(row, ImportColumnKeys.CompanyPhone);
+        return string.IsNullOrWhiteSpace(phone) ? MissingPhonePlaceholder : phone;
+    }
+
+    private static bool IsMissingPhonePlaceholder(string phone) =>
+        phone.Equals(MissingPhonePlaceholder, StringComparison.Ordinal);
+
     private static bool ResolveAssignToYourself(string assignToYourselfText, string assignedTo)
     {
         if (ImportValueParser.TryParseBool(assignToYourselfText, out var parsed))
@@ -589,6 +617,59 @@ public sealed class LeadImportProvider : ImportProviderBase
         {
             return new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         }
+    }
+
+    private async Task EnsureMissingOfferingsAsync(
+        IReadOnlyList<ImportParsedRow> rows,
+        LeadImportLookups lookups,
+        CancellationToken cancellationToken)
+    {
+        var missingNames = rows
+            .Where(row => row.IsValid)
+            .Select(row => GetValue(row, ImportColumnKeys.Offering))
+            .Where(name => !string.IsNullOrWhiteSpace(name) && !lookups.OfferingsByName.ContainsKey(name))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (missingNames.Count == 0)
+        {
+            return;
+        }
+
+        var ownerUserId = _currentUser.GetUserId().ToString();
+        var created = missingNames
+            .Select(name => new Offerings
+            {
+                UniqueId = Guid.NewGuid(),
+                Name = name.Trim(),
+                Type = OfferingType.Product,
+                Status = OfferingStatus.Active,
+                FKOwnerUserId = ownerUserId,
+            })
+            .ToList();
+
+        await _dbContext.Offerings.AddRangeAsync(created, cancellationToken);
+        await _dbContext.SaveChangesAsync(cancellationToken);
+
+        created.ForEach(offering => lookups.OfferingsByName[offering.Name] = offering.Id);
+    }
+
+    private static void MarkUnresolvedOfferingRows(
+        IReadOnlyList<ImportParsedRow> rows,
+        LeadImportLookups lookups,
+        string errorDetail)
+    {
+        _ = rows
+            .Where(row => row.IsValid)
+            .Select(row => new { row, offeringName = GetValue(row, ImportColumnKeys.Offering) })
+            .Where(x => !string.IsNullOrWhiteSpace(x.offeringName) && !lookups.OfferingsByName.ContainsKey(x.offeringName))
+            .Select(x =>
+            {
+                AddError(x.row, $"Unable to create Offering '{x.offeringName}': {errorDetail}");
+                FinalizeRow(x.row);
+                return x.row;
+            })
+            .ToList();
     }
 
     private static void RememberInserted(LeadImportLookups lookups, CreateLeadRequest request)
